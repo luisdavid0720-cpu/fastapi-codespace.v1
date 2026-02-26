@@ -32,7 +32,7 @@ class RolController:
             content = {} 
             
             content={
-                    'id':int(result[0]),
+                    'id_rol':int(result[0]),
                     'nombre_rol':result[1],
                     'usuarios':result[2]
                     
@@ -66,7 +66,7 @@ class RolController:
             content = {} 
             for data in result:
                 content={
-                    'id':data[0],
+                    'id_rol':data[0],
                     'nombre_rol':data[1],
                     'usuarios':data[2]
                     

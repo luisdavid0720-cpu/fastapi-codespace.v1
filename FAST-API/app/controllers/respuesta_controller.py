@@ -32,7 +32,7 @@ class RespuestaController:
             content = {} 
             
             content={
-                    'id':int(result[0]),
+                    'id_respuesta':int(result[0]),
                     'mensaje':data[1],
                     'fecha':data[2],
                     'id_incidencias':data[3],
@@ -68,7 +68,7 @@ class RespuestaController:
             content = {} 
             for data in result:
                 content={
-                    'id':data[0],
+                    'id_respuesta':data[0],
                     'mensaje':data[1],
                     'fecha':data[2],
                     'id_incidencias':data[3],

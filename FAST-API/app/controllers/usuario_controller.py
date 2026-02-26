@@ -32,7 +32,7 @@ class UsuarioController:
             content = {} 
             
             content={
-                    'id':int(result[0]),
+                    'id_usuario':int(result[0]),
                     'nombre':data[1],
                     'cedula':data[2],
                     'carrera':data[3],

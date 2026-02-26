@@ -1,18 +1,18 @@
 from fastapi import HTTPException
 from config.db_config import get_db_connection
-from models.tipo_incidencia_model import Tipo_incidencia
+from models.incidencia_model import Incidencia
 from fastapi.encoders import jsonable_encoder
 
-class Tipo_incidenciaController:
+class IncidenciaController:
         
-    def create_tipo_incidencia(self, tipo_incidencia: Tipo_incidencia):   
+    def create_incidencia(self, incidencia: Incidencia):   
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO tipo_incidencia (nombre,incidencias) VALUES (%s, %s)", (user.nombre, user.incidencias))
+            cursor.execute("INSERT INTO incidencia (fecha,descripcion,id_usuario,id_tipo,id_estado,id_departamento,id_prioridad,departamento,estado,prioridad,tipo_incidencia) VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s ,%s)", (user.fecha, user.descripcion, user.id_usuario, user.id_tipo, user.id_estado, user.id_departamento, user.id_prioridad, user.departamento, user.estado, user.prioridad, user.tipo_incidencia))
             conn.commit()
             conn.close()
-            return {"resultado": "Tipo_incidencia creado"}
+            return {"resultado": "Incidencia creado"}
         except psycopg2.Error as err:
             print(err)
             # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
@@ -22,19 +22,28 @@ class Tipo_incidenciaController:
             conn.close()
         
 
-    def get_tipo_incidencia(self, tipo_incidencia_id: int):
+    def get_incidencia(self, incidencia_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM tipo_incidencia WHERE id = %s", (tipo_incidencia_id,))
+            cursor.execute("SELECT * FROM incidencia WHERE id = %s", (incidencia_id,))
             result = cursor.fetchone()
             payload = []
             content = {} 
             
             content={
-                    'id_tipo':int(result[0]),
-                    'nombre':result[1],
-                    'incidencias':result[2]
+                    'id_incidencias':int(result[0]),
+                    'fecha':data[1],
+                    'descripcion':data[2],
+                    'id_usuario':data[3],
+                    'id_tipo':data[4],
+                    'id_estado':data[5],
+                    'id_departamento':data[6],
+                    'id_prioridad':data[7],
+                    'departamento':data[8],
+                    'estado':data[9],
+                    'prioridad':data[10],
+                    'tipo_incidencia':data[11]
                     
             }
             payload.append(content)
@@ -56,20 +65,28 @@ class Tipo_incidenciaController:
         finally:
             conn.close()
        
-    def get_tipo_incidencias(self):
+    def get_incidencias(self):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM tipo_incidencia")
+            cursor.execute("SELECT * FROM incidencia")
             result = cursor.fetchall()
             payload = []
             content = {} 
             for data in result:
                 content={
-                    'id_tipo':data[0],
-                    'nombre':data[1],
-                    'incidencias':data[2]
-                    
+                    'id_incidencias':data[0],
+                    'fecha':data[1],
+                    'descripcion':data[2],
+                    'id_usuario':data[3],
+                    'id_tipo':data[4],
+                    'id_estado':data[5],
+                    'id_departamento':data[6],
+                    'id_prioridad':data[7],
+                    'departamento':data[8],
+                    'estado':data[9],
+                    'prioridad':data[10],
+                    'tipo_incidencia':data[11]
                 }
                 payload.append(content)
                 content = {}

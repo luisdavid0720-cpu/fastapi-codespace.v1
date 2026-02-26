@@ -32,7 +32,7 @@ class PrioridadController:
             content = {} 
             
             content={
-                    'id':int(result[0]),
+                    'id_prioridad':int(result[0]),
                     'nombre':result[1],
                     'incidencias':result[2]
                    
@@ -66,7 +66,7 @@ class PrioridadController:
             content = {} 
             for data in result:
                 content={
-                    'id':data[0],
+                    'id_prioridad':data[0],
                     'nombre':data[1],
                     'incidencias':data[2]
                     
