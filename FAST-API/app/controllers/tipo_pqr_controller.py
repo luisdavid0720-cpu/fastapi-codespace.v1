@@ -1,18 +1,18 @@
 from fastapi import HTTPException
 from config.db_config import get_db_connection
-from models.tipo_incidencia_model import Tipo_incidencia
+from models.tipo_pqr_model import Tipo_pqr
 from fastapi.encoders import jsonable_encoder
 
-class Tipo_incidenciaController:
+class Tipo_pqrController:
         
-    def create_tipo_incidencia(self, tipo_incidencia: Tipo_incidencia):   
+    def create_tipo_pqr(self, tipo_pqr: Tipo_pqr):   
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO tipo_incidencia (nombre,incidencias) VALUES (%s, %s)", (tipo_incidencia.nombre, tipo_incidencia.incidencias))
+            cursor.execute("INSERT INTO tipo_pqr (nombre,pqrs) \ VALUES (%s, %s)", (tipo_incidencia.nombre, tipo_incidencia.pqrs))
             conn.commit()
             conn.close()
-            return {"resultado": "Tipo_incidencia creado"}
+            return {"resultado": "Tipo_pqr creado"}
         except psycopg2.Error as err:
             print(err)
             # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
@@ -22,11 +22,11 @@ class Tipo_incidenciaController:
             conn.close()
         
 
-    def get_tipo_incidencia(self, tipo_incidencia_id: int):
+    def get_tipo_pqr(self, tipo_pqr_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM tipo_incidencia WHERE id = %s", (tipo_incidencia_id,))
+            cursor.execute("SELECT * FROM tipo_pqr WHERE id = %s", (tipo_pqr_id,))
             result = cursor.fetchone()
             payload = []
             content = {} 
@@ -34,7 +34,7 @@ class Tipo_incidenciaController:
             content={
                     'id_tipo':int(result[0]),
                     'nombre':result[1],
-                    'incidencias':result[2]
+                    'pqrs':result[2]
                     
             }
             payload.append(content)
@@ -56,11 +56,11 @@ class Tipo_incidenciaController:
         finally:
             conn.close()
        
-    def get_tipo_incidencias(self):
+    def get_tipo_pqrs(self):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM tipo_incidencia")
+            cursor.execute("SELECT * FROM tipo_pqr")
             result = cursor.fetchall()
             payload = []
             content = {} 
@@ -68,7 +68,7 @@ class Tipo_incidenciaController:
                 content={
                     'id_tipo':data[0],
                     'nombre':data[1],
-                    'incidencias':data[2]
+                    'pqrs':data[2]
                     
                 }
                 payload.append(content)
