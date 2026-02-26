@@ -1,9 +1,9 @@
 from fastapi import HTTPException
 from config.db_config import get_db_connection
-from models.user_model import User
+from models.tipo_incidencia_model import Tipo_incidencia
 from fastapi.encoders import jsonable_encoder
 
-class UserController:
+class tController:
         
     def create_user(self, user: User):   
         try:

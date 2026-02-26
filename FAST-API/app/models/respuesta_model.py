@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class respuesta(BaseModel):
+class Respuesta(BaseModel):
     id_respuesta: int=None
     mensaje: str
     fecha:str

@@ -3,7 +3,7 @@ from config.db_config import get_db_connection
 from models.usuario_model import Usuario
 from fastapi.encoders import jsonable_encoder
 
-class UserController:
+class UsuarioController:
         
     def create_usuario(self, usuario: Usuario):   
         try:

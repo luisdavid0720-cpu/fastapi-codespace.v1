@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class historial_estado(BaseModel):
+class Historial_estado(BaseModel):
     id_historial: int = None
     fecha: str
     id_incidencia:str

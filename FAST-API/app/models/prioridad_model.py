@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class prioridad(BaseModel):
+class Prioridad(BaseModel):
     id_prioridad: int = None
     nombre: str
     incidencias:str

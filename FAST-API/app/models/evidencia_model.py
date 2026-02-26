@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class evidencia(BaseModel):
+class Evidencia(BaseModel):
     id_evidencia: int = None
     nombre_archivo: str
     tipo_archivo:str
