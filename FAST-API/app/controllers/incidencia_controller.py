@@ -9,7 +9,8 @@ class IncidenciaController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO incidencia (fecha,descripcion,id_usuario,id_tipo,id_estado,id_departamento,id_prioridad,departamento,estado,prioridad,tipo_incidencia) VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s ,%s)", (user.fecha, user.descripcion, user.id_usuario, user.id_tipo, user.id_estado, user.id_departamento, user.id_prioridad, user.departamento, user.estado, user.prioridad, user.tipo_incidencia))
+            cursor.execute("INSERT INTO incidencia (fecha,descripcion,id_usuario,id_tipo,id_estado,id_departamento,id_prioridad,departamento,estado,prioridad,tipo_incidencia)
+             VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s ,%s)", (incidencia.fecha, incidencia.descripcion, incidencia.id_usuario, incidencia.id_tipo, incidencia.id_estado, incidencia.id_departamento, incidencia.id_prioridad, incidencia.departamento, incidencia.estado, incidencia.prioridad, incidencia.tipo_incidencia))
             conn.commit()
             conn.close()
             return {"resultado": "Incidencia creado"}

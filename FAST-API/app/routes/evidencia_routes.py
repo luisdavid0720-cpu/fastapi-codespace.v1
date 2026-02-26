@@ -1,0 +1,24 @@
+from fastapi import APIRouter, HTTPException
+from controllers.evidencia_controller import *
+from models.evidencia_model import evidencia 
+
+router = APIRouter()
+
+nuevo_evidencia = evidenciaController()
+
+
+@router.post("/create_evidencia")
+async def create_evidencia(evidencia: evidencia):
+    rpta = nuevo_evidencia.create_evidencia(evidencia)
+    return rpta
+
+
+@router.get("/get_evidencia/{evidencia_id}",response_model=evidencia)
+async def get_evidencia(evidencia_id: int):
+    rpta = nuevo_evidencia.get_evidencia(evidencia_id)
+    return rpta
+
+@router.get("/get_evidencias/")
+async def get_evidencias():
+    rpta = nuevo_evidencia.get_evidencias()
+    return rpta

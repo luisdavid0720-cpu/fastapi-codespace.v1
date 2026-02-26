@@ -9,7 +9,7 @@ class Tipo_incidenciaController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO tipo_incidencia (nombre,incidencias) VALUES (%s, %s)", (user.nombre, user.incidencias))
+            cursor.execute("INSERT INTO tipo_incidencia (nombre,incidencias) VALUES (%s, %s)", (tipo_incidencia.nombre, tipo_incidencia.incidencias))
             conn.commit()
             conn.close()
             return {"resultado": "Tipo_incidencia creado"}

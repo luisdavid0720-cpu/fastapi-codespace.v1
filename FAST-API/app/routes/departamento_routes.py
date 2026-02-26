@@ -1,0 +1,24 @@
+from fastapi import APIRouter, HTTPException
+from controllers.departamento_controller import *
+from models.departamento_model import departamento
+
+router = APIRouter()
+
+nuevo_departamento = departamentoController()
+
+
+@router.post("/create_departamento")
+async def create_departamento(departamento: departamento):
+    rpta = nuevo_departamento.create_departamento(departamento)
+    return rpta
+
+
+@router.get("/get_departamento/{departamento_id}",response_model=departamento)
+async def get_departamento(departamento_id: int):
+    rpta = nuevo_departamento.get_departamento(departamento_id)
+    return rpta
+
+@router.get("/get_departamentos/")
+async def get_departamentos():
+    rpta = nuevo_departamento.get_departamentos()
+    return rpta
