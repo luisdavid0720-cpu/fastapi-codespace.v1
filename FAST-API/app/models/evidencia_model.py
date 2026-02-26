@@ -5,4 +5,4 @@ class Evidencia(BaseModel):
     nombre_archivo: str
     tipo_archivo:str
     url:str
-    id_incidencia:str
+    id_incidencia:int
