@@ -3,16 +3,16 @@ from config.db_config import get_db_connection
 from models.tipo_incidencia_model import Tipo_incidencia
 from fastapi.encoders import jsonable_encoder
 
-class tController:
+class Tipo_incidenciaController:
         
-    def create_user(self, user: User):   
+    def create_tipo_incidencia(self, tipo_incidencia: Tipo_incidencia):   
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO usuarios (nombre,apellido,cedula,edad,usuario,contrasena) VALUES (%s, %s, %s, %s, %s ,%s)", (user.nombre, user.apellido, user.cedula, user.edad, user.usuario, user.contrasena))
+            cursor.execute("INSERT INTO tipo_incidencia (nombre,incidencias) VALUES (%s, %s)", (user.nombre, user.incidencias))
             conn.commit()
             conn.close()
-            return {"resultado": "Usuario creado"}
+            return {"resultado": "Tipo_incidencia creado"}
         except psycopg2.Error as err:
             print(err)
             # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
@@ -22,11 +22,11 @@ class tController:
             conn.close()
         
 
-    def get_user(self, user_id: int):
+    def get_tipo_incidencia(self, tipo_incidencia_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM usuarios WHERE id = %s", (user_id,))
+            cursor.execute("SELECT * FROM tipo_incidencia WHERE id = %s", (tipo_incidencia_id,))
             result = cursor.fetchone()
             payload = []
             content = {} 
@@ -34,11 +34,8 @@ class tController:
             content={
                     'id':int(result[0]),
                     'nombre':result[1],
-                    'apellido':result[2],
-                    'cedula':result[3],
-                    'edad':int(result[4]),
-                    'usuario':result[5],
-                    'contrasena':result[6]
+                    'incidencias':result[2]
+                    
             }
             payload.append(content)
             
@@ -59,11 +56,11 @@ class tController:
         finally:
             conn.close()
        
-    def get_users(self):
+    def get_tipo_incidencias(self):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM usuarios")
+            cursor.execute("SELECT * FROM tipo_incidencia")
             result = cursor.fetchall()
             payload = []
             content = {} 
@@ -71,10 +68,8 @@ class tController:
                 content={
                     'id':data[0],
                     'nombre':data[1],
-                    'cedula':data[2],
-                    'edad':data[3],
-                    'usuario':data[4],
-                    'contrasena':data[5]
+                    'incidencias':data[2]
+                    
                 }
                 payload.append(content)
                 content = {}
