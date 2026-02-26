@@ -1,10 +1,10 @@
 from pydantic import BaseModel
-from typing import Optional
 from datetime import date
 
 class Historial_estado(BaseModel):
-    id_historial: Optional[int] = None
+    id_historial: int=None
     fecha: date
-    id_incidencia: int
+    id_pqrs: int
     id_estado: int
     estado: str
+    pqrs: str

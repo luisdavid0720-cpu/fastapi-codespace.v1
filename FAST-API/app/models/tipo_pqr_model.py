@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class Tipo_incidencia(BaseModel):
+class Tipo_pqr(BaseModel):
     id_tipo : int=None
     nombre: str
-    incidencias: str
+    pqrs: str
