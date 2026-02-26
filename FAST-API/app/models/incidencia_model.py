@@ -1,6 +1,6 @@
 from pydantic import BaseModel
 
-class incidencias(BaseModel):
+class incidencia(BaseModel):
     id_incidencias: int=None
     fecha: str
     descripcion:str

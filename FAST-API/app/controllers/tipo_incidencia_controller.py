@@ -1,15 +1,15 @@
 from fastapi import HTTPException
 from config.db_config import get_db_connection
-from models.usuario_model import Usuario
+from models.user_model import User
 from fastapi.encoders import jsonable_encoder
 
 class UserController:
         
-    def create_usuario(self, usuario: Usuario):   
+    def create_user(self, user: User):   
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO usuario (nombre,cedula,carrera,semestre,cargo,celular,correo,id_rol,rol) VALUES (%s, %s, %s, %s, %s ,%s,%s, %s ,%s)", (user.nombre, user.cedula, user.carrera, user.semestre, user.cargo, user.celular, user.correo, user.id_rol, user.rol))
+            cursor.execute("INSERT INTO usuarios (nombre,apellido,cedula,edad,usuario,contrasena) VALUES (%s, %s, %s, %s, %s ,%s)", (user.nombre, user.apellido, user.cedula, user.edad, user.usuario, user.contrasena))
             conn.commit()
             conn.close()
             return {"resultado": "Usuario creado"}
@@ -22,27 +22,23 @@ class UserController:
             conn.close()
         
 
-    def get_usuario(self, usuario_id: int):
+    def get_user(self, user_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM usuario WHERE id = %s", (usuario_id,))
+            cursor.execute("SELECT * FROM usuarios WHERE id = %s", (user_id,))
             result = cursor.fetchone()
             payload = []
             content = {} 
             
             content={
                     'id':int(result[0]),
-                    'nombre':data[1],
-                    'cedula':data[2],
-                    'carrera':data[3],
-                    'semestre':data[4],
-                    'cargo':data[5],
-                    'celular':data[6],
-                    'correo':data[7],
-                    'id_rol':data[8],
-                    'rol':data[9]
-                    
+                    'nombre':result[1],
+                    'apellido':result[2],
+                    'cedula':result[3],
+                    'edad':int(result[4]),
+                    'usuario':result[5],
+                    'contrasena':result[6]
             }
             payload.append(content)
             
@@ -63,27 +59,22 @@ class UserController:
         finally:
             conn.close()
        
-    def get_usuarios(self):
+    def get_users(self):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM usuario")
+            cursor.execute("SELECT * FROM usuarios")
             result = cursor.fetchall()
             payload = []
             content = {} 
             for data in result:
                 content={
-                    'id_usuario':data[0],
+                    'id':data[0],
                     'nombre':data[1],
                     'cedula':data[2],
-                    'carrera':data[3],
-                    'semestre':data[4],
-                    'cargo':data[5],
-                    'celular':data[6],
-                    'correo':data[7],
-                    'id_rol':data[8],
-                    'rol':data[9]
-
+                    'edad':data[3],
+                    'usuario':data[4],
+                    'contrasena':data[5]
                 }
                 payload.append(content)
                 content = {}
