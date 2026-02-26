@@ -1,19 +1,19 @@
 from fastapi import HTTPException
 from config.db_config import get_db_connection
-from models.incidencia_model import Incidencia
+from models.pqr_model_model import Incidencia
 from fastapi.encoders import jsonable_encoder
 
 class IncidenciaController:
         
-    def create_incidencia(self, incidencia: Incidencia):   
+    def create_pqr(self, pqr: pqr):   
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO incidencia (fecha,descripcion,id_usuario,id_tipo,id_estado,id_departamento,id_prioridad,departamento,estado,prioridad,tipo_incidencia)
-             VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s ,%s)", (incidencia.fecha, incidencia.descripcion, incidencia.id_usuario, incidencia.id_tipo, incidencia.id_estado, incidencia.id_departamento, incidencia.id_prioridad, incidencia.departamento, incidencia.estado, incidencia.prioridad, incidencia.tipo_incidencia))
+            cursor.execute("INSERT INTO pqr (fecha,descripcion,id_usuario,id_tipo,id_estado,id_departamento,id_prioridad,departamento,estado,prioridad,tipo_pqr)\
+             VALUES (%s, %s, %s, %s, %s ,%s, %s, %s, %s, %s ,%s)", (pqr.fecha, pqr.descripcion, pqr.id_usuario, pqr.id_tipo, pqr.id_estado, pqr.id_departamento, pqr.id_prioridad, pqr.departamento, pqr.estado, pqr.prioridad, pqr.tipo_pqr))
             conn.commit()
             conn.close()
-            return {"resultado": "Incidencia creado"}
+            return {"resultado": "pqr creado"}
         except psycopg2.Error as err:
             print(err)
             # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
@@ -23,17 +23,17 @@ class IncidenciaController:
             conn.close()
         
 
-    def get_incidencia(self, incidencia_id: int):
+    def get_pqr(self, pqr_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM incidencia WHERE id = %s", (incidencia_id,))
+            cursor.execute("SELECT * FROM pqr WHERE id = %s", (pqr_id,))
             result = cursor.fetchone()
             payload = []
             content = {} 
             
             content={
-                    'id_incidencias':int(result[0]),
+                    'id_pqr':int(result[0]),
                     'fecha':data[1],
                     'descripcion':data[2],
                     'id_usuario':data[3],
@@ -44,7 +44,7 @@ class IncidenciaController:
                     'departamento':data[8],
                     'estado':data[9],
                     'prioridad':data[10],
-                    'tipo_incidencia':data[11]
+                    'tipo_pqr':data[11]
                     
             }
             payload.append(content)
@@ -66,17 +66,17 @@ class IncidenciaController:
         finally:
             conn.close()
        
-    def get_incidencias(self):
+    def get_pqr(self):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM incidencia")
+            cursor.execute("SELECT * FROM pqr")
             result = cursor.fetchall()
             payload = []
             content = {} 
             for data in result:
                 content={
-                    'id_incidencias':data[0],
+                    'id_pqr':data[0],
                     'fecha':data[1],
                     'descripcion':data[2],
                     'id_usuario':data[3],
@@ -87,7 +87,7 @@ class IncidenciaController:
                     'departamento':data[8],
                     'estado':data[9],
                     'prioridad':data[10],
-                    'tipo_incidencia':data[11]
+                    'tipo_pqr':data[11]
                 }
                 payload.append(content)
                 content = {}
@@ -104,6 +104,4 @@ class IncidenciaController:
             conn.close()
     
     
-       
-
-##user_controller = UserController()
+##pqr_controller = pqrController()
