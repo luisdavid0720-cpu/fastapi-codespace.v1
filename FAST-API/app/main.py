@@ -12,6 +12,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+
+@app.get("/")
+def inicio():
+    return {"mensaje": "Servidor funcionando correctamente"}
+
+
 origins = [
     #"http://localhost.tiangolo.com",
     "https://ep-young-sunset-aid708e7-pooler.c-4.us-east-1.aws.neon.tech",
