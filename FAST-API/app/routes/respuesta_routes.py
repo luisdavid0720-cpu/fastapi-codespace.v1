@@ -14,7 +14,7 @@ async def create_respuesta(Respuesta: Respuesta):
 
 
 @router.get("/get_respuesta/{respuesta_id}",response_model=Respuesta)
-async def get_respuesta(Respuesta_id: int):
+async def get_respuesta(respuesta_id: int):
     rpta = nuevo_respuesta.get_respuesta(respuesta_id)
     return rpta
 
