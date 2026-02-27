@@ -29,15 +29,15 @@ app.add_middleware(
 )
 
 app.include_router(user_router)
-app.include_router(usuario_routes)
-app.include_router(tipo_pqr_routes)
-app.include_router(rol_routes)
-app.include_router(respuesta_routes)
-app.include_router(prioridad_routes)
-app.include_router(historial_routes)
-app.include_router(pqr_routes)
-app.include_router(estado_routes)
-app.include_router(departamento_routes)
+app.include_router(usuario_router)
+app.include_router(tipo_pqr_router)
+app.include_router(rol_router)
+app.include_router(respuesta_router)
+app.include_router(prioridad_router)
+app.include_router(historial_router)
+app.include_router(pqr_router)
+app.include_router(estado_router)
+app.include_router(departamento_router)
 
 if __name__ == "__main__":
     import uvicorn
