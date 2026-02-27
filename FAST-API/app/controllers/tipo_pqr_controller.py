@@ -84,6 +84,40 @@ class Tipo_pqrController:
             conn.rollback()
         finally:
             conn.close()
+
+    def update_tipo_pqr(self, tipo_pqr_id: int, tipo_pqr: Tipo_pqr):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE tipo_pqr
+                SET nombre = %s, pqrs = %s
+                WHERE id = %s
+            """, (tipo_pqr.nombre, tipo_pqr.pqrs, tipo_pqr_id))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Tipo_pqr no encontrado")
+            return {"resultado": "Tipo_pqr actualizado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
+
+    def delete_tipo_pqr(self, tipo_pqr_id: int):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM tipo_pqr WHERE id = %s", (tipo_pqr_id,))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Tipo_pqr no encontrado")
+            return {"resultado": "Tipo_pqr eliminado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
     
     
        

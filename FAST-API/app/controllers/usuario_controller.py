@@ -99,6 +99,42 @@ class UsuarioController:
             conn.rollback()
         finally:
             conn.close()
+
+    def update_usuario(self, usuario_id: int, usuario: Usuario):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE usuario
+                SET nombre = %s, cedula = %s, carrera = %s, semestre = %s, cargo = %s,
+                    celular = %s, correo = %s, id_rol = %s, rol = %s
+                WHERE id = %s
+            """, (usuario.nombre, usuario.cedula, usuario.carrera, usuario.semestre,
+                  usuario.cargo, usuario.celular, usuario.correo, usuario.id_rol, usuario.rol, usuario_id))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
+            return {"resultado": "Usuario actualizado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
+
+    def delete_usuario(self, usuario_id: int):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM usuario WHERE id = %s", (usuario_id,))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Usuario no encontrado")
+            return {"resultado": "Usuario eliminado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
     
     
        

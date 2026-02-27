@@ -84,6 +84,40 @@ class DepartamentoController:
             conn.rollback()
         finally:
             conn.close()
+
+    def update_departamento(self, departamento_id: int, departamento: Departamento):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE departamento
+                SET nombre = %s, pqrs = %s
+                WHERE id = %s
+            """, (departamento.nombre, departamento.pqrs, departamento_id))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Departamento no encontrado")
+            return {"resultado": "Departamento actualizado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
+
+    def delete_departamento(self, departamento_id: int):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM departamento WHERE id = %s", (departamento_id,))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Departamento no encontrado")
+            return {"resultado": "Departamento eliminado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
     
     
        

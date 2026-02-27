@@ -88,6 +88,40 @@ class RespuestaController:
             conn.rollback()
         finally:
             conn.close()
+
+    def update_respuesta(self, respuesta_id: int, respuesta: Respuesta):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE respuesta
+                SET mensaje = %s, fecha = %s, id_incidencias = %s, id_usuario = %s
+                WHERE id = %s
+            """, (respuesta.mensaje, respuesta.fecha, respuesta.id_incidencias, respuesta.id_usuario, respuesta_id))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Respuesta no encontrada")
+            return {"resultado": "Respuesta actualizada"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
+
+    def delete_respuesta(self, respuesta_id: int):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM respuesta WHERE id = %s", (respuesta_id,))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Respuesta no encontrada")
+            return {"resultado": "Respuesta eliminada"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
     
     
        

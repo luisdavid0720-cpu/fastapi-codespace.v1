@@ -86,6 +86,40 @@ class EstadoController:
             conn.rollback()
         finally:
             conn.close()
+
+    def update_estado(self, estado_id: int, estado: Estado):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE estado
+                SET nombre = %s, historial_estados = %s, pqrs = %s
+                WHERE id = %s
+            """, (estado.nombre, estado.historial_estados, estado.pqrs, estado_id))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Estado no encontrado")
+            return {"resultado": "Estado actualizado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
+
+    def delete_estado(self, estado_id: int):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM estado WHERE id = %s", (estado_id,))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Estado no encontrado")
+            return {"resultado": "Estado eliminado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
     
     
        

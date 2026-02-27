@@ -85,6 +85,40 @@ class PrioridadController:
             conn.rollback()
         finally:
             conn.close()
+
+    def update_prioridad(self, prioridad_id: int, prioridad: Prioridad):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE prioridad
+                SET nombre = %s, pqrs = %s
+                WHERE id = %s
+            """, (prioridad.nombre, prioridad.pqrs, prioridad_id))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Prioridad no encontrada")
+            return {"resultado": "Prioridad actualizada"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
+
+    def delete_prioridad(self, prioridad_id: int):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM prioridad WHERE id = %s", (prioridad_id,))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Prioridad no encontrada")
+            return {"resultado": "Prioridad eliminada"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
     
     
        

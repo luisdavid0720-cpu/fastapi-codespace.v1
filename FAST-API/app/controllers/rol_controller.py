@@ -85,6 +85,40 @@ class RolController:
             conn.rollback()
         finally:
             conn.close()
+
+    def update_rol(self, rol_id: int, rol: Rol):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE rol
+                SET nombre_rol = %s, usuarios = %s
+                WHERE id = %s
+            """, (rol.nombre_rol, rol.usuarios, rol_id))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Rol no encontrado")
+            return {"resultado": "Rol actualizado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
+
+    def delete_rol(self, rol_id: int):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM rol WHERE id = %s", (rol_id,))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Rol no encontrado")
+            return {"resultado": "Rol eliminado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
     
     
        

@@ -87,6 +87,40 @@ class EvidenciaController:
             conn.rollback()
         finally:
             conn.close()
+
+    def update_historial_estado(self, historial_estado_id: int, historial_estado: Historial_estado):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE historial_estado
+                SET fecha = %s, id_pqrs = %s, id_estado = %s, estado = %s, pqrs = %s
+                WHERE id = %s
+            """, (historial_estado.fecha, historial_estado.id_pqrs, historial_estado.id_estado, historial_estado.estado, historial_estado.pqrs, historial_estado_id))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Historial no encontrado")
+            return {"resultado": "Historial_estado actualizado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
+
+    def delete_historial_estado(self, historial_estado_id: int):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM historial_estado WHERE id = %s", (historial_estado_id,))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Historial no encontrado")
+            return {"resultado": "Historial_estado eliminado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
     
     
        

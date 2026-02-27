@@ -111,6 +111,44 @@ class PqrController:
             conn.rollback()
         finally:
             conn.close()
+
+    def update_pqr(self, pqr_id: int, pqr: Pqr):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("""
+                UPDATE pqr
+                SET descripcion = %s, fecha = %s, id_usuario = %s, id_tipo = %s, id_estado = %s,
+                    id_departamento = %s, id_prioridad = %s, evidencias = %s, historial_estado = %s,
+                    departamento = %s, estado = %s, prioridad = %s, tipo_pqr = %s, usuario = %s, respuesta = %s
+                WHERE id = %s
+            """, (pqr.descripcion, pqr.fecha, pqr.id_usuario, pqr.id_tipo, pqr.id_estado, pqr.id_departamento,
+                  pqr.id_prioridad, pqr.evidencias, pqr.historial_estado, pqr.departamento, pqr.estado,
+                  pqr.prioridad, pqr.tipo_pqr, pqr.usuario, pqr.respuesta, pqr_id))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Pqr no encontrado")
+            return {"resultado": "Pqr actualizado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
+
+    def delete_pqr(self, pqr_id: int):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM pqr WHERE id = %s", (pqr_id,))
+            conn.commit()
+            if cursor.rowcount == 0:
+                raise HTTPException(status_code=404, detail="Pqr no encontrado")
+            return {"resultado": "Pqr eliminado"}
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+        finally:
+            conn.close()
     
     
 ##pqr_controller = pqrController()
