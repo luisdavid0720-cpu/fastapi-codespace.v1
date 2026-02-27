@@ -5,9 +5,9 @@ class Usuario(BaseModel):
     nombre: str
     cedula:str
     carrera:str
-    semestre:str
+    semestre:int
     cargo:str
     celular:str
     correo:str
-    id_rol:str
+    id_rol:int
     rol:str
