@@ -35,14 +35,14 @@ class UsuarioController:
             
             content={
                     'id_usuario':int(result[0]),
-                    'nombre':data[1],
-                    'cedula':data[2],
-                    'carrera':data[3],
-                    'semestre':data[4],
-                    'cargo':data[5],
-                    'celular':data[6],
-                    'correo':data[7],
-                    'id_rol':data[8]
+                    'nombre':result[1],
+                    'cedula':result[2],
+                    'carrera':result[3],
+                    'semestre':result[4],
+                    'cargo':result[5],
+                    'celular':result[6],
+                    'correo':result[7],
+                    'id_rol':result[8]
                     
             }
             payload.append(content)

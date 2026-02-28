@@ -35,10 +35,10 @@ class RespuestaController:
             
             content={
                     'id_respuesta':int(result[0]),
-                    'mensaje':data[1],
-                    'fecha':data[2],
-                    'id_pqr':data[3],
-                    'id_usuario':data[4]
+                    'mensaje':result[1],
+                    'fecha':result[2],
+                    'id_pqr':result[3],
+                    'id_usuario':result[4]
                     
             }
             payload.append(content)

@@ -34,23 +34,15 @@ class PqrController:
             content = {} 
             
             content={
-                    'id_pqrs':data[0],
-                    'descripcion':data[1],
-                    'fecha':data[2],
-                    'id_usuario':data[3],
-                    'id_tipo':data[4],
-                    'id_estado':data[5],
-                    'id_departamento':data[6],
-                    'id_prioridad':data[7],
-                    'evidencias':data[8],
-                    'historial_estado':data[9],
-                    'departamento':data[10],
-                    'estado':data[11],
-                    'prioridad':data[12],
-                    'tipo_pqr':data[13],
-                    'usuario':data[14],
-                    'respuesta':data[15]
-                    
+                    'id_pqrs':result[0],
+                    'descripcion':result[1],
+                    'fecha':result[2],
+                    'id_usuario':result[3],
+                    'id_tipo':result[4],
+                    'id_estado':result[5],
+                    'id_departamento':result[6],
+                    'id_prioridad':result[7]
+                           
             }
             payload.append(content)
             
