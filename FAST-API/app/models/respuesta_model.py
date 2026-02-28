@@ -5,5 +5,5 @@ class Respuesta(BaseModel):
     id_respuesta: int=None
     mensaje: str
     fecha:date
-    id_incidencias: int
+    id_pqr: int
     id_usuario:int

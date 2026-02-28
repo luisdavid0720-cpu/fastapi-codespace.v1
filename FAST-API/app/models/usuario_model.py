@@ -10,4 +10,4 @@ class Usuario(BaseModel):
     celular:str
     correo:str
     id_rol:int
-    rol:str
+  
