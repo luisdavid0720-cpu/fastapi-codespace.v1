@@ -108,7 +108,7 @@ class UsuarioController:
                 UPDATE usuario
                 SET nombre = %s, cedula = %s, carrera = %s, semestre = %s, cargo = %s,
                     celular = %s, correo = %s, id_rol = %s
-                WHERE id_usuairo = %s
+                WHERE id_usuario = %s
             """, (usuario.nombre, usuario.cedula, usuario.carrera, usuario.semestre,
                   usuario.cargo, usuario.celular, usuario.correo, usuario.id_rol, usuario_id))
             conn.commit()
