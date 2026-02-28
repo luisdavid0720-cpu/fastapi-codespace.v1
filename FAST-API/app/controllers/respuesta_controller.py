@@ -9,8 +9,8 @@ class RespuestaController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO respuesta (mensaje,fecha,id_incidencias,id_usuario) \
-            VALUES (%s, %s, %s, %s)", (respuesta.mensaje, respuesta.fecha, respuesta.id_incidencias, respuesta.id_usuario))
+            cursor.execute("INSERT INTO respuesta (mensaje,fecha,id_pqr,id_usuario) \
+            VALUES (%s, %s, %s, %s)", (respuesta.mensaje, respuesta.fecha, respuesta.id_pqr, respuesta.id_usuario))
             conn.commit()
             conn.close()
             return {"resultado": "Respuesta creado"}
@@ -36,7 +36,7 @@ class RespuestaController:
                     'id_respuesta':int(result[0]),
                     'mensaje':data[1],
                     'fecha':data[2],
-                    'id_incidencias':data[3],
+                    'id_pqr':data[3],
                     'id_usuario':data[4]
                     
             }
@@ -72,7 +72,7 @@ class RespuestaController:
                     'id_respuesta':data[0],
                     'mensaje':data[1],
                     'fecha':data[2],
-                    'id_incidencias':data[3],
+                    'id_pqr':data[3],
                     'id_usuario':data[4]
                     
                 }
@@ -96,9 +96,9 @@ class RespuestaController:
             cursor = conn.cursor()
             cursor.execute("""
                 UPDATE respuesta
-                SET mensaje = %s, fecha = %s, id_incidencias = %s, id_usuario = %s
+                SET mensaje = %s, fecha = %s, id_pqr = %s, id_usuario = %s
                 WHERE id = %s
-            """, (respuesta.mensaje, respuesta.fecha, respuesta.id_incidencias, respuesta.id_usuario, respuesta_id))
+            """, (respuesta.mensaje, respuesta.fecha, respuesta.id_pqr, respuesta.id_usuario, respuesta_id))
             conn.commit()
             if cursor.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Respuesta no encontrada")

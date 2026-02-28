@@ -9,8 +9,8 @@ class UsuarioController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("""INSERT INTO usuario (nombre,cedula,carrera,semestre,cargo,celular,correo,id_rol,rol) \ VALUES 
-            (%s, %s, %s, %s, %s , %s, %s, %s ,%s)""", (usuario.nombre, usuario.cedula, usuario.carrera, usuario.semestre, usuario.cargo, usuario.celular, usuario.correo, usuario.id_rol, usuario.rol))
+            cursor.execute("""INSERT INTO usuario (nombre,cedula,carrera,semestre,cargo,celular,correo,id_rol) \ VALUES 
+            (%s, %s, %s, %s, %s , %s, %s, %s)""", (usuario.nombre, usuario.cedula, usuario.carrera, usuario.semestre, usuario.cargo, usuario.celular, usuario.correo, usuario.id_rol))
             conn.commit()
             conn.close()
             return {"resultado": "Usuario creado"}
@@ -41,8 +41,7 @@ class UsuarioController:
                     'cargo':data[5],
                     'celular':data[6],
                     'correo':data[7],
-                    'id_rol':data[8],
-                    'rol':data[9]
+                    'id_rol':data[8]
                     
             }
             payload.append(content)
@@ -82,8 +81,7 @@ class UsuarioController:
                     'cargo':data[5],
                     'celular':data[6],
                     'correo':data[7],
-                    'id_rol':data[8],
-                    'rol':data[9]
+                    'id_rol':data[8]
 
                 }
                 payload.append(content)
@@ -107,10 +105,10 @@ class UsuarioController:
             cursor.execute("""
                 UPDATE usuario
                 SET nombre = %s, cedula = %s, carrera = %s, semestre = %s, cargo = %s,
-                    celular = %s, correo = %s, id_rol = %s, rol = %s
+                    celular = %s, correo = %s, id_rol = %s
                 WHERE id = %s
             """, (usuario.nombre, usuario.cedula, usuario.carrera, usuario.semestre,
-                  usuario.cargo, usuario.celular, usuario.correo, usuario.id_rol, usuario.rol, usuario_id))
+                  usuario.cargo, usuario.celular, usuario.correo, usuario.id_rol, usuario_id))
             conn.commit()
             if cursor.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Usuario no encontrado")

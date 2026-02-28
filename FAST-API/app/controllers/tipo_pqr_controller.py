@@ -9,7 +9,7 @@ class Tipo_pqrController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO tipo_pqr (nombre,pqrs) \ VALUES (%s, %s)", (tipo_pqr.nombre, tipo_pqr.pqrs))
+            cursor.execute("INSERT INTO tipo_pqr (nombre) \ VALUES (%s)", (tipo_pqr.nombre))
             conn.commit()
             conn.close()
             return {"resultado": "Tipo_pqr creado"}
@@ -33,8 +33,7 @@ class Tipo_pqrController:
             
             content={
                     'id_tipo':int(result[0]),
-                    'nombre':result[1],
-                    'pqrs':result[2]
+                    'nombre':result[1]
                     
             }
             payload.append(content)
@@ -67,7 +66,7 @@ class Tipo_pqrController:
             for data in result:
                 content={
                     'id_tipo':data[0],
-                    'nombre':data[1],
+                    'nombre':data[1]
                    
                     
                 }
@@ -91,9 +90,9 @@ class Tipo_pqrController:
             cursor = conn.cursor()
             cursor.execute("""
                 UPDATE tipo_pqr
-                SET nombre = %s, pqrs = %s
+                SET nombre = %s
                 WHERE id = %s
-            """, (tipo_pqr.nombre, tipo_pqr.pqrs, tipo_pqr_id))
+            """, (tipo_pqr.nombre, tipo_pqr_id))
             conn.commit()
             if cursor.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Tipo_pqr no encontrado")

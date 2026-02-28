@@ -9,8 +9,8 @@ class RolController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO rol (nombre_rol,usuarios) \
-            VALUES (%s, %s)", (rol.nombre_rol, rol.usuarios))
+            cursor.execute("INSERT INTO rol (nombre) \
+            VALUES (%s)", (rol.nombre,))
             conn.commit()
             conn.close()
             return {"resultado": "Rol creado"}
@@ -34,8 +34,7 @@ class RolController:
             
             content={
                     'id_rol':int(result[0]),
-                    'nombre_rol':result[1],
-                    'usuarios':result[2]
+                    'nombre':result[1]
                     
             }
             payload.append(content)
@@ -68,8 +67,7 @@ class RolController:
             for data in result:
                 content={
                     'id_rol':data[0],
-                    'nombre_rol':data[1],
-                    'usuarios':data[2]
+                    'nombre':data[1]
                     
                 }
                 payload.append(content)
@@ -92,9 +90,9 @@ class RolController:
             cursor = conn.cursor()
             cursor.execute("""
                 UPDATE rol
-                SET nombre_rol = %s, usuarios = %s
+                SET nombre = %s
                 WHERE id = %s
-            """, (rol.nombre_rol, rol.usuarios, rol_id))
+            """, (rol.nombre, rol_id))
             conn.commit()
             if cursor.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Rol no encontrado")

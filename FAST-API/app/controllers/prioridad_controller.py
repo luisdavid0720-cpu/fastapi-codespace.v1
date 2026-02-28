@@ -9,8 +9,8 @@ class PrioridadController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO prioridad (nombre,incidencias) \
-            VALUES (%s, %s)", (prioridad.nombre, prioridad.incidencias))
+            cursor.execute("INSERT INTO prioridad (nombre) \
+            VALUES (%s)", (prioridad.nombre))
             conn.commit()
             conn.close()
             return {"resultado": "Prioridad creado"}
@@ -34,8 +34,7 @@ class PrioridadController:
             
             content={
                     'id_prioridad':int(result[0]),
-                    'nombre':result[1],
-                    'incidencias':result[2]
+                    'nombre':result[1]
                    
             }
             payload.append(content)
@@ -68,8 +67,7 @@ class PrioridadController:
             for data in result:
                 content={
                     'id_prioridad':data[0],
-                    'nombre':data[1],
-                    'incidencias':data[2]
+                    'nombre':data[1]
                     
                 }
                 payload.append(content)
@@ -92,9 +90,9 @@ class PrioridadController:
             cursor = conn.cursor()
             cursor.execute("""
                 UPDATE prioridad
-                SET nombre = %s, pqrs = %s
+                SET nombre = %s
                 WHERE id = %s
-            """, (prioridad.nombre, prioridad.pqrs, prioridad_id))
+            """, (prioridad.nombre, prioridad_id))
             conn.commit()
             if cursor.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Prioridad no encontrada")
