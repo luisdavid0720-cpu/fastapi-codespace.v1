@@ -93,7 +93,7 @@ class RolController:
                 UPDATE rol
                 SET nombre = %s
                 WHERE id = %s
-            """, (rol.nombre, rol_id))
+            """, (rol.nombre_rol,rol_id,))
             conn.commit()
             if cursor.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Rol no encontrado")
