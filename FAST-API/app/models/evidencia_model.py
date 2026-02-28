@@ -5,4 +5,3 @@ class Evidencia(BaseModel):
     nombre_archivo: str
     url:str
     id_pqr:int
-    pqrs:str

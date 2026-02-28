@@ -68,7 +68,7 @@ class DepartamentoController:
                 content={
                     'id_departamento':data[0],
                     'nombre':data[1],
-                    'pqrs':data[2]
+                   
                     
                 }
                 payload.append(content)

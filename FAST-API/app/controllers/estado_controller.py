@@ -35,8 +35,7 @@ class EstadoController:
             content={
                     'id_estado':data[0],
                     'nombre':data[1],
-                    'historial_estados':data[2],
-                    'incidencias':data[3]
+                   
             }
             payload.append(content)
             
@@ -69,8 +68,7 @@ class EstadoController:
                 content={
                     'id_estado':data[0],
                     'nombre':data[1],
-                    'historial_estados':data[2],
-                    'incidencias':data[3]
+                    
                    
                 }
                 payload.append(content)

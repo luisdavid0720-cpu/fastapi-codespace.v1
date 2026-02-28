@@ -35,9 +35,8 @@ class EvidenciaController:
             content={
                     'id_evidencia':data[0],
                     'nombre_archivo':data[1],
-                    'tipo_archivo':data[2],
                     'url':data[3],
-                    'id_incidencia':data[4]
+                    'id_pqr':data[4]
             }
             payload.append(content)
             
@@ -70,9 +69,8 @@ class EvidenciaController:
                 content={
                     'id_evidencia':data[0],
                     'nombre_archivo':data[1],
-                    'tipo_archivo':data[2],
                     'url':data[3],
-                    'id_incidencia':data[4]
+                    'id_pqr':data[4]
                 }
                 payload.append(content)
                 content = {}

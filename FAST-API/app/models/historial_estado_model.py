@@ -6,5 +6,4 @@ class Historial_estado(BaseModel):
     fecha: date
     id_pqrs: int
     id_estado: int
-    estado: str
-    pqrs: str
+   

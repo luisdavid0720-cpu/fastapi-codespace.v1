@@ -9,8 +9,8 @@ class Historial_estadoController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("""INSERT INTO historial_estado (fecha ,id_incidencia,id_estado,estado) \ 
-            VALUES (%s, %s, %s, %s)""", (historial_estado.fecha, historial_estado.id_incidencia, historial_estado.id_estado, historial_estado.estado))
+            cursor.execute("""INSERT INTO historial_estado (fecha ,id_incidencia,id_estado,) \ 
+            VALUES (%s, %s, %s, %s)""", (historial_estado.fecha, historial_estado.id_pqr, historial_estado.id_estado))
             conn.commit()
             conn.close()
             return {"resultado": "Historial_estado creado"}
@@ -70,9 +70,9 @@ class Historial_estadoController:
                 content={
                     'id_historial':data[0],
                     'fecha':data[1],
-                    'id_incidencia':data[2],
-                    'id_estado':data[3],
-                    'estado':data[4]
+                    'id_pqr':data[2],
+                    'id_estado':data[3]
+                   
                 }
                 payload.append(content)
                 content = {}

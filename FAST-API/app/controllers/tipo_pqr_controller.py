@@ -68,7 +68,7 @@ class Tipo_pqrController:
                 content={
                     'id_tipo':data[0],
                     'nombre':data[1],
-                    'pqrs':data[2]
+                   
                     
                 }
                 payload.append(content)

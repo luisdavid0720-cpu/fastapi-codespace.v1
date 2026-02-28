@@ -74,6 +74,7 @@ class RespuestaController:
                     'fecha':data[2],
                     'id_incidencias':data[3],
                     'id_usuario':data[4]
+                    
                 }
                 payload.append(content)
                 content = {}

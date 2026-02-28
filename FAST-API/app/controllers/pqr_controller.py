@@ -89,14 +89,7 @@ class PqrController:
                     'id_estado':data[5],
                     'id_departamento':data[6],
                     'id_prioridad':data[7],
-                    'evidencias':data[8],
-                    'historial_estado':data[9],
-                    'departamento':data[10],
-                    'estado':data[11],
-                    'prioridad':data[12],
-                    'tipo_pqr':data[13],
-                    'usuario':data[14],
-                    'respuesta':data[15]
+                    
                 }
                 payload.append(content)
                 content = {}
