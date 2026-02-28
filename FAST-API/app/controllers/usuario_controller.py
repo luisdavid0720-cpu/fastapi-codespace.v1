@@ -32,6 +32,9 @@ class UsuarioController:
             result = cursor.fetchone()
             payload = []
             content = {} 
+
+            if not result:
+                   raise HTTPException(status_code=404, detail="User not found")
             
             content={
                     'id_usuario':int(result[0]),
