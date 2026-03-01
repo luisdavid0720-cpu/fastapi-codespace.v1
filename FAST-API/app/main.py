@@ -6,6 +6,7 @@ from routes.respuesta_routes import router as respuesta_router
 from routes.prioridad_routes import router as prioridad_router
 from routes.historial_estado_routes import router as historial_router
 from routes.pqr_routes import router as pqr_router
+from routes.evidencia_routes import router as evidencia_router
 from routes.estado_routes import router as estado_router
 from routes.departamento_routes import router as departamento_router
 from fastapi.middleware.cors import CORSMiddleware
@@ -39,6 +40,7 @@ app.include_router(respuesta_router)
 app.include_router(prioridad_router)
 app.include_router(historial_router)
 app.include_router(pqr_router)
+app.include_router(evidencia_router)
 app.include_router(estado_router)
 app.include_router(departamento_router)
 
