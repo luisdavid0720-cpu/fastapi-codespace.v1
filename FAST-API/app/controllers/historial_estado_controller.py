@@ -24,42 +24,29 @@ class Historial_estadoController:
             conn.close()
         
 
-    def get_historial_estado(self, historial_estado_id: int):
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM historial_estado WHERE id_historial = %s", (historial_estado_id,))
-            result = cursor.fetchone()
-            payload = []
-            content = {} 
-            
-            content={
-                    'id_historial':int(result[0]),
-                    'fecha':result[1],
-                    'id_pqr':result[2],
-                    'id_estado':result[3]
-                    
+def get_historial_estado(self, historial_estado_id: int):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM historial_estado WHERE id_historial = %s", (historial_estado_id,))
+        result = cursor.fetchone()
+        if result:
+            content = {
+                'id_historial': int(result[0]),
+                'fecha': result[1],
+                'id_pqr': result[2],
+                'id_estado': result[3]
             }
-            payload.append(content)
-            
-            json_data = jsonable_encoder(content)            
-            if result:
-               return  json_data
-            else:
-                ##Esto interrumpe la ejecución y responde al cliente con un código 404
-                ## comunica al cliente de la API qué pasó (error HTTP).
-                ##código 404,comportamiento correcto según las reglas HTTP
-                raise HTTPException(status_code=404, detail="User not found")  
-                
-        except psycopg2.Error as err:
-            print(err)
-            # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
-            ##Maneja el estado de la transacción en la base de datos.Si un INSERT, UPDATE o DELETE falla dentro de una transacción, rollback() revierte esos cambios.
-            conn.rollback()
-        finally:
-            conn.close()
-       
-    def get_historial_estados(self):
+            return jsonable_encoder(content)
+        else:
+            raise HTTPException(status_code=404, detail="Historial no encontrado")
+    except psycopg2.Error as err:
+        print(err)
+        conn.rollback()
+        return {"error": str(err)}
+    finally:
+        conn.close()   
+def get_historial_estados(self):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
@@ -89,7 +76,7 @@ class Historial_estadoController:
         finally:
             conn.close()
 
-    def update_historial_estado(self, historial_estado_id: int, historial_estado: Historial_estado):
+def update_historial_estado(self, historial_estado_id: int, historial_estado: Historial_estado):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
@@ -108,7 +95,7 @@ class Historial_estadoController:
         finally:
             conn.close()
 
-    def delete_historial_estado(self, historial_estado_id: int):
+def delete_historial_estado(self, historial_estado_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
