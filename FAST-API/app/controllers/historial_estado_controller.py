@@ -10,81 +10,75 @@ class Historial_estadoController:
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("""INSERT INTO historial_estado (fecha ,id_pqr,id_estado) 
+            cursor.execute("""INSERT INTO historial_estado (fecha, id_pqr, id_estado) 
             VALUES (%s, %s, %s)""", (historial_estado.fecha, historial_estado.id_pqrs, historial_estado.id_estado))
             conn.commit()
             return {"resultado": "Historial_estado creado"}
         except psycopg2.Error as err:
             print(err)
-            # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
-            # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
             conn.rollback()
             return {"error": str(err)}
         finally:
             conn.close()
-        
 
-def get_historial_estado(self, historial_estado_id: int):
-    try:
-        conn = get_db_connection()
-        cursor = conn.cursor()
-        cursor.execute("SELECT * FROM historial_estado WHERE id_historial = %s", (historial_estado_id,))
-        result = cursor.fetchone()
-        if result:
-            content = {
-                'id_historial': int(result[0]),
-                'fecha': result[1],
-                'id_pqr': result[2],
-                'id_estado': result[3]
-            }
-            return jsonable_encoder(content)
-        else:
-            raise HTTPException(status_code=404, detail="Historial no encontrado")
-    except psycopg2.Error as err:
-        print(err)
-        conn.rollback()
-        return {"error": str(err)}
-    finally:
-        conn.close()   
-def get_historial_estados(self):
+    def get_historial_estado(self, historial_estado_id: int):
+        try:
+            conn = get_db_connection()
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM historial_estado WHERE id_historial = %s", (historial_estado_id,))
+            result = cursor.fetchone()
+            if result:
+                content = {
+                    'id_historial': int(result[0]),
+                    'fecha': result[1],
+                    'id_pqr': result[2],
+                    'id_estado': result[3]
+                }
+                return jsonable_encoder(content)
+            else:
+                raise HTTPException(status_code=404, detail="Historial no encontrado")
+        except psycopg2.Error as err:
+            print(err)
+            conn.rollback()
+            return {"error": str(err)}
+        finally:
+            conn.close()
+
+    def get_historial_estados(self):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM historial_estado")
             result = cursor.fetchall()
-            payload = []
-            content = {} 
-            for data in result:
-                content={
-                    'id_historial':data[0],
-                    'fecha':data[1],
-                    'id_pqr':data[2],
-                    'id_estado':data[3]
-                   
-                }
-                payload.append(content)
-                content = {}
-            json_data = jsonable_encoder(payload)        
             if result:
-               return {"resultado": json_data}
+                payload = []
+                for data in result:
+                    content = {
+                        'id_historial': data[0],
+                        'fecha': data[1],
+                        'id_pqr': data[2],
+                        'id_estado': data[3]
+                    }
+                    payload.append(content)
+                return {"resultado": jsonable_encoder(payload)}
             else:
-                raise HTTPException(status_code=404, detail="User not found")  
-                
+                raise HTTPException(status_code=404, detail="No hay registros")
         except psycopg2.Error as err:
             print(err)
             conn.rollback()
+            return {"error": str(err)}
         finally:
             conn.close()
 
-def update_historial_estado(self, historial_estado_id: int, historial_estado: Historial_estado):
+    def update_historial_estado(self, historial_estado_id: int, historial_estado: Historial_estado):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("""
                 UPDATE historial_estado
-                SET fecha = %s, id_pqrs = %s, id_estado = %s, estado = %s, pqrs = %s
-                WHERE id = %s
-            """, (historial_estado.fecha, historial_estado.id_pqrs, historial_estado.id_estado, historial_estado.estado, historial_estado.pqrs, historial_estado_id))
+                SET fecha = %s, id_pqr = %s, id_estado = %s
+                WHERE id_historial = %s
+            """, (historial_estado.fecha, historial_estado.id_pqrs, historial_estado.id_estado, historial_estado_id))
             conn.commit()
             if cursor.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Historial no encontrado")
@@ -92,14 +86,15 @@ def update_historial_estado(self, historial_estado_id: int, historial_estado: Hi
         except psycopg2.Error as err:
             print(err)
             conn.rollback()
+            return {"error": str(err)}
         finally:
             conn.close()
 
-def delete_historial_estado(self, historial_estado_id: int):
+    def delete_historial_estado(self, historial_estado_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM historial_estado WHERE id = %s", (historial_estado_id,))
+            cursor.execute("DELETE FROM historial_estado WHERE id_historial = %s", (historial_estado_id,))
             conn.commit()
             if cursor.rowcount == 0:
                 raise HTTPException(status_code=404, detail="Historial no encontrado")
@@ -107,10 +102,6 @@ def delete_historial_estado(self, historial_estado_id: int):
         except psycopg2.Error as err:
             print(err)
             conn.rollback()
+            return {"error": str(err)}
         finally:
             conn.close()
-    
-    
-       
-
-##user_controller = UserController()
