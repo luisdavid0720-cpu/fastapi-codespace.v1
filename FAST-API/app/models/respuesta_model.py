@@ -1,9 +1,9 @@
 from pydantic import BaseModel
-from datetime import date
+from datetime import datetime
 
 class Respuesta(BaseModel):
     id_respuesta: int=None
     mensaje: str
-    fecha:date
+    fecha: datetime
     id_pqr: int
     id_usuario:int
