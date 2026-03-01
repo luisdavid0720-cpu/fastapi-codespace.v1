@@ -11,7 +11,7 @@ class PrioridadController:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("INSERT INTO prioridad (nombre) \
-            VALUES (%s)", (prioridad.nombre))
+            VALUES (%s)", (prioridad.nombre,))
             conn.commit()
             conn.close()
             return {"resultado": "Prioridad creado"}
