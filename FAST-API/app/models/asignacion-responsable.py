@@ -5,5 +5,5 @@ class asignacion_responsable(BaseModel):
     id_asignacion: int =None
     id_pqr: int
     id_usuario: int
-    fecha: date
+    fecha_asignacion: date
    
