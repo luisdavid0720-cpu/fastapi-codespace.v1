@@ -1,20 +1,20 @@
 import psycopg2
 from fastapi import HTTPException
 from config.db_config import get_db_connection
-from models.asignacion_responsable import Asignacion_responsable
+from models.asignacion_responsable_model import Asignacion_responsable
 from fastapi.encoders import jsonable_encoder
 
 class Asignacion_responsableController:
         
-    def create_departamento(self, departamento: Departamento):   
+    def create_asignacion_responsable(self, asignacion_responsable: Asignacion_responsable):   
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("""INSERT INTO departamento (nombre) 
-            VALUES (%s)""", (departamento.nombre,))
+            cursor.execute("""INSERT INTO asignacion_responsable (id_pqr, id_usuario, fecha_asignacion) 
+            VALUES (%s, %s, %s)""", (asignacion_responsable.id_pqr, asignacion_responsable.id_usuario, asignacion_responsable.fecha_asignacion))
             conn.commit()
             conn.close()
-            return {"resultado": "Departamento creado"}
+            return {"resultado": "Asignacion_responsable creado"}
         except psycopg2.Error as err:
             print(err)
             # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
@@ -24,18 +24,22 @@ class Asignacion_responsableController:
             conn.close()
         
 
-    def get_departamento(self, departamento_id: int):
+    def get_asignacion_responsable(self, asignacion_responsable_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM departamento WHERE id_departamento = %s", (departamento_id,))
+            cursor.execute("SELECT * FROM asignacion_responsable WHERE id_asignacion = %s", (asignacion_responsable_id,))
             result = cursor.fetchone()
             payload = []
             content = {} 
             
             content={
-                    'id_departamento':result[0],
-                    'nombre':result[1]
+                    'id_asignacion':result[0],
+                    'id_pqr':result[1],
+                    'id_usuario':result[2],
+                    'fecha_asignacion':result[3]
+
+
             }
             payload.append(content)
             
@@ -56,18 +60,20 @@ class Asignacion_responsableController:
         finally:
             conn.close()
        
-    def get_departamentos(self):
+    def get_asignacion_responsables(self):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("SELECT * FROM departamento")
+            cursor.execute("SELECT * FROM asignacion_responsable")
             result = cursor.fetchall()
             payload = []
             content = {} 
             for data in result:
                 content={
-                    'id_departamento':data[0],
-                    'nombre':data[1]
+                    'id_asignacion':result[0],
+                    'id_pqr':result[1],
+                    'id_usuario':result[2],
+                    'fecha_asignacion':result[3]
                    
                     
                 }
@@ -85,34 +91,34 @@ class Asignacion_responsableController:
         finally:
             conn.close()
 
-    def update_departamento(self, departamento_id: int, departamento: Departamento):
+    def update_asignacion_responsable(self, asignacion_responsable_id: int, asignacion_responsable: Asignacion_responsable):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
             cursor.execute("""
-                UPDATE departamento
-                SET nombre = %s
-                WHERE id_departamento = %s
-            """, (departamento.nombre, departamento_id))
+                UPDATE asignacion_responsable
+                SET id_pqr = %s, id_usuario = %s, fecha_asignacion = %s 
+                WHERE id_asignacion = %s
+            """, (asignacion_responsable.id_pqr, asignacion_responsable.id_usuario, asignacion_responsable.fecha_asignacion, asignacion_responsable_id))
             conn.commit()
             if cursor.rowcount == 0:
-                raise HTTPException(status_code=404, detail="Departamento no encontrado")
-            return {"resultado": "Departamento actualizado"}
+                raise HTTPException(status_code=404, detail="Asignacion_responsable no encontrado")
+            return {"resultado": "Asignacion_responsable actualizado"}
         except psycopg2.Error as err:
             print(err)
             conn.rollback()
         finally:
             conn.close()
 
-    def delete_departamento(self, departamento_id: int):
+    def delete_asignacion_responsable(self, asignacion_responsable_id: int):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("DELETE FROM departamento WHERE id_departamento = %s", (departamento_id,))
+            cursor.execute("DELETE FROM asignacion_responsable WHERE id_asignacion = %s", (asignacion_responsable_id,))
             conn.commit()
             if cursor.rowcount == 0:
-                raise HTTPException(status_code=404, detail="Departamento no encontrado")
-            return {"resultado": "Departamento eliminado"}
+                raise HTTPException(status_code=404, detail="Asignacion_responsable no encontrado")
+            return {"resultado": "Asignacion_responsable eliminado"}
         except psycopg2.Error as err:
             print(err)
             conn.rollback()
