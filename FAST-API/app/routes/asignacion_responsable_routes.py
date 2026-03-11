@@ -8,12 +8,12 @@ nuevo_asignacion_responsable = Asignacion_responsableController()
 
 
 @router.post("/create_asignacion_responsable")
-async def create_asignacion_responsable(asignacion_responsable: asignacion_responsable):
+async def create_asignacion_responsable(asignacion_responsable: Asignacion_responsable):
     rpta = nuevo_asignacion_responsable.create_asignacion_responsable(asignacion_responsable)
     return rpta
 
 
-@router.get("/get_asignacion_responsable/{asignacion_responsable_id}",response_model=asignacion_responsable)
+@router.get("/get_asignacion_responsable/{asignacion_responsable_id}",response_model=Asignacion_responsable)
 async def get_asignacion_repsonsable(asignacion_responsable_id: int):
     rpta = nuevo_asignacion_responsable.get_asignacion_responsable(asignacion_responsable_id)
     return rpta
@@ -24,7 +24,7 @@ async def get_asignacion_responsables():
     return rpta
 
 @router.put("/update_asignacion_responsable/{asignacion_responsable_id}")
-async def update_asignacion_responsable(asignacion_responsable_id: int, asignacion_responsable: asignacion_responsable):
+async def update_asignacion_responsable(asignacion_responsable_id: int, asignacion_responsable: Asignacion_responsable):
     return nuevo_asignacion_responsable.update_asignacion_responsable(asignacion_responsable_id, asignacion_responsable)
 
 @router.delete("/delete_asignacion_responsable/{asignacion_responsable_id}")
