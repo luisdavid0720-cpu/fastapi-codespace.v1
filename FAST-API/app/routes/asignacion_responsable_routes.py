@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from controllers.asignacion_responsable_controller import *
-from models.asignacion_responsable_model import asignacion_responsable
+from models.asignacion_responsable_model import Asignacion_responsable
 
 router = APIRouter()
 
