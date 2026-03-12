@@ -1,12 +1,14 @@
 <script>
-  let correo = "";
-  let password = "";
-  let mensaje = "";
+  // 1. En Svelte 5, usamos $state para que las variables sean reactivas
+  let correo = $state("");
+  let password = $state("");
+  let mensaje = $state("");
 
   async function iniciarSesion() {
     mensaje = "Cargando...";
     
     try {
+      // Recuerda cambiar localhost por la URL de Codespaces que vimos antes
       const respuesta = await fetch("http://localhost:8000/login", {
         method: "POST",
         headers: {
@@ -33,10 +35,11 @@
 
 <main>
   <h1>Iniciar Sesión</h1>
+  
   <input type="email" bind:value={correo} placeholder="Correo">
   <input type="password" bind:value={password} placeholder="Contraseña">
   
-  <button on:click={iniciarSesion}>Entrar</button>
+  <button onclick={iniciarSesion}>Entrar</button>
   
   {#if mensaje}
     <p>{mensaje}</p>
