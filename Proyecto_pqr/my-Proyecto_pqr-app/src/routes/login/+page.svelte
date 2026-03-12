@@ -9,7 +9,7 @@
     
     try {
       // Recuerda cambiar localhost por la URL de Codespaces que vimos antes
-      const respuesta = await fetch("http://localhost:8000/login", {
+      const respuesta = await fetch("https://zany-dollop-97r6rvrq7qq62jx5-8000.app.github.dev/login", {
         method: "POST",
         headers: {
           "Content-Type": "application/json"
