@@ -133,6 +133,8 @@ class RespuestaController:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM respuesta WHERE id_pqr = %s ORDER BY fecha ASC", (pqr_id,))
             result = cursor.fetchall()
+            if not result:
+                raise HTTPException(status_code=404, detail="No hay respuestas para esta PQR")
             payload = []
             for data in result:
                 content = {
@@ -140,10 +142,9 @@ class RespuestaController:
                     'fecha': data[2], 'id_pqr': data[3], 'id_usuario': data[4]
                 }
                 payload.append(content)
-            if result:
-                return {"resultado": jsonable_encoder(payload)}
-            else:
-                raise HTTPException(status_code=404, detail="No hay respuestas para esta PQR")
+            return {"resultado": jsonable_encoder(payload)}
+        except HTTPException:
+            raise
         except psycopg2.Error as err:
             print(err)
             conn.rollback()
@@ -157,6 +158,8 @@ class RespuestaController:
             cursor = conn.cursor()
             cursor.execute("SELECT * FROM respuesta WHERE id_usuario = %s ORDER BY fecha DESC", (usuario_id,))
             result = cursor.fetchall()
+            if not result:
+                raise HTTPException(status_code=404, detail="No hay respuestas de este usuario")
             payload = []
             for data in result:
                 content = {
@@ -164,10 +167,9 @@ class RespuestaController:
                     'fecha': data[2], 'id_pqr': data[3], 'id_usuario': data[4]
                 }
                 payload.append(content)
-            if result:
-                return {"resultado": jsonable_encoder(payload)}
-            else:
-                raise HTTPException(status_code=404, detail="No hay respuestas de este usuario")
+            return {"resultado": jsonable_encoder(payload)}
+        except HTTPException:
+            raise
         except psycopg2.Error as err:
             print(err)
             conn.rollback()
