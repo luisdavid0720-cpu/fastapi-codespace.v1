@@ -10,8 +10,8 @@ from routes.evidencia_routes import router as evidencia_router
 from routes.estado_routes import router as estado_router
 from routes.departamento_routes import router as departamento_router
 from routes.asignacion_responsable_routes import router as asignacion_responsable_router
-from routes.login_routes import router as login_router
-from fastapi.middleware.cors import CORSMiddleware
+
+
 
 app = FastAPI()
 
@@ -40,7 +40,7 @@ app.include_router(evidencia_router)
 app.include_router(estado_router)
 app.include_router(departamento_router)
 app.include_router(asignacion_responsable_router)
-app.include_router(login_router)
+
 
 if __name__ == "__main__":
     import uvicorn
