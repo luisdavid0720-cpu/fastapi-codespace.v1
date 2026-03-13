@@ -1,4 +1,5 @@
 <script>
+  let { children } = $props()
   import { currentUser } from '../stores/auth.js';
   import Login from '../lib/componentes/Login.svelte';
   import Dashboard from '../lib/componentes/Dashboard.svelte';
@@ -12,7 +13,7 @@
   <Login />
 {/if}
 
-<slot />
+{@render children()}
 
 <style>
   :global(*) {
