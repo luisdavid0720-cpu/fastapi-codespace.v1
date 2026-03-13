@@ -72,3 +72,12 @@ git commit -m "nuevo cambio"
 git push
 
 hola hola
+
+ENTRAR A LA CARPETA DEL SVELTE
+cd Proyecto_pqr/my-Proyecto_pqr-app
+
+DESCARGAR EL SVELTE
+npm install
+
+CORRER EL SVELTE 
+npm run dev
