@@ -10,7 +10,7 @@ from routes.evidencia_routes import router as evidencia_router
 from routes.estado_routes import router as estado_router
 from routes.departamento_routes import router as departamento_router
 from routes.asignacion_responsable_routes import router as asignacion_responsable_router
-
+from fastapi.middleware.cors import CORSMiddleware
 
 
 app = FastAPI()
