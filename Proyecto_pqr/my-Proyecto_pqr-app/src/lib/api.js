@@ -156,8 +156,10 @@ export async function getPrioridades() {
 }
 
 export async function getTiposPqr() {
-  const res = await fetch(`${API}/get_tipo_pqrs/`)
-  return res.json()
+    const res = await fetch(`${API}/get_tipo_pqrs/`);
+    const data = await res.json();
+    return data.resultado; // <--- AGREGA EL .resultado AQUÍ
+
 }
 
 export async function getRoles() {
