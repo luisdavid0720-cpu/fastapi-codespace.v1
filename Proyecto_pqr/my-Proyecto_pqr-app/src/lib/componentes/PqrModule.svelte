@@ -41,10 +41,10 @@
         api.getPqrs(), api.getTiposPqr(), api.getEstados(), api.getDepartamentos(), api.getPrioridades(),
       ])
       pqrs = p.value?.resultado || []
-      tipos = t.value || []
-      estados = e.value || []
-      departamentos = d.value || []
-      prioridades = pr.value || []
+     tipos = t.value || []
+     estados = e.value || []
+     departamentos = d.value || []
+     prioridades = pr.value || []
     } catch(e) {}
     loading = false
   }
@@ -198,7 +198,7 @@ function getLabelPrio(id) { return prioridades.find(p => p.id_prioridad == id)?.
           <label>Tipo de PQR <span class="req">*</span></label>
           <select bind:value={form.id_tipo}>
             <option value="">Selecciona un tipo</option>
-            {#each tipos as t}<option value={t.id_tipo}>{t.nombre_tipo}</option>{/each}
+           {#each tipos as t}<option value={t.id_tipo}>{t.nombre}</option>{/each}
             {#if tipos.length === 0}
               <option value="1">Petición</option>
               <option value="2">Queja</option>
@@ -210,7 +210,7 @@ function getLabelPrio(id) { return prioridades.find(p => p.id_prioridad == id)?.
           <label>Departamento <span class="req">*</span></label>
           <select bind:value={form.id_departamento}>
             <option value="">Selecciona departamento</option>
-            {#each departamentos as d}<option value={d.id_departamento}>{d.nombre_departamento}</option>{/each}
+            {#each departamentos as d}<option value={d.id_departamento}>{d.nombre}</option>{/each}
             {#if departamentos.length === 0}
               <option value="1">Sistemas</option>
               <option value="2">Administración</option>
@@ -222,7 +222,7 @@ function getLabelPrio(id) { return prioridades.find(p => p.id_prioridad == id)?.
           <label>Prioridad <span class="req">*</span></label>
           <select bind:value={form.id_prioridad}>
             <option value="">Selecciona prioridad</option>
-            {#each prioridades as p}<option value={p.id_prioridad}>{p.nombre_prioridad}</option>{/each}
+            {#each prioridades as p}<option value={p.id_prioridad}>{p.nombre}</option>{/each}
             {#if prioridades.length === 0}
               <option value="1">Baja</option>
               <option value="2">Media</option>
@@ -235,7 +235,7 @@ function getLabelPrio(id) { return prioridades.find(p => p.id_prioridad == id)?.
         <div class="field">
           <label>Estado</label>
           <select bind:value={form.id_estado}>
-            {#each estados as e}<option value={e.id_estado}>{e.nombre_estado}</option>{/each}
+            {#each estados as e}<option value={e.id_estado}>{e.nombre}</option>{/each}
             {#if estados.length === 0}
               <option value="1">Pendiente</option>
               <option value="2">En proceso</option>
