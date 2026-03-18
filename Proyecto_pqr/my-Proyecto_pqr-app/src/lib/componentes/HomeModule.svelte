@@ -36,9 +36,12 @@
 <div class="home">
   <header class="page-header">
     <div>
-      <p class="greeting">{greeting},</p>
-      <h1>{$currentUser?.nombre || 'Usuario'}</h1>
-    </div>
+  <p class="greeting">{greeting},</p>
+
+  <h1 style="font-weight: 700;">
+    {$currentUser?.nombre || 'Usuario'}
+  </h1>
+</div>
     <div class="date-badge">
       {new Date().toLocaleDateString('es-CO', { weekday: 'long', day: 'numeric', month: 'long' })}
     </div>
@@ -112,7 +115,7 @@
 <style>
   .home { padding: 40px 48px; max-width: 1100px; }
   .page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 40px; flex-wrap: wrap; gap: 16px; }
-  .greeting { font-size: 14px; color: var(--text-muted); margin-bottom: 4px; }
+  .greeting { font-size: 14px; color: #9ca3af; letter-spacing: 0.3px; }
   h1 { font-family: var(--font-display); font-size: 36px; font-weight: 800; letter-spacing: -0.03em; }
   .date-badge { background: var(--surface); border: 1px solid var(--border); border-radius: 100px; padding: 8px 16px; font-size: 13px; color: var(--text-muted); text-transform: capitalize; align-self: center; }
   .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 40px; }
@@ -120,7 +123,7 @@
   .stat-card:hover { transform: translateY(-2px); }
   .stat-card.accent { background: rgba(45,45,58,0.04); border-color: rgba(232,255,71,0.25); }
   .stat-icon { font-size: 14px; margin-bottom: 12px; color: var(--accent); text-transform: uppercase; letter-spacing: 0.05em; }
-  .stat-num { font-family: var(--font-display); font-size: 40px; font-weight: 800; letter-spacing: -0.04em; line-height: 1; margin-bottom: 6px; }
+  .stat-num { font-family: var(--font-display); font-size: 42px; font-weight: 800; letter-spacing: -1px; color: #111; }
   .stat-label { font-size: 12px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.05em; }
   .section { margin-bottom: 40px; }
   .section-title { font-family: var(--font-display); font-size: 18px; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 16px; color: var(--text-muted); }

@@ -4,13 +4,15 @@
   import UsuariosModule from './UsuariosModule.svelte'
   import HomeModule from './HomeModule.svelte'
 
-  let { page = $bindable('home') } = $props()
+    let { page = $bindable('home') } = $props()
 
-  let isAdmin = $derived($currentUser?.id_rol === 1)
+    let loading = $state(false);
+
+    let isAdmin = $derived($currentUser?.id_rol === 1)
 
   const navItems = [
     { id: 'home',     label: 'Inicio',   icon: '⊞', always: true },
-    { id: 'pqrs',     label: 'PQRs',     icon: '◈', always: true },
+    { id: 'pqrs',     label: 'PQRS',     icon: '◈', always: true },
     { id: 'usuarios', label: 'Usuarios', icon: '◉', admin: true  },
   ]
 
@@ -30,16 +32,23 @@
             <path d="M8 10h16M8 16h10M8 22h13" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round"/>
           </svg>
         </div>
-        <span class="brand-text">PQR Sistema</span>
+        <span class="brand-text">Sistema PQRS</span>
       </div>
 
       <nav>
-        {#each navItems as item}
-          {#if item.always || (item.admin && isAdmin)}
-            <button
-              class="nav-item {page === item.id ? 'active' : ''}"
-              onclick={() => page = item.id}
-            >
+       {#each navItems as item}
+  {#if item.always || (item.admin && isAdmin)}
+    <button
+      class="nav-item {page === item.id ? 'active' : ''}"
+      onclick={() => {
+        loading = true;
+
+        setTimeout(() => {
+          page = item.id;
+          loading = false;
+        }, 300);
+      }}
+    > 
               <span class="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
             </button>
@@ -67,16 +76,22 @@
 
   <!-- MAIN CONTENT -->
   <main class="main">
-    {#if page === 'home'}
-      <HomeModule onnavigate={(p) => page = p} />
-    {:else if page === 'pqrs'}
-      <PqrModule />
-    {:else if page === 'usuarios' && isAdmin}
-      <UsuariosModule />
-    {:else}
-      <div class="no-access">No tienes acceso a esta sección.</div>
-    {/if}
-  </main>
+  {#if loading}
+    <p style="padding:20px;">⏳ Cargando módulo...</p>
+
+  {:else if page === 'home'}
+    <HomeModule onnavigate={(p) => page = p} />
+
+  {:else if page === 'pqrs'}
+    <PqrModule />
+
+  {:else if page === 'usuarios' && isAdmin}
+    <UsuariosModule />
+
+  {:else}
+    <div class="no-access">No tienes acceso a esta sección.</div>
+  {/if}
+</main>
 </div>
 
 <style>
@@ -88,7 +103,8 @@
   .sidebar {
     width: 240px;
     min-width: 240px;
-    background: var(--surface);
+    background: linear-gradient(180deg, #000, #111);
+    color: #fff;
     border-right: 1px solid var(--border);
     display: flex;
     flex-direction: column;
@@ -129,10 +145,10 @@
     border-radius: var(--radius-sm);
     border: none;
     background: transparent;
-    color: var(--text-muted);
+    color: #ccc;
     font-size: 14px;
     font-weight: 500;
-    transition: background 0.15s, color 0.15s;
+    transition: all 0.2s ease;
     text-align: left;
     width: 100%;
   }
@@ -140,17 +156,20 @@
   .nav-item:hover {
     background: var(--surface2);
     color: var(--text);
+    transform: translateX(3px);
   }
 
   .nav-item.active {
-    background: rgba(45,45,58,0.08);
-    color: var(--accent);
-    border: 1px solid rgba(45,45,58,0.15);
+    background: rgba(255,255,255,0.15);
+    color: #fff;
+    border: 1px solid rgba(255,255,255,0.2);
   }
 
   .nav-icon { font-size: 16px; }
 
   .sidebar-bottom {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 16px;
     display: flex;
     flex-direction: column;
     gap: 12px;
@@ -161,17 +180,17 @@
     align-items: center;
     gap: 10px;
     padding: 12px;
-    background: var(--surface2);
+    background: rgba(255,255,255,0.05);
     border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,255,255,0.01);
   }
 
   .avatar {
     width: 36px;
     height: 36px;
     border-radius: 50%;
-    background: var(--accent);
-    color: #ffffff;
+    background: #2563eb;
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -184,6 +203,7 @@
   .user-name {
     font-size: 13px;
     font-weight: 600;
+    color: #fff;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -191,7 +211,7 @@
 
   .user-role {
     font-size: 11px;
-    color: var(--text-muted);
+    color: #aaa;
   }
 
   .btn-logout {
@@ -200,24 +220,25 @@
     gap: 8px;
     padding: 10px 12px;
     border-radius: var(--radius-sm);
-    border: 1px solid var(--border);
-    background: transparent;
-    color: var(--text-muted);
+    border: 1px solid rgba(255,255,255,0.11);
+    background: rgba(255,255,255,0.05);
+    color: #ddd;
     font-size: 13px;
     transition: all 0.15s;
     width: 100%;
   }
 
+  
   .btn-logout:hover {
-    background: rgba(255,71,71,0.1);
-    border-color: rgba(255,71,71,0.3);
-    color: var(--danger);
+    background: rgba(255,71,71,0.2);
+    border-color: rgba(255,71,71,0.5);
+    color: #ff6b6b;
   }
 
   .main {
     flex: 1;
     overflow-y: auto;
-    background: var(--bg);
+    background: linear-gradient(180deg, #f4f6f9, #eef1f5);
   }
 
   .no-access {
