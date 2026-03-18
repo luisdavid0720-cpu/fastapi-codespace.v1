@@ -41,10 +41,10 @@
         api.getPqrs(), api.getTiposPqr(), api.getEstados(), api.getDepartamentos(), api.getPrioridades(),
       ])
       pqrs = p.value?.resultado || []
-      tipos = t.value?.resultado || []
-      estados = e.value?.resultado || []
-      departamentos = d.value?.resultado || []
-      prioridades = pr.value?.resultado || []
+      tipos = t.value || []
+      estados = e.value || []
+      departamentos = d.value || []
+      prioridades = pr.value || []
     } catch(e) {}
     loading = false
   }
@@ -96,9 +96,9 @@
   }
 
   function getLabelEstado(id) { return ['','Pendiente','En proceso','Resuelto','Cerrado'][id] || id }
-  function getLabelTipo(id) { return tipos.find(t => t.id_tipo == id)?.nombre_tipo || id }
-  function getLabelDep(id) { return departamentos.find(d => d.id_departamento == id)?.nombre_departamento || id }
-  function getLabelPrio(id) { return prioridades.find(p => p.id_prioridad == id)?.nombre_prioridad || id }
+ function getLabelTipo(id) { return tipos.find(t => t.id_tipo == id)?.nombre || id }
+function getLabelDep(id) { return departamentos.find(d => d.id_departamento == id)?.nombre || id }
+function getLabelPrio(id) { return prioridades.find(p => p.id_prioridad == id)?.nombre || id }
 </script>
 
 <div class="module">
