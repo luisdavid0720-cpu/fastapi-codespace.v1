@@ -20,7 +20,7 @@
           <path d="M8 10h16M8 16h10M8 22h13" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round"/>
         </svg>
       </div>
-      <span class="brand-name">Sistema PQR</span>
+      <span class="brand-name">Sistema PQRS</span>
     </div>
     <h1>Bienvenido</h1>
     <p class="subtitle">Selecciona tu tipo de acceso para continuar</p>

@@ -1,5 +1,5 @@
 // Cambia esta URL si tu API corre en otro puerto o dominio
-const API = "https://cuddly-xylophone-qg9qvxv5wr7hxwpx-8000.app.github.dev"
+const API = "https://shiny-umbrella-wrqj9qj7vxgvcgrwg-8000.app.github.dev"
 
 // ── USUARIOS ──────────────────────────────────────────────
 export async function getUsuarios() {
