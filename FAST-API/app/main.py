@@ -1,3 +1,4 @@
+import os
 from fastapi import FastAPI
 from routes.usuario_routes import router as usuario_router
 from routes.tipo_pqr_routes import router as tipo_pqr_router
@@ -15,15 +16,18 @@ from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI()
 
+FRONTEND_URL = os.getenv("FRONTEND_URL", "https://fastapi-codespace-v1.vercel.app")
+
 origins = [
     "http://localhost",
     "http://localhost:5173",
-    "https://zany-dollop-97r6rvrq7qq62jx5-5173.app.github.dev"
+    "https://zany-dollop-97r6rvrq7qq62jx5-5173.app.github.dev",
+    FRONTEND_URL
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
