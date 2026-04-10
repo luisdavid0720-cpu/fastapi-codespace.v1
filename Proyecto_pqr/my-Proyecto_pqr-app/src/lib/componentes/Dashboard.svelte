@@ -4,11 +4,9 @@
   import UsuariosModule from './UsuariosModule.svelte'
   import HomeModule from './HomeModule.svelte'
 
-    let { page = $bindable('home') } = $props()
-
-    let loading = $state(false);
-
-    let isAdmin = $derived($currentUser?.id_rol === 1)
+  let { page = $bindable('home') } = $props()
+  let loading = $state(false);
+  let isAdmin = $derived($currentUser?.id_rol === 1)
 
   const navItems = [
     { id: 'home',     label: 'Inicio',   icon: '⊞', always: true },
@@ -22,7 +20,6 @@
 </script>
 
 <div class="layout">
-  <!-- SIDEBAR -->
   <aside class="sidebar">
     <div class="sidebar-top">
       <div class="brand">
@@ -36,19 +33,18 @@
       </div>
 
       <nav>
-       {#each navItems as item}
-  {#if item.always || (item.admin && isAdmin)}
-    <button
-      class="nav-item {page === item.id ? 'active' : ''}"
-      onclick={() => {
-        loading = true;
-
-        setTimeout(() => {
-          page = item.id;
-          loading = false;
-        }, 300);
-      }}
-    > 
+        {#each navItems as item}
+          {#if item.always || (item.admin && isAdmin)}
+            <button
+              class="nav-item {page === item.id ? 'active' : ''}"
+              onclick={() => {
+                loading = true;
+                setTimeout(() => {
+                  page = item.id;
+                  loading = false;
+                }, 300);
+              }}
+            > 
               <span class="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
             </button>
@@ -74,24 +70,50 @@
     </div>
   </aside>
 
-  <!-- MAIN CONTENT -->
   <main class="main">
-  {#if loading}
-    <p style="padding:20px;">⏳ Cargando módulo...</p>
+    {#if loading}
+      <div class="loading-container">
+        <div class="spinner"></div>
+        <p>Cargando módulo...</p>
+      </div>
 
-  {:else if page === 'home'}
-    <HomeModule onnavigate={(p) => page = p} />
+    {:else if page === 'home'}
+      <HomeModule onnavigate={(p) => page = p} />
 
-  {:else if page === 'pqrs'}
-    <PqrModule />
+      <section class="powerbi-section">
+        <div class="section-header">
+          <div class="header-info">
+            <h3>Panel de Analítica Avanzada</h3>
+            <p>Visualización de datos en tiempo real desde Power BI</p>
+          </div>
+          <div class="live-status">
+            <span class="pulse-dot"></span>
+            ACTIVO
+          </div>
+        </div>
 
-  {:else if page === 'usuarios' && isAdmin}
-    <UsuariosModule />
+        <div class="iframe-container">
+          <iframe 
+            title="gestion pqrs" 
+            width="100%" 
+            height="541.25" 
+            src="https://app.powerbi.com/view?r=eyJrIjoiZmFlM2Y3YzEtMDIwNS00OGM2LTk4OGUtMzc2YjgwZWYzNmE0IiwidCI6ImFjYTUxNjMxLTAwZmUtNDkwZC05MWFiLTE2M2VmODcyNjBlZSIsImMiOjR9" 
+            frameborder="0" 
+            allowFullScreen="true">
+          </iframe>
+        </div>
+      </section>
 
-  {:else}
-    <div class="no-access">No tienes acceso a esta sección.</div>
-  {/if}
-</main>
+    {:else if page === 'pqrs'}
+      <PqrModule />
+
+    {:else if page === 'usuarios' && isAdmin}
+      <UsuariosModule />
+
+    {:else}
+      <div class="no-access">No tienes acceso a esta sección.</div>
+    {/if}
+  </main>
 </div>
 
 <style>
@@ -120,7 +142,7 @@
     align-items: center;
     gap: 10px;
     padding: 0 8px 28px;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
     margin-bottom: 20px;
   }
 
@@ -151,11 +173,12 @@
     transition: all 0.2s ease;
     text-align: left;
     width: 100%;
+    cursor: pointer;
   }
 
   .nav-item:hover {
-    background: var(--surface2);
-    color: var(--text);
+    background: rgba(255,255,255,0.05);
+    color: #fff;
     transform: translateX(3px);
   }
 
@@ -226,9 +249,9 @@
     font-size: 13px;
     transition: all 0.15s;
     width: 100%;
+    cursor: pointer;
   }
 
-  
   .btn-logout:hover {
     background: rgba(255,71,71,0.2);
     border-color: rgba(255,71,71,0.5);
@@ -241,9 +264,93 @@
     background: linear-gradient(180deg, #f4f6f9, #eef1f5);
   }
 
+  .powerbi-section {
+    margin: 24px;
+    background: white;
+    border-radius: 16px;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    overflow: hidden;
+  }
+
+  .section-header {
+    padding: 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
+  .header-info h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 700;
+    color: #111;
+  }
+
+  .header-info p {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #666;
+  }
+
+  .live-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #2563eb;
+    background: #eff6ff;
+    padding: 6px 12px;
+    border-radius: 20px;
+  }
+
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: #2563eb;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.7; }
+  }
+
+  .iframe-container {
+    width: 100%;
+    line-height: 0;
+    background: #fdfdfd;
+  }
+
+  .loading-container {
+    padding: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+    color: #666;
+  }
+
+  .spinner {
+    width: 30px;
+    height: 30px;
+    border: 3px solid #eee;
+    border-top: 3px solid #2563eb;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
   .no-access {
     padding: 40px;
-    color: var(--text-muted);
+    color: #666;
   }
 
   @media (max-width: 768px) {
@@ -257,10 +364,6 @@
       padding: 16px;
       gap: 8px;
     }
-    .sidebar-top { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; flex: 1; }
-    .brand { border-bottom: none; padding-bottom: 0; margin-bottom: 0; }
-    nav { flex-direction: row; }
-    .sidebar-bottom { flex-direction: row; align-items: center; }
-    .user-info { display: none; }
+    .powerbi-section { margin: 12px; }
   }
 </style>
