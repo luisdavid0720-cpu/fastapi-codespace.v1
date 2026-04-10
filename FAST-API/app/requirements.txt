@@ -1,0 +1,7 @@
+fastapi[standard]
+uvicorn[standard]
+psycopg2-binary
+mysql-connector-python
+pymysql
+python-dotenv
+sqlalchemy
