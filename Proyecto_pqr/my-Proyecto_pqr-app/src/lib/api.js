@@ -1,5 +1,5 @@
 // Cambia esta URL si tu API corre en otro puerto o dominio
-const API = ""
+const API = "https://fastapi-codespace-v1.onrender.com"
 
 // ── USUARIOS ──────────────────────────────────────────────
 export async function getUsuarios() {
