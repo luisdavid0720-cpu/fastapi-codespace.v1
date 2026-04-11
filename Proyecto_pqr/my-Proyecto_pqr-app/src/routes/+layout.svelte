@@ -64,7 +64,7 @@
     font-family: var(--font-body);
   }
 
-  /* 🔥 Esto hace que el footer quede abajo siempre */
+  /* 🔥 Layout para mantener footer abajo */
   .app {
     display: flex;
     flex-direction: column;
@@ -73,5 +73,7 @@
 
   .content {
     flex: 1;
+    display: flex;
+    flex-direction: column;
   }
 </style>

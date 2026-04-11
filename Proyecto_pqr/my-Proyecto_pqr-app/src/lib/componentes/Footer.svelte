@@ -12,9 +12,10 @@
   background: #0f172a;
   color: #ccc;
   text-align: center;
-  padding: 15px 10px;
+  padding: 20px 10px;
   font-size: 14px;
-  margin-top: 40px;
+  margin-top: 60px;
+  border-top: 1px solid #1e293b;
 }
 
 .sub {
