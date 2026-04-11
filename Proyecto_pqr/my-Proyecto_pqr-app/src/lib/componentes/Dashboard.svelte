@@ -7,7 +7,7 @@
   let { page = $bindable('home') } = $props()
   let loading = $state(false);
   
-  // Lógica de validación: Solo el rol 1 puede ver analítica
+  // Seguridad: Solo el rol 1 accede a la analítica avanzada
   let isAdmin = $derived($currentUser?.id_rol === 1)
 
   const navItems = [
@@ -19,6 +19,14 @@
   function handleLogout() {
     logout()
   }
+
+  function navigateTo(id) {
+    loading = true;
+    setTimeout(() => {
+      page = id;
+      loading = false;
+    }, 300);
+  }
 </script>
 
 <div class="layout">
@@ -27,8 +35,8 @@
       <div class="brand">
         <div class="brand-icon">
           <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
-            <rect width="32" height="32" rx="8" fill="var(--accent)"/>
-            <path d="M8 10h16M8 16h10M8 22h13" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round"/>
+            <rect width="32" height="32" rx="8" fill="#2563eb"/>
+            <path d="M8 10h16M8 16h10M8 22h13" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
           </svg>
         </div>
         <span class="brand-text">Sistema PQRS</span>
@@ -39,13 +47,7 @@
           {#if item.always || (item.admin && isAdmin)}
             <button
               class="nav-item {page === item.id ? 'active' : ''}"
-              onclick={() => {
-                loading = true;
-                setTimeout(() => {
-                  page = item.id;
-                  loading = false;
-                }, 300);
-              }}
+              onclick={() => navigateTo(item.id)}
             > 
               <span class="nav-icon">{item.icon}</span>
               <span>{item.label}</span>
@@ -60,7 +62,7 @@
         <div class="avatar">{$currentUser?.nombre?.charAt(0)?.toUpperCase() || '?'}</div>
         <div class="user-info">
           <p class="user-name">{$currentUser?.nombre || 'Usuario'}</p>
-          <p class="user-role">{$currentUser?.id_rol === 1 ? 'Administrador' : 'Usuario'}</p>
+          <p class="user-role">{isAdmin ? 'Administrador' : 'Usuario'}</p>
         </div>
       </div>
       <button class="btn-logout" onclick={handleLogout}>
@@ -80,7 +82,9 @@
       </div>
 
     {:else if page === 'home'}
-      <HomeModule onnavigate={(p) => page = p} />
+      <div class="home-wrapper">
+        <HomeModule onnavigate={(p) => page = p} />
+      </div>
 
       {#if isAdmin}
         <section class="powerbi-section">
@@ -109,10 +113,14 @@
       {/if}
 
     {:else if page === 'pqrs'}
-      <PqrModule />
+      <div class="module-wrapper">
+        <PqrModule />
+      </div>
 
     {:else if page === 'usuarios' && isAdmin}
-      <UsuariosModule />
+      <div class="module-wrapper">
+        <UsuariosModule />
+      </div>
 
     {:else}
       <div class="no-access">No tienes acceso a esta sección.</div>
@@ -121,35 +129,178 @@
 </div>
 
 <style>
-  /* Aquí van exactamente tus mismos estilos que ya tienes */
-  .layout { display: flex; min-height: 100vh; }
-  .sidebar { width: 240px; min-width: 240px; background: linear-gradient(180deg, #000, #111); color: #fff; border-right: 1px solid var(--border); display: flex; flex-direction: column; justify-content: space-between; padding: 24px 16px; position: sticky; top: 0; height: 100vh; }
-  .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 28px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
-  .brand-text { font-family: var(--font-display); font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
-  nav { display: flex; flex-direction: column; gap: 4px; }
-  .nav-item { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: var(--radius-sm); border: none; background: transparent; color: #ccc; font-size: 14px; font-weight: 500; transition: all 0.2s ease; text-align: left; width: 100%; cursor: pointer; }
-  .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; transform: translateX(3px); }
-  .nav-item.active { background: rgba(255,255,255,0.15); color: #fff; border: 1px solid rgba(255,255,255,0.2); }
-  .nav-icon { font-size: 16px; }
-  .sidebar-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .user-card { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.01); }
-  .avatar { width: 36px; height: 36px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-family: var(--font-display); font-weight: 800; font-size: 16px; flex-shrink: 0; }
-  .user-name { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .layout {
+    display: flex;
+    min-height: 100vh;
+  }
+
+  .sidebar {
+    width: 240px;
+    min-width: 240px;
+    background: linear-gradient(180deg, #000, #111);
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 24px 16px;
+    position: sticky;
+    top: 0;
+    height: 100vh;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 8px 28px;
+    border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 20px;
+  }
+
+  .brand-text {
+    font-weight: 700;
+    font-size: 16px;
+    letter-spacing: -0.02em;
+  }
+
+  nav {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    background: transparent;
+    color: #ccc;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    text-align: left;
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+  .nav-item.active { background: #2563eb; color: #fff; }
+
+  .sidebar-bottom {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .user-card {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 8px;
+  }
+
+  .avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: #2563eb;
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+  }
+
+  .user-name { font-size: 13px; font-weight: 600; color: #fff; }
   .user-role { font-size: 11px; color: #aaa; }
-  .btn-logout { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: var(--radius-sm); border: 1px solid rgba(255,255,255,0.11); background: rgba(255,255,255,0.05); color: #ddd; font-size: 13px; transition: all 0.15s; width: 100%; cursor: pointer; }
-  .btn-logout:hover { background: rgba(255,71,71,0.2); border-color: rgba(255,71,71,0.5); color: #ff6b6b; }
-  .main { flex: 1; overflow-y: auto; background: linear-gradient(180deg, #f4f6f9, #eef1f5); }
-  .powerbi-section { margin: 24px; background: white; border-radius: 16px; border: 1px solid rgba(0,0,0,0.05); box-shadow: 0 10px 30px rgba(0,0,0,0.03); overflow: hidden; }
-  .section-header { padding: 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; }
+
+  .btn-logout {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.11);
+    background: rgba(255,255,255,0.05);
+    color: #ddd;
+    cursor: pointer;
+  }
+
+  .main {
+    flex: 1;
+    overflow-y: auto;
+    background: #f4f6f9;
+    padding-bottom: 40px;
+  }
+
+  /* ESTO ES LO QUE ARREGLA EL ANCHO */
+  .home-wrapper, .module-wrapper {
+    width: 100%;
+    padding: 24px 24px 0 24px; /* 24px a los lados para igualar al Power BI */
+    box-sizing: border-box;
+  }
+
+  .powerbi-section {
+    margin: 24px; /* Mismo margen que el wrapper superior */
+    background: white;
+    border-radius: 16px;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    overflow: hidden;
+  }
+
+  .section-header {
+    padding: 20px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #f0f0f0;
+  }
+
   .header-info h3 { margin: 0; font-size: 18px; font-weight: 700; color: #111; }
-  .header-info p { margin: 4px 0 0; font-size: 12px; color: #666; }
-  .live-status { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; color: #2563eb; background: #eff6ff; padding: 6px 12px; border-radius: 20px; }
-  .pulse-dot { width: 8px; height: 8px; background: #2563eb; border-radius: 50%; animation: pulse 2s infinite; }
-  @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.7; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.7; } }
-  .iframe-container { width: 100%; line-height: 0; background: #fdfdfd; }
-  .loading-container { padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 15px; color: #666; }
+  .header-info p { margin: 4px 0 0; font-size: 12.5px; color: #666; }
+
+  .live-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 11px;
+    font-weight: 800;
+    color: #2563eb;
+    background: #eff6ff;
+    padding: 6px 12px;
+    border-radius: 20px;
+  }
+
+  .pulse-dot {
+    width: 8px;
+    height: 8px;
+    background: #2563eb;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(0.95); opacity: 0.7; }
+  }
+
+  .iframe-container { width: 100%; line-height: 0; }
+
+  .loading-container { padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
   .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-  .no-access { padding: 40px; color: #666; }
-  @media (max-width: 768px) { .layout { flex-direction: column; } .sidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 16px; gap: 8px; } .powerbi-section { margin: 12px; } }
+
+  @media (max-width: 768px) {
+    .home-wrapper, .module-wrapper { padding: 12px; }
+    .powerbi-section { margin: 12px; }
+  }
 </style>
