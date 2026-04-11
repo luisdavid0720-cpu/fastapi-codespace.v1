@@ -1,480 +1,119 @@
 <script>
-  import { createEventDispatcher } from 'svelte';
+  import { currentUser } from '../../stores/auth.js';
  
-  const dispatch = createEventDispatcher();
- 
-  let role = 'admin';
-  let email = '';
-  let password = '';
-  let showPassword = false;
- 
-  function selectRole(r) {
-    role = r;
-  }
- 
-  function handleLogin() {
-    dispatch('login', { role, email, password });
-  }
- 
-  function handleForgotPassword() {
-    dispatch('forgotPassword');
-  }
- 
-  function handleRegister() {
-    dispatch('register');
-  }
+  function loginAs(rol) {
+    if (rol === 'admin') {
+      currentUser.set({ nombre: 'Administrador', correo: 'admin@pqr.com', cedula: '123456', id_rol: 1 });
+    } else {
+      currentUser.set({ nombre: 'Juan Pérez', correo: 'user@pqr.com', cedula: '654321', id_rol: 2 });
+    }
+    
 </script>
  
-<div class="wrapper">
-  <div class="card">
- 
-    <!-- Header -->
-    <div class="header">
-      <div class="brand">
-        <img src="/logo-cul.jpg" alt="Logo CUL" class="logo" />
-        <div class="brand-text">
-          <span class="brand-name">Corporación Universitaria</span>
-          <span class="brand-sub">Latinoamericana</span>
-          <span class="brand-loc">Barranquilla, Colombia</span>
-        </div>
-      </div>
-      <div class="system-badge">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="3" width="20" height="18" rx="2"/>
-          <line x1="8" y1="3" x2="8" y2="21"/>
+<div class="login-bg">
+  <div class="glow"></div>
+  <div class="login-card">
+    <div class="brand">
+      <div class="brand-icon">
+  <img src="/logo_cul.png" alt="Logo CUL" style="width: 40px; height: 40px; object-fit: contain;" />
+</div>
+          <rect width="32" height="32" rx="8" fill="var(--accent)"/>
+          <path d="M8 10h16M8 16h10M8 22h13" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round"/>
         </svg>
-        Sistema PQRS
       </div>
+      <span class="brand-name">Sistema PQRS</span>
     </div>
- 
-    <div class="divider-gradient"></div>
- 
-    <!-- Title -->
-    <h1>Iniciar sesión</h1>
-    <p class="subtitle">Acceso de administrador al sistema</p>
- 
-    <!-- Role selector -->
-    <div class="roles">
-      <button
-        class="role-card {role === 'admin' ? 'active' : ''}"
-        on:click={() => selectRole('admin')}
-        type="button"
-      >
-        <div class="role-icon admin-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+    <h1>Bienvenido</h1>
+    <p class="subtitle">Selecciona tu tipo de acceso para continuar</p>
+    <div class="roles-grid">
+      <button class="role-card admin" onclick={() => loginAs('admin')}>
+        <div class="role-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M12 1l3 6.5L22 8.7l-5 4.9 1.2 7L12 17.2l-6.2 3.4L7 13.6 2 8.7l7-1.2z"/>
           </svg>
         </div>
-        <span class="role-label">Administrador</span>
-        <span class="role-desc">Acceso completo</span>
+        <div class="role-info">
+          <span class="role-title">Administrador</span>
+          <span class="role-desc">Acceso completo al sistema</span>
+        </div>
+        <span class="role-arrow">→</span>
       </button>
- 
-      <button
-        class="role-card {role === 'user' ? 'active' : ''}"
-        on:click={() => selectRole('user')}
-        type="button"
-      >
-        <div class="role-icon user-icon">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-            <circle cx="12" cy="7" r="4"/>
+      <button class="role-card user" onclick={() => loginAs('usuario')}>
+        <div class="role-icon">
+          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <circle cx="12" cy="8" r="4"/>
+            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
           </svg>
         </div>
-        <span class="role-label">Usuario</span>
-        <span class="role-desc">PQRs propias</span>
+        <div class="role-info">
+          <span class="role-title">Usuario</span>
+          <span class="role-desc">Gestión de PQRs propias</span>
+        </div>
+        <span class="role-arrow">→</span>
       </button>
     </div>
- 
-    <!-- Active role badge -->
-    <div class="active-badge {role}">
-      {#if role === 'admin'}
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
-        </svg>
-        Administrador — acceso completo
-      {:else}
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
-          <circle cx="12" cy="7" r="4"/>
-        </svg>
-        Usuario — PQRs propias
-      {/if}
-    </div>
- 
-    <!-- Fields -->
-    <div class="field">
-      <label for="email">Correo institucional</label>
-      <input
-        id="email"
-        type="email"
-        placeholder="usuario@ul.edu.co"
-        bind:value={email}
-      />
-    </div>
- 
-    <div class="field">
-      <label for="password">Contraseña</label>
-      <div class="password-wrapper">
-        <input
-          id="password"
-          type={showPassword ? 'text' : 'password'}
-          placeholder="••••••••"
-          bind:value={password}
-        />
-        <button
-          class="toggle-pwd"
-          type="button"
-          on:click={() => (showPassword = !showPassword)}
-          aria-label="Mostrar/ocultar contraseña"
-        >
-          {#if showPassword}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/>
-              <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/>
-              <line x1="1" y1="1" x2="23" y2="23"/>
-            </svg>
-          {:else}
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
-              <circle cx="12" cy="12" r="3"/>
-            </svg>
-          {/if}
-        </button>
-      </div>
-    </div>
- 
-    <button class="btn-secondary" type="button" on:click={handleForgotPassword}>
-      ¿Olvidaste tu contraseña?
-    </button>
- 
-    <button class="btn-primary" type="button" on:click={handleLogin}>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-        <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/>
-        <polyline points="10 17 15 12 10 7"/>
-        <line x1="15" y1="12" x2="3" y2="12"/>
-      </svg>
-      Ingresar
-    </button>
- 
-    <p class="register-link">
-      ¿No tienes cuenta?
-      <button type="button" on:click={handleRegister}>Regístrate →</button>
-    </p>
- 
   </div>
 </div>
  
 <style>
-  .wrapper {
+  .login-bg {
     min-height: 100vh;
-    background: #1a1a1a;
     display: flex;
     align-items: center;
     justify-content: center;
-    padding: 2rem;
-    font-family: 'Segoe UI', system-ui, sans-serif;
-  }
- 
-  .card {
-    background: #2a2a2a;
-    border-radius: 16px;
-    padding: 2rem;
-    width: 100%;
-    max-width: 420px;
-    border: 0.5px solid rgba(255, 255, 255, 0.1);
-  }
- 
-  /* Header */
-  .header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
-  }
- 
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-  }
- 
-  .logo {
-    width: 52px;
-    height: 52px;
-    border-radius: 8px;
-    object-fit: cover;
-    flex-shrink: 0;
-  }
- 
-  .brand-text {
-    display: flex;
-    flex-direction: column;
-  }
- 
-  .brand-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: #E8921A;
-    line-height: 1.3;
-  }
- 
-  .brand-sub {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
-    line-height: 1.3;
-  }
- 
-  .brand-loc {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.35);
-    line-height: 1.3;
-  }
- 
-  .system-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    background: rgba(255, 255, 255, 0.05);
-    border: 0.5px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-size: 13px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.8);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
- 
-  .divider-gradient {
-    height: 2px;
-    background: linear-gradient(to right, #E8921A, #1B6B3A, #1B4A7A);
-    border-radius: 2px;
-    margin-bottom: 1.5rem;
-  }
- 
-  /* Title */
-  h1 {
-    margin: 0 0 4px;
-    font-size: 22px;
-    font-weight: 500;
-    color: white;
-  }
- 
-  .subtitle {
-    margin: 0 0 1.5rem;
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.5);
-  }
- 
-  /* Roles */
-  .roles {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 1rem;
-  }
- 
-  .role-card {
-    background: rgba(255, 255, 255, 0.04);
-    border: 0.5px solid rgba(255, 255, 255, 0.12);
-    border-radius: 10px;
-    padding: 12px;
-    cursor: pointer;
-    text-align: left;
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-    transition: border-color 0.15s, background 0.15s;
-  }
- 
-  .role-card.active {
-    background: rgba(255, 255, 255, 0.06);
-    border: 1.5px solid rgba(255, 255, 255, 0.35);
-  }
- 
-  .role-icon {
-    width: 32px;
-    height: 32px;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
- 
-  .admin-icon {
-    background: rgba(99, 102, 241, 0.2);
-    color: #818cf8;
-  }
- 
-  .user-icon {
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.5);
-  }
- 
-  .role-label {
-    font-size: 13px;
-    font-weight: 500;
-    color: white;
-  }
- 
-  .role-desc {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.4);
-  }
- 
-  /* Active badge */
-  .active-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    border-radius: 20px;
-    padding: 5px 12px;
-    margin-bottom: 1.25rem;
-    font-size: 12px;
-    transition: all 0.2s;
-  }
- 
-  .active-badge.admin {
-    background: rgba(99, 102, 241, 0.15);
-    border: 0.5px solid rgba(99, 102, 241, 0.4);
-    color: #a5b4fc;
-  }
- 
-  .active-badge.user {
-    background: rgba(56, 189, 248, 0.1);
-    border: 0.5px solid rgba(56, 189, 248, 0.4);
-    color: #7dd3fc;
-  }
- 
-  /* Fields */
-  .field {
-    margin-bottom: 1rem;
-  }
- 
-  .field label {
-    display: block;
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.6);
-    margin-bottom: 6px;
-  }
- 
-  .field input {
-    width: 100%;
-    box-sizing: border-box;
-    background: rgba(255, 255, 255, 0.06);
-    border: 0.5px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    padding: 10px 14px;
-    color: rgba(255, 255, 255, 0.8);
-    font-size: 14px;
-    outline: none;
-    transition: border-color 0.15s;
-  }
- 
-  .field input::placeholder {
-    color: rgba(255, 255, 255, 0.25);
-  }
- 
-  .field input:focus {
-    border-color: rgba(255, 255, 255, 0.35);
-  }
- 
-  .password-wrapper {
+    background: var(--bg);
     position: relative;
+    overflow: hidden;
   }
- 
-  .password-wrapper input {
-    padding-right: 48px;
-  }
- 
-  .toggle-pwd {
+  .glow {
     position: absolute;
-    right: 10px;
-    top: 50%;
-    transform: translateY(-50%);
-    background: rgba(255, 255, 255, 0.08);
-    border: 0.5px solid rgba(255, 255, 255, 0.15);
-    border-radius: 6px;
-    width: 32px;
-    height: 28px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: rgba(255, 255, 255, 0.5);
-    transition: background 0.15s;
+    width: 700px; height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(45,45,58,0.04) 0%, transparent 70%);
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    pointer-events: none;
   }
- 
-  .toggle-pwd:hover {
-    background: rgba(255, 255, 255, 0.14);
+  .login-card {
+    position: relative; z-index: 1;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 48px 44px;
+    width: 100%; max-width: 440px;
+    box-shadow: var(--shadow); animation: fadeUp 0.5s ease;
   }
- 
-  /* Buttons */
-  .btn-secondary {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.06);
-    border: 0.5px solid rgba(255, 255, 255, 0.15);
-    border-radius: 8px;
-    padding: 10px;
-    color: rgba(255, 255, 255, 0.7);
-    font-size: 14px;
-    cursor: pointer;
-    margin-bottom: 0.75rem;
-    transition: background 0.15s;
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
   }
- 
-  .btn-secondary:hover {
-    background: rgba(255, 255, 255, 0.1);
+  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
+  .brand-name { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
+  h1 { font-family: var(--font-display); font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 8px; }
+  .subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
+  .roles-grid { display: flex; flex-direction: column; gap: 14px; }
+  .role-card {
+    display: flex; align-items: center; gap: 16px; padding: 20px;
+    border-radius: var(--radius); border: 1px solid var(--border);
+    background: var(--surface2); color: var(--text);
+    text-align: left; transition: all 0.2s; width: 100%;
   }
- 
-  .btn-primary {
-    width: 100%;
-    background: rgba(255, 255, 255, 0.95);
-    border: none;
-    border-radius: 8px;
-    padding: 12px;
-    color: #1a1a1a;
-    font-size: 15px;
-    font-weight: 500;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
-    margin-bottom: 1.25rem;
-    transition: background 0.15s, transform 0.1s;
+  .role-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+  .role-card.admin:hover { border-color: var(--accent); background: rgba(45,45,58,0.04); box-shadow: var(--shadow-accent); }
+  .role-card.user:hover  { border-color: var(--accent2); background: rgba(74,111,165,0.05); }
+  .role-icon {
+    width: 52px; height: 52px; border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
   }
- 
-  .btn-primary:hover {
-    background: white;
-  }
- 
-  .btn-primary:active {
-    transform: scale(0.98);
-  }
- 
-  /* Register link */
-  .register-link {
-    text-align: center;
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.4);
-    margin: 0;
-  }
- 
-  .register-link button {
-    background: none;
-    border: none;
-    color: #60a5fa;
-    font-size: 13px;
-    cursor: pointer;
-    padding: 0;
-    margin-left: 4px;
-  }
- 
-  .register-link button:hover {
-    text-decoration: underline;
+  .admin .role-icon { background: rgba(45,45,58,0.08); color: var(--accent); }
+  .user .role-icon  { background: rgba(74,111,165,0.1); color: var(--accent2); }
+  .role-info { display: flex; flex-direction: column; gap: 3px; flex: 1; }
+  .role-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
+  .role-desc { font-size: 13px; color: var(--text-muted); }
+  .role-arrow { font-size: 18px; color: var(--text-muted); transition: transform 0.2s, color 0.2s; }
+  .role-card:hover .role-arrow { transform: translateX(4px); }
+  .admin:hover .role-arrow { color: var(--accent); }
+  .user:hover  .role-arrow { color: var(--accent2); }
+  @media (max-width: 480px) {
+    .login-card { padding: 32px 24px; margin: 16px; }
+    h1 { font-size: 26px; }
   }
 </style>
