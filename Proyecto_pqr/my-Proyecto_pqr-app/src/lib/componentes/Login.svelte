@@ -11,20 +11,37 @@
 </script>
  
 <div class="login-bg">
-  <div class="glow"></div>
   <div class="login-card">
-    <div class="brand">
-      <div class="brand-icon">
-        <img src="/logo_cul.png" alt="Logo CUL" style="width: 40px; height: 40px; object-fit: contain;" />
+ 
+    <!-- Header -->
+    <div class="header">
+      <div class="brand">
+        <img src="/logo_cul.png" alt="Logo CUL" class="logo" />
+        <div class="brand-text">
+          <span class="brand-name">Corporación Universitaria</span>
+          <span class="brand-sub">Latinoamericana</span>
+          <span class="brand-loc">Barranquilla, Colombia</span>
+        </div>
       </div>
-      <span class="brand-name">Sistema PQRS</span>
+      <div class="system-badge">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="2" y="3" width="20" height="18" rx="2"/>
+          <line x1="8" y1="3" x2="8" y2="21"/>
+        </svg>
+        Sistema PQRS
+      </div>
     </div>
-    <h1>Bienvenido</h1>
-    <p class="subtitle">Selecciona tu tipo de acceso para continuar</p>
+ 
+    <div class="divider-gradient"></div>
+ 
+    <h1>Iniciar sesión</h1>
+    <p class="subtitle">Acceso de administrador al sistema</p>
+ 
+    <!-- Roles -->
     <div class="roles-grid">
       <button class="role-card admin" onclick={() => loginAs('admin')}>
-        <div class="role-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <div class="role-icon admin-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <path d="M12 1l3 6.5L22 8.7l-5 4.9 1.2 7L12 17.2l-6.2 3.4L7 13.6 2 8.7l7-1.2z"/>
           </svg>
         </div>
@@ -34,9 +51,10 @@
         </div>
         <span class="role-arrow">→</span>
       </button>
+ 
       <button class="role-card user" onclick={() => loginAs('usuario')}>
-        <div class="role-icon">
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+        <div class="role-icon user-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
             <circle cx="12" cy="8" r="4"/>
             <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
           </svg>
@@ -48,6 +66,7 @@
         <span class="role-arrow">→</span>
       </button>
     </div>
+ 
   </div>
 </div>
  
@@ -57,59 +76,201 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg);
-    position: relative;
-    overflow: hidden;
+    background: #1a1a1a;
+    padding: 2rem;
   }
-  .glow {
-    position: absolute;
-    width: 700px; height: 700px;
-    border-radius: 50%;
-    background: radial-gradient(circle, rgba(45,45,58,0.04) 0%, transparent 70%);
-    top: 50%; left: 50%;
-    transform: translate(-50%, -50%);
-    pointer-events: none;
-  }
+ 
   .login-card {
-    position: relative; z-index: 1;
-    background: var(--surface); border: 1px solid var(--border);
-    border-radius: 20px; padding: 48px 44px;
-    width: 100%; max-width: 440px;
-    box-shadow: var(--shadow); animation: fadeUp 0.5s ease;
+    background: #2a2a2a;
+    border-radius: 16px;
+    padding: 2rem;
+    width: 100%;
+    max-width: 420px;
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    animation: fadeUp 0.4s ease;
   }
+ 
   @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(20px); }
+    from { opacity: 0; transform: translateY(16px); }
     to   { opacity: 1; transform: translateY(0); }
   }
-  .brand { display: flex; align-items: center; gap: 10px; margin-bottom: 32px; }
-  .brand-name { font-family: var(--font-display); font-weight: 700; font-size: 18px; letter-spacing: -0.02em; }
-  h1 { font-family: var(--font-display); font-size: 32px; font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; margin-bottom: 8px; }
-  .subtitle { color: var(--text-muted); font-size: 14px; margin-bottom: 32px; }
-  .roles-grid { display: flex; flex-direction: column; gap: 14px; }
+ 
+  /* Header */
+  .header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
+  }
+ 
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex: 1;
+  }
+ 
+  .logo {
+    width: 52px;
+    height: 52px;
+    border-radius: 8px;
+    object-fit: contain;
+    flex-shrink: 0;
+    mix-blend-mode: lighten;
+  }
+ 
+  .brand-text {
+    display: flex;
+    flex-direction: column;
+  }
+ 
+  .brand-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #E8921A;
+    line-height: 1.3;
+  }
+ 
+  .brand-sub {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.5);
+    line-height: 1.3;
+  }
+ 
+  .brand-loc {
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.35);
+    line-height: 1.3;
+  }
+ 
+  .system-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 0.5px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 6px 10px;
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255, 255, 255, 0.8);
+    white-space: nowrap;
+    flex-shrink: 0;
+  }
+ 
+  .divider-gradient {
+    height: 2px;
+    background: linear-gradient(to right, #E8921A, #1B6B3A, #1B4A7A);
+    border-radius: 2px;
+    margin-bottom: 1.5rem;
+  }
+ 
+  h1 {
+    margin: 0 0 4px;
+    font-size: 22px;
+    font-weight: 700;
+    color: white;
+  }
+ 
+  .subtitle {
+    margin: 0 0 1.5rem;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.5);
+  }
+ 
+  /* Roles */
+  .roles-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+ 
   .role-card {
-    display: flex; align-items: center; gap: 16px; padding: 20px;
-    border-radius: var(--radius); border: 1px solid var(--border);
-    background: var(--surface2); color: var(--text);
-    text-align: left; transition: all 0.2s; width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 18px 20px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 0.5px solid rgba(255, 255, 255, 0.12);
+    border-radius: 12px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.2s;
+    width: 100%;
+    color: white;
   }
-  .role-card:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-  .role-card.admin:hover { border-color: var(--accent); background: rgba(45,45,58,0.04); box-shadow: var(--shadow-accent); }
-  .role-card.user:hover  { border-color: var(--accent2); background: rgba(74,111,165,0.05); }
+ 
+  .role-card:hover {
+    transform: translateY(-2px);
+  }
+ 
+  .role-card.admin:hover {
+    border-color: #E8921A;
+    background: rgba(232, 146, 26, 0.08);
+  }
+ 
+  .role-card.user:hover {
+    border-color: #4a6fa5;
+    background: rgba(74, 111, 165, 0.08);
+  }
+ 
   .role-icon {
-    width: 52px; height: 52px; border-radius: 12px;
-    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
   }
-  .admin .role-icon { background: rgba(45,45,58,0.08); color: var(--accent); }
-  .user .role-icon  { background: rgba(74,111,165,0.1); color: var(--accent2); }
-  .role-info { display: flex; flex-direction: column; gap: 3px; flex: 1; }
-  .role-title { font-family: var(--font-display); font-size: 17px; font-weight: 700; letter-spacing: -0.02em; }
-  .role-desc { font-size: 13px; color: var(--text-muted); }
-  .role-arrow { font-size: 18px; color: var(--text-muted); transition: transform 0.2s, color 0.2s; }
-  .role-card:hover .role-arrow { transform: translateX(4px); }
-  .admin:hover .role-arrow { color: var(--accent); }
-  .user:hover  .role-arrow { color: var(--accent2); }
+ 
+  .admin-icon {
+    background: rgba(232, 146, 26, 0.15);
+    color: #E8921A;
+  }
+ 
+  .user-icon {
+    background: rgba(74, 111, 165, 0.15);
+    color: #7aadff;
+  }
+ 
+  .role-info {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    flex: 1;
+  }
+ 
+  .role-title {
+    font-size: 15px;
+    font-weight: 600;
+    color: white;
+  }
+ 
+  .role-desc {
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.45);
+  }
+ 
+  .role-arrow {
+    font-size: 18px;
+    color: rgba(255, 255, 255, 0.3);
+    transition: transform 0.2s, color 0.2s;
+  }
+ 
+  .role-card:hover .role-arrow {
+    transform: translateX(4px);
+  }
+ 
+  .admin:hover .role-arrow { color: #E8921A; }
+  .user:hover  .role-arrow { color: #7aadff; }
+ 
   @media (max-width: 480px) {
-    .login-card { padding: 32px 24px; margin: 16px; }
-    h1 { font-size: 26px; }
+    .login-card { padding: 1.5rem; }
+    h1 { font-size: 20px; }
+    .header { flex-wrap: wrap; }
+    .system-badge { font-size: 11px; padding: 5px 8px; }
   }
 </style>
