@@ -6,6 +6,8 @@
 
   let { page = $bindable('home') } = $props()
   let loading = $state(false);
+  
+  // Lógica de validación de administrador
   let isAdmin = $derived($currentUser?.id_rol === 1)
 
   const navItems = [
@@ -80,29 +82,31 @@
     {:else if page === 'home'}
       <HomeModule onnavigate={(p) => page = p} />
 
-      <section class="powerbi-section">
-        <div class="section-header">
-          <div class="header-info">
-            <h3>Panel de Analítica Avanzada</h3>
-            <p>Visualización de datos en tiempo real desde Power BI</p>
+      {#if isAdmin}
+        <section class="powerbi-section">
+          <div class="section-header">
+            <div class="header-info">
+              <h3>Panel de Analítica Avanzada</h3>
+              <p>Visualización de datos en tiempo real desde Power BI</p>
+            </div>
+            <div class="live-status">
+              <span class="pulse-dot"></span>
+              MODO ADMIN
+            </div>
           </div>
-          <div class="live-status">
-            <span class="pulse-dot"></span>
-            ACTIVO
-          </div>
-        </div>
 
-        <div class="iframe-container">
-          <iframe 
-            title="gestion pqrs" 
-            width="100%" 
-            height="541.25" 
-            src="https://app.powerbi.com/view?r=eyJrIjoiZmFlM2Y3YzEtMDIwNS00OGM2LTk4OGUtMzc2YjgwZWYzNmE0IiwidCI6ImFjYTUxNjMxLTAwZmUtNDkwZC05MWFiLTE2M2VmODcyNjBlZSIsImMiOjR9" 
-            frameborder="0" 
-            allowFullScreen="true">
-          </iframe>
-        </div>
-      </section>
+          <div class="iframe-container">
+            <iframe 
+              title="gestion pqrs" 
+              width="100%" 
+              height="541.25" 
+              src="https://app.powerbi.com/view?r=eyJrIjoiZmFlM2Y3YzEtMDIwNS00OGM2LTk4OGUtMzc2YjgwZWYzNmE0IiwidCI6ImFjYTUxNjMxLTAwZmUtNDkwZC05MWFiLTE2M2VmODcyNjBlZSIsImMiOjR9" 
+              frameborder="0" 
+              allowFullScreen="true">
+            </iframe>
+          </div>
+        </section>
+      {/if}
 
     {:else if page === 'pqrs'}
       <PqrModule />
