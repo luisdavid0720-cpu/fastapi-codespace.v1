@@ -214,7 +214,7 @@
   .modern-input:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.05); }
 
   /* TABLE */
-  .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+  .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
   table { width: 100%; border-collapse: collapse; }
   th { background: #f8fafc; padding: 18px 20px; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #f1f5f9; }
   td { padding: 18px 20px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
@@ -226,7 +226,7 @@
   .card { 
     background: white; width: 100%; max-width: 680px; 
     border-radius: 32px; border: 1px solid #e2e8f0; 
-    box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1); overflow: hidden;
+    box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1); overflow-x: auto;
   }
   
   /* PADDING PARA EL FORMULARIO */
@@ -266,4 +266,17 @@
   .toast { position: fixed; bottom: 30px; right: 30px; background: #0f172a; color: white; padding: 16px 28px; border-radius: 16px; font-weight: 600; z-index: 100; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
   .animate-up { animation: slideUp 0.4s ease-out; }
   @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+
+  @media (max-width: 768px) {
+  .module { padding: 16px; }
+  .page-header { flex-direction: column; gap: 12px; }
+  h1 { font-size: 22px; }
+  .toolbar { flex-direction: column; gap: 10px; }
+  .filter-select { width: 100%; }
+  table { min-width: 600px; }
+  th, td { padding: 10px 12px; font-size: 12px; }
+}
+
 </style>
+
+

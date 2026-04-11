@@ -208,4 +208,18 @@
   .r1 { background: #dcfce7; color: #166534; }
   .toast { position: fixed; bottom: 20px; right: 20px; background: #0f172a; color: white; padding: 12px 24px; border-radius: 12px; z-index: 100; }
   .loading-state { text-align: center; padding: 60px; color: #94a3b8; }
+
+  @media (max-width: 768px) {
+  .module { padding: 24px 16px; }
+  .form-grid { grid-template-columns: 1fr; }
+  h1 { font-size: 22px; }
+  .page-header { flex-direction: column; gap: 12px; }
+  table { min-width: 700px; }
+  th, td { padding: 10px 12px; font-size: 12px; }
+}
+
+
+
 </style>
+
+
