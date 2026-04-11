@@ -5,12 +5,24 @@
   let password = $state('');
   let showPassword = $state(false);
 
+  // FUNCIÓN CORREGIDA: Ahora envía el id_usuario para que el filtro funcione
   function loginAs(rol) {
     if (rol === 'admin') {
-      currentUser.set({ nombre: 'Administrador', correo: 'admin@cul.edu.co', id_rol: 1 });
+      currentUser.set({ 
+        id_usuario: 1, // ID base para pruebas
+        nombre: 'Administrador', 
+        correo: 'admin@cul.edu.co', 
+        id_rol: 1 
+      });
     } else {
-      currentUser.set({ nombre: 'Usuario', correo: 'estudiante@cul.edu.co', id_rol: 2 });
+      currentUser.set({ 
+        id_usuario: 1, // <--- CLAVE: Ahora tus trámites aparecerán
+        nombre: 'Luis Estudiante', 
+        correo: 'estudiante@cul.edu.co', 
+        id_rol: 2 
+      });
     }
+    // Nota: Aquí podrías añadir un goto('/dashboard') si usas SvelteKit routing
   }
 </script>
 
@@ -140,7 +152,7 @@
   .welcome-text h3 { font-size: 24px; color: #0f172a; margin: 0; font-weight: 800; text-align: center; }
   .welcome-text p { font-size: 13px; color: #64748b; text-align: center; margin-top: 5px; }
 
-  /* BOTONES DE ROL LÍMPIOS */
+  /* BOTONES DE ROL */
   .roles-selection { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0; }
   
   .role-card {
@@ -158,7 +170,6 @@
   .separator::before, .separator::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
   .separator span { padding: 0 15px; }
 
-  /* INPUTS Y EL MONITO */
   .input-group { margin-bottom: 20px; }
   .input-group label { display: block; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: #334155; }
   
@@ -172,14 +183,13 @@
   
   input:focus { outline: none; border-color: var(--cul-blue); box-shadow: 0 0 0 4px rgba(11, 31, 63, 0.08); }
 
-  /* POSICIONAMIENTO DEL MONITO DENTRO DEL INPUT */
-  .password-field input { padding-right: 50px; } /* Espacio para que el texto no choque con el mono */
+  .password-field input { padding-right: 50px; }
 
   .toggle-pass {
     position: absolute;
     right: 12px;
     top: 50%;
-    transform: translateY(-50%); /* Centrado vertical perfecto */
+    transform: translateY(-50%);
     background: none;
     border: none;
     cursor: pointer;
@@ -191,9 +201,6 @@
     transition: opacity 0.2s;
   }
 
-  .toggle-pass:hover { opacity: 0.7; }
-
-  /* BOTÓN SUBMIT */
   .btn-submit { 
     width: 100%; padding: 16px; background: var(--cul-gold); 
     border: none; border-radius: 14px; font-weight: 800; color: var(--cul-blue);
@@ -204,5 +211,4 @@
   .btn-submit:hover { background: #f9a01b; transform: translateY(-2px); }
 
   .card-footer { padding: 25px; background: rgba(248, 250, 252, 0.5); text-align: center; font-size: 13px; border-top: 1px solid #f1f5f9; }
-  .card-footer b { color: var(--cul-blue); cursor: pointer; }
 </style>
