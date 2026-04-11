@@ -3,21 +3,16 @@
   import { currentUser } from '../../stores/auth.js'
   import { api } from '../api.js'
 
-  // Estados de la UI
   let pqrs = $state([])
   let loading = $state(true)
-  let view = $state('list') // 'list' | 'form' | 'detail'
+  let view = $state('list') 
   let selected = $state(null)
   let saving = $state(false)
   let toastMsg = $state('')
   let toastType = $state('success')
   let searchText = $state('')
-  let filterEstado = $state('')
 
-  // Catálogos para los Selects
   let tipos = $state([]), estados = $state([]), departamentos = $state([]), prioridades = $state([])
-  
-  // Seguridad: Verificamos si el usuario es Admin (Rol 1)
   let isAdmin = $derived($currentUser?.id_rol === 1)
 
   function defaultForm() {
@@ -26,13 +21,10 @@
 
   let form = $state(defaultForm())
 
-  // FILTRO DE SEGURIDAD SEGÚN ROL
   let filtered = $derived(pqrs.filter(p => {
-    // Si es Admin ve todo, si es Usuario solo ve lo que coincida con su ID
     const belongsToMe = isAdmin || Number(p.id_usuario) === Number($currentUser?.id_usuario)
     const matchText = !searchText || p.descripcion?.toLowerCase().includes(searchText.toLowerCase())
-    const matchEstado = !filterEstado || p.id_estado == filterEstado
-    return belongsToMe && matchText && matchEstado
+    return belongsToMe && matchText
   }))
 
   onMount(async () => { await loadAll() })
@@ -48,31 +40,18 @@
       estados = e.value || []
       departamentos = d.value || []
       prioridades = pr.value || []
-    } catch(e) { console.error("Error al cargar datos:", e) }
+    } catch(e) { console.error(e) }
     loading = false
   }
 
-  // --- NAVEGACIÓN ---
   function openCreate() { form = defaultForm(); selected = null; view = 'form' }
-  
-  function openEdit(pqr) { 
-    selected = pqr; 
-    form = { ...pqr }; 
-    view = 'form'; 
-  }
+  function openEdit(pqr) { selected = pqr; form = { ...pqr }; view = 'form' }
+  function openDetail(pqr) { selected = pqr; view = 'detail' }
 
-  function openDetail(pqr) { 
-    selected = pqr; 
-    view = 'detail'; 
-  }
-
-  // --- ACCIONES API ---
   async function savePqr() {
     if (!form.descripcion || !form.id_tipo || !form.id_departamento) {
-      showToast('Completa los campos obligatorios', 'error');
-      return;
+      showToast('Campos obligatorios incompletos', 'error'); return;
     }
-
     saving = true;
     try {
       const payload = {
@@ -81,43 +60,35 @@
         "fecha": selected ? selected.fecha : new Date().toISOString(),
         "id_usuario": selected ? selected.id_usuario : (parseInt($currentUser?.id_usuario) || 1),
         "id_tipo": parseInt(form.id_tipo),
-        "id_estado": parseInt(form.id_estado) || 1,
+        "id_estado": parseInt(form.id_estado),
         "id_departamento": parseInt(form.id_departamento),
-        "id_prioridad": parseInt(form.id_prioridad) || 1
+        "id_prioridad": parseInt(form.id_prioridad)
       };
-
-      if (selected) {
-        await api.updatePqr(selected.id_pqr, payload);
-        showToast('PQR actualizada correctamente');
-      } else {
-        await api.createPqr(payload);
-        showToast('¡PQR radicada con éxito!');
-      }
-
-      await loadAll();
-      view = 'list';
-    } catch (error) {
-      showToast('Error al procesar la solicitud', 'error');
-    } finally { saving = false; }
+      if (selected) await api.updatePqr(selected.id_pqr, payload);
+      else await api.createPqr(payload);
+      showToast('Operación exitosa');
+      await loadAll(); view = 'list';
+    } catch (e) { showToast('Error en el servidor', 'error'); }
+    finally { saving = false; }
   }
 
   async function deletePqr(id) {
-    if (!confirm('¿Seguro que deseas eliminar esta PQR? Esta acción no se puede deshacer.')) return;
+    if (!confirm('¿Eliminar definitivamente este registro?')) return;
     try {
       await api.deletePqr(id);
-      showToast('Registro eliminado', 'success');
+      showToast('Registro eliminado');
       await loadAll();
     } catch (e) { showToast('Error al eliminar', 'error'); }
   }
 
   function showToast(msg, type = 'success') {
     toastMsg = msg; toastType = type;
-    setTimeout(() => toastMsg = '', 3500);
+    setTimeout(() => toastMsg = '', 3000);
   }
 
-  function getLabelEstado(id) { return estados.find(e => e.id_estado == id)?.nombre || 'PENDIENTE' }
-  function getLabelTipo(id) { return tipos.find(t => t.id_tipo == id)?.nombre || 'Peticion' }
-  function getLabelDep(id) { return departamentos.find(d => d.id_departamento == id)?.nombre || 'Sistemas' }
+  const getLabelEstado = (id) => estados.find(e => e.id_estado == id)?.nombre || 'PENDIENTE'
+  const getLabelTipo = (id) => tipos.find(t => t.id_tipo == id)?.nombre || 'Trámite'
+  const getLabelDep = (id) => departamentos.find(d => d.id_departamento == id)?.nombre || 'General'
 </script>
 
 <div class="module">
@@ -126,57 +97,56 @@
   {/if}
 
   <header class="page-header">
-    <div>
-      <h1>{view === 'list' ? (isAdmin ? 'Administración de PQRs' : 'Mis Trámites') : (view === 'form' ? 'Formulario PQR' : 'Resumen de Solicitud')}</h1>
-      <p class="subtitle">{view === 'list' ? 'Gestión centralizada de solicitudes institucionales' : 'Detalles del registro en sistema'}</p>
+    <div class="title-group">
+      <h1>{view === 'list' ? (isAdmin ? 'Administración de PQRs' : 'Mis Solicitudes') : 'Detalle de Solicitud'}</h1>
+      <p class="subtitle">Gestión centralizada de requerimientos institucionales</p>
     </div>
-    <div class="header-actions">
-      {#if view !== 'list'}<button class="btn-secondary" onclick={() => view = 'list'}>← Volver</button>{/if}
-      {#if view === 'list'}<button class="btn-primary" onclick={openCreate}>＋ Nueva Solicitud</button>{/if}
-    </div>
+    {#if view === 'list'}
+      <button class="btn-primary" onclick={openCreate}>+ Nueva Solicitud</button>
+    {/if}
   </header>
 
   {#if view === 'list'}
     <div class="toolbar">
-      <div class="search-wrap">
+      <div class="search-container">
         <span class="search-icon">🔍</span>
-        <input class="search-input" type="text" placeholder="Buscar por descripción..." bind:value={searchText} />
+        <input class="search-input" type="text" placeholder="Buscar por descripción o palabra clave..." bind:value={searchText} />
       </div>
     </div>
 
     {#if loading}
-      <div class="loading-state"><span class="spinner-lg"></span><p>Consultando Base de Datos...</p></div>
+      <div class="loading-box"><span class="loader"></span><p>Sincronizando datos...</p></div>
     {:else}
-      <div class="table-wrap">
+      <div class="table-container">
         <table>
           <thead>
             <tr>
-              <th>ID</th>
+              <th width="80">ID</th>
               <th>Descripción</th>
               <th>Tipo</th>
               <th>Departamento</th>
               {#if isAdmin}<th>Estado</th>{/if}
               <th>Fecha</th>
-              <th>Acciones</th>
+              <th class="text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
             {#each filtered as pqr}
               <tr>
-                <td><span class="id-badge">#{pqr.id_pqr}</span></td>
-                <td>{pqr.descripcion?.slice(0, 35)}...</td>
-                <td><span class="chip">{getLabelTipo(pqr.id_tipo)}</span></td>
-                <td>{getLabelDep(pqr.id_departamento)}</td>
+                <td><span class="id-tag">#{pqr.id_pqr}</span></td>
+                <td class="desc-text" title={pqr.descripcion}>{pqr.descripcion?.slice(0, 50)}...</td>
+                <td><span class="type-badge">{getLabelTipo(pqr.id_tipo)}</span></td>
+                <td class="dep-text">{getLabelDep(pqr.id_departamento)}</td>
                 {#if isAdmin}
-                  <td><span class="status-badge s{pqr.id_estado}">{getLabelEstado(pqr.id_estado)}</span></td>
+                  <td><span class="status-pill s{pqr.id_estado}">{getLabelEstado(pqr.id_estado)}</span></td>
                 {/if}
-                <td>{new Date(pqr.fecha).toLocaleDateString('es-CO')}</td>
+                <td class="date-text">{new Date(pqr.fecha).toLocaleDateString('es-CO')}</td>
                 <td class="actions-cell">
                   {#if isAdmin}
-                    <button class="icon-btn edit-btn" onclick={() => openEdit(pqr)} title="Editar">✎</button>
-                    <button class="icon-btn delete-btn" onclick={() => deletePqr(pqr.id_pqr)} title="Eliminar">✕</button>
+                    <button class="btn-icon edit" onclick={() => openEdit(pqr)} title="Corregir">✎</button>
+                    <button class="btn-icon delete" onclick={() => deletePqr(pqr.id_pqr)} title="Eliminar">✕</button>
                   {:else}
-                    <button class="view-btn" onclick={() => openDetail(pqr)} title="Ver Detalle">👁</button>
+                    <button class="btn-icon view" onclick={() => openDetail(pqr)} title="Ver Resumen">👁</button>
                   {/if}
                 </td>
               </tr>
@@ -186,104 +156,96 @@
       </div>
     {/if}
 
-  {:else if view === 'form'}
-    <div class="container-center">
-      <div class="form-card">
-        <h2>{selected ? 'Actualizar Información' : 'Nueva Solicitud'}</h2>
-        <div class="form-grid">
-          <div class="field full">
-            <label>Descripción <span class="req">*</span></label>
-            <textarea bind:value={form.descripcion} rows="4"></textarea>
-          </div>
-          <div class="field">
-            <label>Tipo</label>
-            <select bind:value={form.id_tipo}>
-              {#each tipos as t}<option value={t.id_tipo}>{t.nombre}</option>{/each}
-            </select>
-          </div>
-          <div class="field">
-            <label>Departamento</label>
-            <select bind:value={form.id_departamento}>
-              {#each departamentos as d}<option value={d.id_departamento}>{d.nombre}</option>{/each}
-            </select>
-          </div>
-          {#if isAdmin}
-            <div class="field">
-              <label>Estado Administrativo</label>
-              <select bind:value={form.id_estado}>
-                {#each estados as e}<option value={e.id_estado}>{e.nombre}</option>{/each}
-              </select>
+  {:else}
+    <div class="form-wrapper">
+        <div class="card">
+            <button class="btn-back" onclick={() => view = 'list'}>← Volver a la lista</button>
+            <div class="card-content">
+                {#if view === 'form'}
+                    <h2>{selected ? 'Editar Registro' : 'Nueva PQR'}</h2>
+                    <div class="form-grid">
+                        <div class="f-full"><label>Descripción</label><textarea bind:value={form.descripcion}></textarea></div>
+                        <div><label>Tipo</label><select bind:value={form.id_tipo}>{#each tipos as t}<option value={t.id_tipo}>{t.nombre}</option>{/each}</select></div>
+                        <div><label>Departamento</label><select bind:value={form.id_departamento}>{#each departamentos as d}<option value={d.id_departamento}>{d.nombre}</option>{/each}</select></div>
+                        {#if isAdmin}
+                            <div><label>Estado</label><select bind:value={form.id_estado}>{#each estados as e}<option value={e.id_estado}>{e.nombre}</option>{/each}</select></div>
+                        {/if}
+                    </div>
+                    <button class="btn-save" onclick={savePqr}>{saving ? 'Guardando...' : 'Guardar Datos'}</button>
+                {:else}
+                    <div class="detail-view">
+                        <h3>Radicado #{selected.id_pqr}</h3>
+                        <p class="detail-desc">{selected.descripcion}</p>
+                        <div class="detail-info">
+                            <p><b>Tipo:</b> {getLabelTipo(selected.id_tipo)}</p>
+                            <p><b>Área:</b> {getLabelDep(selected.id_departamento)}</p>
+                        </div>
+                    </div>
+                {/if}
             </div>
-          {/if}
         </div>
-        <div class="form-actions">
-          <button class="btn-secondary" onclick={() => view = 'list'}>Cancelar</button>
-          <button class="btn-primary" onclick={savePqr}>{saving ? 'Guardando...' : 'Guardar Cambios'}</button>
-        </div>
-      </div>
-    </div>
-
-  {:else if view === 'detail'}
-    <div class="container-center">
-      <div class="detail-card">
-        <div class="detail-header">
-          <h3>Resumen de Trámite #{selected.id_pqr}</h3>
-          <span class="chip">{getLabelTipo(selected.id_tipo)}</span>
-        </div>
-        <div class="text-box">{selected.descripcion}</div>
-        <div class="detail-footer">
-          <p><b>Departamento:</b> {getLabelDep(selected.id_departamento)}</p>
-          <p><b>Fecha:</b> {new Date(selected.fecha).toLocaleString()}</p>
-        </div>
-        <button class="btn-primary full-w" onclick={() => view = 'list'}>Volver a mis trámites</button>
-      </div>
     </div>
   {/if}
 </div>
 
 <style>
-  .module { padding: 30px; }
-  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
-  h1 { font-size: 28px; color: #0f172a; margin: 0; }
-  .subtitle { color: #64748b; font-size: 14px; }
-
-  /* TABLA */
-  .table-wrap { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; }
-  table { width: 100%; border-collapse: collapse; }
-  th { background: #f8fafc; padding: 16px; text-align: left; font-size: 13px; color: #64748b; }
-  td { padding: 16px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+  .module { padding: 40px; font-family: 'Inter', sans-serif; background: #fdfdfd; min-height: 100vh; }
   
-  .actions-cell { display: flex; gap: 10px; }
-  .icon-btn { border: none; background: none; cursor: pointer; font-size: 18px; padding: 5px; transition: 0.2s; }
-  
-  /* Lápiz Amarillo */
-  .edit-btn { color: #fbb03b; }
-  .edit-btn:hover { transform: scale(1.2); }
-  
-  /* X Roja */
-  .delete-btn { color: #ef4444; }
-  .delete-btn:hover { transform: scale(1.2); }
-  
-  /* Ojo Azul */
-  .view-btn { border: none; background: none; cursor: pointer; color: #2563eb; font-size: 18px; }
+  /* HEADER */
+  .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 35px; }
+  h1 { font-size: 30px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -1px; }
+  .subtitle { color: #94a3b8; font-size: 14px; margin-top: 5px; }
 
-  .status-badge { padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 700; background: #fef3c7; color: #92400e; }
-  .id-badge { font-weight: 800; color: #94a3b8; }
-  .chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+  /* TOOLBAR & BUSCADOR PRO */
+  .toolbar { margin-bottom: 25px; }
+  .search-container { position: relative; max-width: 450px; }
+  .search-input { 
+    width: 100%; padding: 14px 14px 14px 45px; border-radius: 14px; border: 1.5px solid #e2e8f0;
+    background: white; font-size: 14px; transition: 0.3s; outline: none; box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+  }
+  .search-input:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1); }
+  .search-icon { position: absolute; left: 16px; top: 50%; transform: translateY(-50%); font-size: 18px; opacity: 0.4; }
 
-  /* CARDS */
-  .container-center { display: flex; justify-content: center; padding: 20px; }
-  .form-card, .detail-card { background: white; padding: 32px; border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); width: 100%; max-width: 600px; border: 1px solid #e2e8f0; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
-  .field.full { grid-column: 1 / -1; }
-  .text-box { background: #f8fafc; padding: 20px; border-radius: 12px; margin: 20px 0; border: 1px solid #e2e8f0; line-height: 1.6; }
+  /* TABLA PROFESIONAL */
+  .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.04); }
+  table { width: 100%; border-collapse: collapse; text-align: left; }
+  th { background: #f8fafc; padding: 18px 20px; font-size: 12px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 1px; }
+  td { padding: 18px 20px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; vertical-align: middle; }
   
-  label { font-size: 13px; font-weight: 700; color: #475569; margin-bottom: 6px; display: block; }
-  textarea, select { width: 100%; padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; background: #fcfcfc; }
+  .id-tag { font-weight: 800; color: #94a3b8; font-size: 13px; }
+  .desc-text { font-weight: 500; color: #1e293b; max-width: 300px; }
+  .type-badge { background: #eff6ff; color: #2563eb; padding: 5px 12px; border-radius: 8px; font-size: 12px; font-weight: 700; }
+  .dep-text { color: #64748b; font-weight: 500; }
+  .date-text { color: #94a3b8; font-family: monospace; }
 
-  .btn-primary { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; cursor: pointer; }
-  .btn-secondary { background: #f1f5f9; border: none; padding: 12px 24px; border-radius: 10px; color: #475569; font-weight: 600; cursor: pointer; }
-  .full-w { width: 100%; margin-top: 20px; }
+  /* ESTADOS DINÁMICOS */
+  .status-pill { padding: 6px 12px; border-radius: 100px; font-size: 11px; font-weight: 800; display: inline-block; }
+  .s1 { background: #fef3c7; color: #92400e; } /* Pendiente - Amarillo */
+  .s2 { background: #dcfce7; color: #166534; } /* Resuelto - Verde */
+  .s3 { background: #dbeafe; color: #1e40af; } /* En Proceso - Azul */
 
-  .toast { position: fixed; bottom: 20px; right: 20px; padding: 15px 25px; border-radius: 12px; color: white; background: #0f172a; z-index: 1000; }
+  /* ACCIONES CON ESPACIADO */
+  .actions-cell { display: flex; gap: 15px; justify-content: center; min-width: 100px; }
+  .btn-icon { background: none; border: none; font-size: 20px; cursor: pointer; transition: 0.2s; padding: 5px; }
+  .btn-icon:hover { transform: scale(1.25); }
+  .edit { color: #fbb03b; }
+  .delete { color: #ef4444; }
+  .view { color: #3b82f6; }
+
+  /* BOTONES */
+  .btn-primary { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.3s; }
+  .btn-primary:hover { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+  
+  /* TOAST */
+  .toast { position: fixed; bottom: 30px; right: 30px; padding: 16px 28px; border-radius: 16px; background: #1e293b; color: white; font-weight: 600; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.2); z-index: 1000; }
+  .toast.error { background: #be123c; }
+
+  /* FORM & CARD */
+  .form-wrapper { display: flex; justify-content: center; padding: 20px; }
+  .card { background: white; width: 100%; max-width: 700px; padding: 40px; border-radius: 24px; border: 1px solid #e2e8f0; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.08); }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 25px 0; }
+  .f-full { grid-column: 1 / -1; }
+  textarea, select { width: 100%; padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: #f8fafc; }
+  .btn-save { width: 100%; background: #0f172a; color: white; padding: 15px; border-radius: 12px; border: none; font-weight: 700; cursor: pointer; }
+  .btn-back { background: none; border: none; color: #64748b; font-weight: 700; cursor: pointer; margin-bottom: 20px; }
 </style>
