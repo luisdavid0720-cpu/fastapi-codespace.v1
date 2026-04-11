@@ -21,7 +21,7 @@
   <div class="login-card">
     <header class="card-header">
       <div class="logo-wrapper">
-        <img src="/logo_cul.jpg" alt="Logo CUL" class="cul-logo" />
+        <img src="/logo_cul.png" alt="Logo CUL" class="cul-logo" />
       </div>
       <div class="header-titles">
         <h2>Corporación Universitaria Latinoamericana</h2>
