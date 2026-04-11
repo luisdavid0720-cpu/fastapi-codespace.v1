@@ -3,10 +3,9 @@
   import { currentUser } from '../../stores/auth.js'
   import { api } from '../api.js'
 
-  // --- ESTADOS ---
   let pqrs = $state([])
   let loading = $state(true)
-  let view = $state('list') // 'list' | 'detail' | 'form'
+  let view = $state('list') 
   let selected = $state(null)
   let saving = $state(false)
   let searchText = $state('')
@@ -14,17 +13,13 @@
 
   let tipos = $state([]), estados = $state([]), departamentos = $state([])
   
-  // REGLA DE ORO: Rol 1 es Admin, Rol 2 es Usuario
-  let isAdmin = $derived($currentUser?.id_rol === 1)
-
   function defaultForm() {
-    return { descripcion: '', id_tipo: '', id_departamento: '', id_estado: 1 }
+    return { descripcion: '', id_tipo: '', id_departamento: '' }
   }
   let form = $state(defaultForm())
 
-  // Filtrado: Estudiante ve lo suyo, Admin ve todo
   let filtered = $derived(pqrs.filter(p => {
-    const belongsToMe = isAdmin || Number(p.id_usuario) === Number($currentUser?.id_usuario)
+    const belongsToMe = Number(p.id_usuario) === Number($currentUser?.id_usuario)
     const matchText = !searchText || p.descripcion?.toLowerCase().includes(searchText.toLowerCase())
     return belongsToMe && matchText
   }))
@@ -36,53 +31,37 @@
         api.getPqrs(), api.getTiposPqr(), api.getEstados(), api.getDepartamentos()
       ])
       pqrs = p.value?.resultado || []
-      tipos = t.value?.resultado || t.value || []
-      estados = e.value?.resultado || e.value || []
-      departamentos = d.value?.resultado || d.value || []
-    } catch(e) { console.error("Error de carga:", e) }
+      tipos = t.value || []
+      estados = e.value || []
+      departamentos = d.value || []
+    } catch(e) { console.error(e) }
     loading = false
   })
 
-  // --- NAVEGACIÓN ---
   function openCreate() { form = defaultForm(); view = 'form' }
-  function openEdit(pqr) { form = { ...pqr }; selected = pqr; view = 'form' }
   function openDetail(pqr) { selected = pqr; view = 'detail' }
 
-  // --- ACCIONES ---
   async function savePqr() {
     if (!form.descripcion || !form.id_tipo || !form.id_departamento) {
-      showToast('⚠️ Completa los campos obligatorios'); return;
+      showToast('⚠️ Completa todos los campos'); return;
     }
     saving = true
     try {
       const payload = {
         ...form,
-        id_pqr: selected ? selected.id_pqr : 0,
-        id_usuario: selected ? selected.id_usuario : $currentUser?.id_usuario,
-        id_estado: form.id_estado || 1,
+        id_pqr: 0,
+        fecha: new Date().toISOString(),
+        id_usuario: $currentUser?.id_usuario,
+        id_estado: 1, 
         id_prioridad: 1
       }
-      if (selected) await api.updatePqr(selected.id_pqr, payload);
-      else await api.createPqr(payload);
-      
-      const data = await api.getPqrs();
-      pqrs = data.resultado || [];
-      view = 'list';
-      showToast('✅ Operación exitosa');
-    } catch(e) { showToast('❌ Error al procesar') }
+      await api.createPqr(payload)
+      const data = await api.getPqrs()
+      pqrs = data.resultado || []
+      view = 'list'
+      showToast('✅ PQR enviada con éxito')
+    } catch(e) { showToast('❌ Error al enviar') }
     saving = false
-  }
-
-  async function deletePqr(id) {
-    // CUADRO DE SEGURIDAD
-    const confirmar = confirm("🚨 ¿ESTÁS SEGURO?\nEsta acción eliminará la PQR permanentemente y no se puede deshacer.");
-    if (!confirmar) return;
-
-    try {
-      await api.deletePqr(id);
-      pqrs = pqrs.filter(p => p.id_pqr !== id);
-      showToast('🗑️ PQR eliminada correctamente');
-    } catch (e) { showToast('❌ Error al eliminar'); }
   }
 
   function showToast(msg) { toastMsg = msg; setTimeout(() => toastMsg = '', 3000) }
@@ -98,16 +77,16 @@
   <header class="page-header">
     <div class="header-content">
       <h1>
-        {#if view === 'list'}{isAdmin ? 'Administración de PQRs' : 'Mis Solicitudes'}
+        {#if view === 'list'}Mis Solicitudes
         {:else if view === 'detail'}Detalle del Radicado
-        {:else}{selected ? 'Editar PQR' : 'Nueva Solicitud'}{/if}
+        {:else}Nueva Solicitud{/if}
       </h1>
-      <p class="subtitle">Gestión centralizada de trámites institucionales</p>
+      <p class="subtitle">Gestiona y consulta el estado de tus trámites institucionales</p>
     </div>
     <div class="header-actions">
-      {#if view === 'list' && !isAdmin}
-        <button class="btn-primary" onclick={openCreate}>＋ Crear PQR</button>
-      {:else if view !== 'list'}
+      {#if view === 'list'}
+        <button class="btn-create" onclick={openCreate}>＋ Crear PQR</button>
+      {:else}
         <button class="btn-back" onclick={() => view = 'list'}>← Volver</button>
       {/if}
     </div>
@@ -115,46 +94,37 @@
 
   {#if view === 'list'}
     <div class="toolbar">
-      <div class="search-wrap">
+      <div class="search-container">
         <span class="search-icon">🔍</span>
         <input type="text" class="modern-input" placeholder="Buscar por palabra clave..." bind:value={searchText} />
       </div>
     </div>
 
     {#if loading}
-      <div class="loader-wrap"><span class="spinner"></span><p>Sincronizando con la base de datos...</p></div>
+      <div class="loader-wrap"><span class="spinner"></span><p>Sincronizando...</p></div>
     {:else}
       <div class="table-container">
         <table>
           <thead>
             <tr>
               <th>ID</th>
-              <th>Descripción</th>
+              <th>Descripción Breve</th>
               <th>Categoría</th>
-              {#if isAdmin}<th>Estado</th>{/if}
+              <th>Estado</th>
               <th>Fecha</th>
-              <th class="text-center">Acciones</th>
+              <th class="text-center">Ver</th>
             </tr>
           </thead>
           <tbody>
             {#each filtered as pqr}
               <tr>
                 <td><span class="id-tag">#{pqr.id_pqr}</span></td>
-                <td class="text-main">{pqr.descripcion?.slice(0, 40)}...</td>
+                <td class="text-main">{pqr.descripcion?.slice(0, 45)}...</td>
                 <td><span class="type-chip">{getLabelTipo(pqr.id_tipo)}</span></td>
-                {#if isAdmin}
-                  <td><span class="status-pill s{pqr.id_estado}">{getLabelEstado(pqr.id_estado)}</span></td>
-                {/if}
+                <td><span class="status-pill s{pqr.id_estado}">{getLabelEstado(pqr.id_estado)}</span></td>
                 <td class="date-text">{new Date(pqr.fecha).toLocaleDateString('es-CO')}</td>
                 <td class="text-center">
-                  <div class="actions-group">
-                    {#if isAdmin}
-                      <button class="icon-btn edit" onclick={() => openEdit(pqr)} title="Editar">✎</button>
-                      <button class="icon-btn delete" onclick={() => deletePqr(pqr.id_pqr)} title="Borrar">✕</button>
-                    {:else}
-                      <button class="icon-btn view" onclick={() => openDetail(pqr)} title="Ver Detalle">👁</button>
-                    {/if}
-                  </div>
+                  <button class="view-btn" onclick={() => openDetail(pqr)}>👁</button>
                 </td>
               </tr>
             {/each}
@@ -179,8 +149,14 @@
             <div class="content-box">{selected.descripcion}</div>
           </div>
           <div class="info-grid">
-            <div class="info-item"><span class="label">Categoría</span><span class="value">{getLabelTipo(selected.id_tipo)}</span></div>
-            <div class="info-item"><span class="label">Área</span><span class="value">{getLabelDep(selected.id_departamento)}</span></div>
+            <div class="info-item">
+              <span class="label">Categoría</span>
+              <span class="value">{getLabelTipo(selected.id_tipo)}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Área Destino</span>
+              <span class="value">{getLabelDep(selected.id_departamento)}</span>
+            </div>
           </div>
         </div>
       </div>
@@ -190,18 +166,30 @@
     <div class="center-container">
       <div class="card animate-up">
         <div class="form-padding">
-          <h2 class="card-title">{selected ? 'Editar Registro' : 'Nueva Solicitud'}</h2>
-          <div class="field full"><label class="section-label">Descripción *</label><textarea bind:value={form.descripcion}></textarea></div>
+          <h2 class="card-title">Radicar nueva PQR</h2>
+          <div class="field">
+            <label class="section-label">¿Qué sucedió? <small>(Descripción)</small></label>
+            <textarea bind:value={form.descripcion} placeholder="Explica detalladamente tu solicitud..."></textarea>
+          </div>
           <div class="field-group">
-            <div class="field"><label class="section-label">Tipo</label><select bind:value={form.id_tipo}>{#each tipos as t}<option value={t.id_tipo}>{t.nombre}</option>{/each}</select></div>
-            <div class="field"><label class="section-label">Departamento</label><select bind:value={form.id_departamento}>{#each departamentos as d}<option value={d.id_departamento}>{d.nombre}</option>{/each}</select></div>
+            <div class="field">
+              <label class="section-label">Tipo</label>
+              <select bind:value={form.id_tipo}>
+                <option value="">Selecciona...</option>
+                {#each tipos as t}<option value={t.id_tipo}>{t.nombre}</option>{/each}
+              </select>
+            </div>
+            <div class="field">
+              <label class="section-label">Departamento</label>
+              <select bind:value={form.id_departamento}>
+                <option value="">Selecciona...</option>
+                {#each departamentos as d}<option value={d.id_departamento}>{d.nombre}</option>{/each}
+              </select>
+            </div>
           </div>
-          {#if isAdmin}
-            <div class="field"><label class="section-label">Estado Administrativo</label><select bind:value={form.id_estado}>{#each estados as e}<option value={e.id_estado}>{e.nombre}</option>{/each}</select></div>
-          {/if}
-          <div class="form-actions-row">
-            <button class="btn-send" onclick={savePqr}>{saving ? 'Guardando...' : 'Confirmar Datos'}</button>
-          </div>
+          <button class="btn-send" onclick={savePqr} disabled={saving}>
+            {saving ? 'Procesando...' : '🚀 Enviar Solicitud'}
+          </button>
         </div>
       </div>
     </div>
@@ -209,62 +197,73 @@
 </div>
 
 <style>
-  .module { padding: 30px 40px; font-family: 'Inter', sans-serif; background: #fcfdfe; min-height: 100vh; }
-  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; width: 100%; }
-  h1 { font-size: 28px; font-weight: 800; color: #0f172a; margin: 0; }
-  .subtitle { color: #64748b; font-size: 14px; }
+  .module { padding: 40px; font-family: 'Inter', sans-serif; background: #fcfdfe; min-height: 100vh; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
+  h1 { font-size: 32px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -1px; }
+  .subtitle { color: #64748b; font-size: 15px; }
 
-  /* TOOLBAR */
+  /* BOTONES */
+  .btn-create { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+  .btn-back { background: white; border: 1.5px solid #e2e8f0; padding: 10px 20px; border-radius: 10px; color: #475569; font-weight: 700; cursor: pointer; }
+
+  /* TOOLBAR & SEARCH */
   .toolbar { margin-bottom: 25px; }
-  .search-wrap { position: relative; max-width: 400px; }
+  .search-container { position: relative; max-width: 400px; }
   .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.4; }
-  .modern-input { width: 100%; padding: 12px 12px 12px 42px; border-radius: 12px; border: 1.5px solid #e2e8f0; outline: none; }
+  .modern-input { width: 100%; padding: 12px 12px 12px 42px; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 14px; outline: none; transition: 0.3s; }
+  .modern-input:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.05); }
 
-  /* TABLA */
+  /* TABLE */
   .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
   table { width: 100%; border-collapse: collapse; }
-  th { background: #f8fafc; padding: 16px 20px; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; }
-  td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; font-size: 14px; }
+  th { background: #f8fafc; padding: 18px 20px; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #f1f5f9; }
+  td { padding: 18px 20px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
+  .view-btn { background: none; border: none; font-size: 20px; cursor: pointer; color: #3b82f6; transition: 0.2s; }
+  .view-btn:hover { transform: scale(1.3); }
+
+  /* CARD SYSTEM (CORREGIDO) */
+  .center-container { display: flex; justify-content: center; padding: 20px 0 60px; }
+  .card { 
+    background: white; width: 100%; max-width: 680px; 
+    border-radius: 32px; border: 1px solid #e2e8f0; 
+    box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1); overflow: hidden;
+  }
   
-  .actions-group { display: flex; gap: 12px; justify-content: center; }
-  .icon-btn { background: none; border: none; font-size: 18px; cursor: pointer; transition: 0.2s; }
-  .icon-btn:hover { transform: scale(1.2); }
-  .edit { color: #fbb03b; }
-  .delete { color: #ef4444; }
-  .view { color: #2563eb; }
+  /* PADDING PARA EL FORMULARIO */
+  .form-padding { padding: 45px; }
+  .card-title { font-size: 26px; font-weight: 800; color: #0f172a; margin-bottom: 30px; }
 
-  /* CARDS */
-  .center-container { display: flex; justify-content: center; padding: 20px 0; }
-  .card { background: white; width: 100%; max-width: 650px; border-radius: 30px; border: 1px solid #e2e8f0; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1); overflow: hidden; }
-  .form-padding { padding: 40px; }
-  .card-top { padding: 30px 40px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; }
-  .card-body { padding: 40px; }
-  .content-box { background: #f8fafc; padding: 20px; border-radius: 15px; border: 1px solid #edf2f7; line-height: 1.6; }
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; }
-  .label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
-  .value { font-weight: 700; color: #1e293b; display: block; }
+  /* ESTILOS DEL DETALLE (CORREGIDO) */
+  .card-top { padding: 35px 45px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; }
+  .card-body { padding: 45px; }
+  .badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .id-large { font-size: 24px; font-weight: 800; color: #0f172a; }
+  .date-sub { color: #94a3b8; font-size: 13px; margin: 0; }
+  
+  .info-section { margin-bottom: 30px; }
+  .content-box { background: #f8fafc; padding: 25px; border-radius: 20px; border: 1px solid #edf2f7; line-height: 1.7; font-size: 15px; color: #334155; }
 
-  /* FORM */
-  .field { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .info-item { display: flex; flex-direction: column; gap: 6px; }
+  .label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+  .value { font-weight: 700; color: #1e293b; font-size: 15px; }
+
+  /* FORM FIELDS */
+  .field { display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; }
   .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .section-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; }
-  textarea, select { padding: 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; font-family: inherit; }
-  textarea { min-height: 100px; resize: none; }
-
-  /* BUTTONS */
-  .btn-primary { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; }
-  .btn-send { width: 100%; background: #2563eb; color: white; border: none; padding: 16px; border-radius: 14px; font-weight: 700; cursor: pointer; margin-top: 10px; }
-  .btn-back { background: #f1f5f9; color: #475569; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; }
+  .section-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+  textarea, select { padding: 15px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: #fcfcfc; font-size: 14px; outline: none; }
+  textarea { min-height: 120px; resize: none; }
+  
+  .btn-send { width: 100%; background: #2563eb; color: white; border: none; padding: 18px; border-radius: 16px; font-weight: 800; font-size: 16px; cursor: pointer; margin-top: 15px; }
 
   /* PILLS */
-  .status-pill { padding: 5px 12px; border-radius: 100px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+  .id-tag { color: #94a3b8; font-weight: 700; font-family: monospace; }
+  .status-pill { padding: 6px 14px; border-radius: 100px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
   .s1 { background: #fef3c7; color: #92400e; }
-  .type-chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 11px; }
-  .id-tag { color: #94a3b8; font-weight: 700; }
+  .type-chip { background: #eff6ff; color: #2563eb; padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; }
 
-  .toast { position: fixed; bottom: 20px; right: 20px; background: #0f172a; color: white; padding: 12px 24px; border-radius: 12px; z-index: 100; }
-  .spinner { width: 30px; height: 30px; border: 3px solid #f1f5f9; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; display: block; margin: 20px auto; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .animate-up { animation: slideUp 0.3s ease-out; }
-  @keyframes slideUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+  .toast { position: fixed; bottom: 30px; right: 30px; background: #0f172a; color: white; padding: 16px 28px; border-radius: 16px; font-weight: 600; z-index: 100; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+  .animate-up { animation: slideUp 0.4s ease-out; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
 </style>
