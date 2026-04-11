@@ -7,13 +7,15 @@
   let { page = $bindable('home') } = $props()
   let loading = $state(false);
   
-  // Seguridad: Solo el rol 1 accede a la analítica avanzada
+  // Seguridad: Solo el rol 1 accede a la analítica avanzada y gestión de usuarios
   let isAdmin = $derived($currentUser?.id_rol === 1)
 
+  // NUEVO: Agregamos el ítem "Analítica" restringido para administradores
   const navItems = [
-    { id: 'home',     label: 'Inicio',   icon: '⊞', always: true },
-    { id: 'pqrs',     label: 'PQRS',     icon: '◈', always: true },
-    { id: 'usuarios', label: 'Usuarios', icon: '◉', admin: true  },
+    { id: 'home',      label: 'Inicio',    icon: '⊞', always: true },
+    { id: 'pqrs',      label: 'PQRS',      icon: '◈', always: true },
+    { id: 'usuarios',  label: 'Usuarios',  icon: '◉', admin: true  },
+    { id: 'analitica', label: 'Analítica', icon: '📊', admin: true  },
   ]
 
   function handleLogout() {
@@ -82,11 +84,22 @@
       </div>
 
     {:else if page === 'home'}
-      <div class="home-wrapper">
-        <HomeModule onnavigate={(p) => page = p} />
+      <div class="full-width-module">
+        <HomeModule onnavigate={(p) => navigateTo(p)} />
       </div>
 
-      {#if isAdmin}
+    {:else if page === 'pqrs'}
+      <div class="full-width-module">
+        <PqrModule />
+      </div>
+
+    {:else if page === 'usuarios' && isAdmin}
+      <div class="full-width-module">
+        <UsuariosModule />
+      </div>
+
+    {:else if page === 'analitica' && isAdmin}
+      <div class="full-width-module">
         <section class="powerbi-section">
           <div class="section-header">
             <div class="header-info">
@@ -103,23 +116,13 @@
             <iframe 
               title="gestion pqrs" 
               width="100%" 
-              height="541.25" 
+              height="650" 
               src="https://app.powerbi.com/view?r=eyJrIjoiZmFlM2Y3YzEtMDIwNS00OGM2LTk4OGUtMzc2YjgwZWYzNmE0IiwidCI6ImFjYTUxNjMxLTAwZmUtNDkwZC05MWFiLTE2M2VmODcyNjBlZSIsImMiOjR9" 
               frameborder="0" 
               allowFullScreen="true">
             </iframe>
           </div>
         </section>
-      {/if}
-
-    {:else if page === 'pqrs'}
-      <div class="module-wrapper">
-        <PqrModule />
-      </div>
-
-    {:else if page === 'usuarios' && isAdmin}
-      <div class="module-wrapper">
-        <UsuariosModule />
       </div>
 
     {:else}
@@ -240,15 +243,13 @@
     padding-bottom: 40px;
   }
 
-  /* ESTO ES LO QUE ARREGLA EL ANCHO */
-  .home-wrapper, .module-wrapper {
+  .full-width-module {
     width: 100%;
-    padding: 24px 24px 0 24px; /* 24px a los lados para igualar al Power BI */
+    padding: 24px 24px 0 24px;
     box-sizing: border-box;
   }
 
   .powerbi-section {
-    margin: 24px; /* Mismo margen que el wrapper superior */
     background: white;
     border-radius: 16px;
     border: 1px solid rgba(0,0,0,0.05);
@@ -299,8 +300,9 @@
   .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
+  .no-access { padding: 40px; color: #666; text-align: center; font-weight: 500;}
+
   @media (max-width: 768px) {
-    .home-wrapper, .module-wrapper { padding: 12px; }
-    .powerbi-section { margin: 12px; }
+    .full-width-module { padding: 12px; }
   }
 </style>
