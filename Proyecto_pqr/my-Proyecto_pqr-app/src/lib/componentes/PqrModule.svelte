@@ -177,8 +177,8 @@
                 <th>Usuario</th>
                 <th>Departamento</th>
                 <th>Prioridad</th>
+                <th>Estado</th>
               {/if}
-              <th>Estado</th>
               <th>Fecha</th>
               <th class="text-center">Acciones</th>
             </tr>
@@ -193,8 +193,8 @@
                   <td class="text-usuario">{getLabelUsuario(pqr.id_usuario)}</td>
                   <td class="text-dep">{getLabelDep(pqr.id_departamento)}</td>
                   <td><span class="prio-chip {prioridadColor(pqr.id_prioridad)}">{getLabelPrioridad(pqr.id_prioridad)}</span></td>
+                  <td><span class="status-pill s{pqr.id_estado}">{getLabelEstado(pqr.id_estado)}</span></td>
                 {/if}
-                <td><span class="status-pill s{pqr.id_estado}">{getLabelEstado(pqr.id_estado)}</span></td>
                 <td class="date-text">{new Date(pqr.fecha).toLocaleDateString('es-CO')}</td>
                 <td class="text-center actions-cell">
                   {#if isAdmin}
