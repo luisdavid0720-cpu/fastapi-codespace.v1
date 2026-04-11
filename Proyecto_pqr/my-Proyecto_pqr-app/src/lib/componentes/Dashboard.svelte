@@ -73,9 +73,14 @@
       <div class="user-card">
         <div class="avatar">{$currentUser?.nombre?.charAt(0)?.toUpperCase() || '?'}</div>
         <div class="user-info">
-          <p class="user-name">{$currentUser?.nombre || 'Usuario'}</p>
-          <p class="user-role">{isAdmin ? 'Administrador' : 'Usuario'}</p>
-        </div>
+  <p class="user-name">{$currentUser?.nombre || 'Usuario'}</p>
+  
+  <p style="color: #fbb03b; font-size: 10px; font-weight: bold; margin: 0;">
+    DEBUG ID: {$currentUser?.id_usuario ?? 'SIN ID'}
+  </p>
+
+  <p class="user-role">{isAdmin ? 'Administrador' : 'Usuario'}</p>
+</div>
       </div>
       <button class="btn-logout" onclick={handleLogout}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
