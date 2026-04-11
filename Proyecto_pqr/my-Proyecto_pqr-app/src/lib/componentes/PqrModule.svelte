@@ -9,6 +9,8 @@
   let selected = $state(null)
   let saving = $state(false)
   let searchText = $state('')
+  let filterEstado = $state('')
+  let filterTipo = $state('')
   let toastMsg = $state('')
   let editForm = $state(null)
   let deleting = $state(false)
@@ -23,11 +25,17 @@
  
   let isAdmin = $derived($currentUser?.id_rol === 1)
  
-  let filtered = $derived(pqrs.filter(p => {
-    const belongsToMe = isAdmin || Number(p.id_usuario) === Number($currentUser?.id_usuario)
-    const matchText = !searchText || p.descripcion?.toLowerCase().includes(searchText.toLowerCase())
-    return belongsToMe && matchText
-  }))
+  let filtered = $derived(
+    pqrs
+      .filter(p => {
+        const belongsToMe = isAdmin || Number(p.id_usuario) === Number($currentUser?.id_usuario)
+        const matchText = !searchText || p.descripcion?.toLowerCase().includes(searchText.toLowerCase())
+        const matchEstado = !filterEstado || String(p.id_estado) === String(filterEstado)
+        const matchTipo = !filterTipo || String(p.id_tipo) === String(filterTipo)
+        return belongsToMe && matchText && matchEstado && matchTipo
+      })
+      .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
+  )
  
   onMount(async () => {
     loading = true
@@ -36,12 +44,12 @@
         api.getPqrs(), api.getTiposPqr(), api.getEstados(),
         api.getDepartamentos(), api.getPrioridades(), api.getUsuarios()
       ])
-      pqrs         = p.value?.resultado  || []
-      tipos        = t.value             || []
-      estados      = e.value             || []
-      departamentos= d.value             || []
-      prioridades  = pr.value            || []
-      usuarios     = u.value?.resultado  || u.value || []
+      pqrs          = p.value?.resultado || []
+      tipos         = t.value            || []
+      estados       = e.value            || []
+      departamentos = d.value            || []
+      prioridades   = pr.value           || []
+      usuarios      = u.value?.resultado || u.value || []
     } catch(e) { console.error(e) }
     loading = false
   })
@@ -112,19 +120,18 @@
  
   function showToast(msg) { toastMsg = msg; setTimeout(() => toastMsg = '', 3000) }
  
-  const getLabelEstado    = (id) => estados.find(e => e.id_estado == id)?.nombre          || 'PENDIENTE'
-  const getLabelTipo      = (id) => tipos.find(t => t.id_tipo == id)?.nombre               || '—'
-  const getLabelDep       = (id) => departamentos.find(d => d.id_departamento == id)?.nombre || '—'
-  const getLabelPrioridad = (id) => prioridades.find(p => p.id_prioridad == id)?.nombre    || '—'
+  const getLabelEstado    = (id) => estados.find(e => e.id_estado == id)?.nombre             || 'PENDIENTE'
+  const getLabelTipo      = (id) => tipos.find(t => t.id_tipo == id)?.nombre                  || '—'
+  const getLabelDep       = (id) => departamentos.find(d => d.id_departamento == id)?.nombre  || '—'
+  const getLabelPrioridad = (id) => prioridades.find(p => p.id_prioridad == id)?.nombre       || '—'
   const getLabelUsuario   = (id) => {
     const u = usuarios.find(u => u.id_usuario == id)
     return u ? (u.nombre || u.correo || `#${id}`) : `#${id}`
   }
- 
   const prioridadColor = (id) => {
-    const nombre = getLabelPrioridad(id)?.toLowerCase()
-    if (nombre.includes('alta') || nombre.includes('urgen') || nombre.includes('crít')) return 'prio-alta'
-    if (nombre.includes('media')) return 'prio-media'
+    const n = getLabelPrioridad(id)?.toLowerCase()
+    if (n.includes('alta') || n.includes('urgen') || n.includes('crít') || n.includes('muy')) return 'prio-alta'
+    if (n.includes('media')) return 'prio-media'
     return 'prio-baja'
   }
 </script>
@@ -161,6 +168,24 @@
         <span class="search-icon">🔍</span>
         <input type="text" class="modern-input" placeholder="Buscar por palabra clave..." bind:value={searchText} />
       </div>
+      {#if isAdmin}
+        <select class="filter-select" bind:value={filterEstado}>
+          <option value="">Todos los estados</option>
+          {#each estados as e}
+            <option value={e.id_estado}>{e.nombre}</option>
+          {/each}
+        </select>
+        <select class="filter-select" bind:value={filterTipo}>
+          <option value="">Todas las categorías</option>
+          {#each tipos as t}
+            <option value={t.id_tipo}>{t.nombre}</option>
+          {/each}
+        </select>
+      {/if}
+    </div>
+ 
+    <div class="results-count">
+      {filtered.length} {filtered.length === 1 ? 'solicitud encontrada' : 'solicitudes encontradas'}
     </div>
  
     {#if loading}
@@ -223,6 +248,11 @@
                 </td>
               </tr>
             {/each}
+            {#if filtered.length === 0}
+              <tr>
+                <td colspan="9" class="empty-row">No se encontraron solicitudes</td>
+              </tr>
+            {/if}
           </tbody>
         </table>
       </div>
@@ -346,17 +376,25 @@
   .btn-create { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
   .btn-back { background: white; border: 1.5px solid #e2e8f0; padding: 10px 20px; border-radius: 10px; color: #475569; font-weight: 700; cursor: pointer; }
  
-  .toolbar { margin-bottom: 25px; }
-  .search-container { position: relative; max-width: 400px; }
+  /* Toolbar */
+  .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+  .search-container { position: relative; flex: 1; min-width: 200px; max-width: 360px; }
   .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.4; }
-  .modern-input { width: 100%; padding: 12px 12px 12px 42px; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 14px; outline: none; transition: 0.3s; }
+  .modern-input { width: 100%; padding: 11px 12px 11px 42px; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 14px; outline: none; transition: 0.3s; background: white; }
   .modern-input:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,0.05); }
+  .filter-select { padding: 11px 14px; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 14px; outline: none; background: white; color: #334155; cursor: pointer; transition: 0.2s; }
+  .filter-select:focus { border-color: #2563eb; }
  
+  /* Contador */
+  .results-count { font-size: 13px; color: #94a3b8; font-weight: 500; margin-bottom: 16px; }
+ 
+  /* Table */
   .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
   table { width: 100%; border-collapse: collapse; }
   th { background: #f8fafc; padding: 14px 16px; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
   td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; font-size: 13px; color: #334155; }
   tr:last-child td { border-bottom: none; }
+  .empty-row { text-align: center; color: #94a3b8; padding: 40px !important; }
  
   .text-usuario { font-weight: 600; color: #1e293b; }
   .text-dep { color: #475569; font-size: 12px; }
@@ -372,7 +410,7 @@
   .delete-btn:hover { background: #dc2626; color: white; transform: scale(1.1); }
   .delete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
  
-  /* Pills y chips */
+  /* Pills */
   .id-tag { color: #94a3b8; font-weight: 700; font-family: monospace; font-size: 12px; }
   .type-chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 11px; white-space: nowrap; }
   .status-pill { padding: 5px 12px; border-radius: 100px; font-size: 10px; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
@@ -380,7 +418,6 @@
   .s2  { background: #dbeafe; color: #1e40af; }
   .s3  { background: #d1fae5; color: #065f46; }
   .s4  { background: #e0e7ff; color: #3730a3; }
- 
   .prio-chip { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; white-space: nowrap; }
   .prio-alta  { background: #fef2f2; color: #dc2626; }
   .prio-media { background: #fff7ed; color: #c2410c; }
@@ -419,6 +456,9 @@
     .module { padding: 16px; }
     .page-header { flex-direction: column; gap: 12px; }
     h1 { font-size: 22px; }
+    .toolbar { flex-direction: column; align-items: stretch; }
+    .search-container { max-width: 100%; }
+    .filter-select { width: 100%; }
     table { min-width: 700px; }
     th, td { padding: 10px 12px; font-size: 11px; }
     .form-padding, .card-top, .card-body { padding: 24px; }
