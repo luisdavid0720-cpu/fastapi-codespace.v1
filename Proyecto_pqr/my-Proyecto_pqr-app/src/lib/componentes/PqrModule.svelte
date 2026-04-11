@@ -14,7 +14,6 @@
   let filterEstado = $state('')
   let tipos = $state([]), estados = $state([]), departamentos = $state([]), prioridades = $state([])
   
-  // Determinamos el rol una sola vez para usarlo en todo el componente
   let isAdmin = $derived($currentUser?.id_rol === 1)
 
   function defaultForm() {
@@ -23,23 +22,18 @@
       fecha: new Date().toISOString().slice(0,16),
       id_usuario: $currentUser?.id_usuario || 1,
       id_tipo: '', 
-      id_estado: 1, // Por defecto: Pendiente
+      id_estado: 1, 
       id_departamento: '', 
-      id_prioridad: 1 // Por defecto: Baja (para que el usuario no tenga que elegirla)
+      id_prioridad: 1 
     }
   }
 
   let form = $state(defaultForm())
 
-  // FILTRO DE SEGURIDAD: Solo el admin ve todo. El usuario solo ve sus PQRs.
   let filtered = $derived(pqrs.filter(p => {
-    // 1. Filtro por Rol (Privacidad)
     const belongsToMe = isAdmin || p.id_usuario === $currentUser?.id_usuario
-    
-    // 2. Filtros de búsqueda y estado
     const matchText = !searchText || p.descripcion?.toLowerCase().includes(searchText.toLowerCase())
     const matchEstado = !filterEstado || p.id_estado == filterEstado
-    
     return belongsToMe && matchText && matchEstado
   }))
 
@@ -65,16 +59,10 @@
   function openDetail(pqr) { selected = pqr; view = 'detail' }
 
   async function savePqr() {
-    // Si no es admin, forzamos valores de control internos
-    if (!isAdmin) {
-      form.id_prioridad = 1; // El usuario no asigna prioridad
-      form.id_estado = 1;    // Siempre entra como pendiente
-    }
-
+    if (!isAdmin) { form.id_prioridad = 1; form.id_estado = 1; }
     if (!form.descripcion || !form.id_tipo || !form.id_departamento) {
       showToast('Completa los campos obligatorios', 'error'); return
     }
-    
     saving = true
     try {
       const payload = {
@@ -88,10 +76,10 @@
       }
       if (selected) {
         await api.updatePqr(selected.id_pqr, payload)
-        showToast('PQR actualizada')
+        showToast('Solicitud actualizada')
       } else {
         await api.createPqr(payload)
-        showToast('PQR enviada correctamente')
+        showToast('Solicitud enviada correctamente')
       }
       await loadAll(); view = 'list'
     } catch(e) { showToast('Error al guardar', 'error') }
@@ -121,7 +109,7 @@
 
 <div class="module">
   {#if toastMsg}
-    <div class="toast {toastType}" role="alert">{toastMsg}</div>
+    <div class="toast {toastType}">{toastMsg}</div>
   {/if}
 
   <div class="page-header">
@@ -132,20 +120,20 @@
         {:else}Detalle de Solicitud{/if}
       </h1>
       <p class="subtitle">
-        {#if view === 'list'}{isAdmin ? 'Panel de control administrativo' : 'Historial personal de peticiones, quejas y reclamos'}
-        {:else}Completa la información para procesar tu solicitud{/if}
+        {#if view === 'list'}{isAdmin ? 'Panel administrativo CUL' : 'Historial de tus trámites institucionales'}
+        {:else}Completa los datos para procesar tu requerimiento{/if}
       </p>
     </div>
     <div class="header-actions">
       {#if view !== 'list'}<button class="btn-secondary" onclick={() => view = 'list'}>← Volver</button>{/if}
-      {#if view === 'list'}<button class="btn-primary" onclick={openCreate}>＋ Crear Solicitud</button>{/if}
+      {#if view === 'list'}<button class="btn-primary" onclick={openCreate}>＋ Radicar PQR</button>{/if}
     </div>
   </div>
 
   {#if view === 'list'}
     <div class="toolbar">
       <div class="search-wrap">
-        <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        <span class="search-icon">🔍</span>
         <input class="search-input" type="text" placeholder="Buscar en mis PQRs…" bind:value={searchText} />
       </div>
       <select class="filter-select" bind:value={filterEstado}>
@@ -155,13 +143,7 @@
     </div>
 
     {#if loading}
-      <div class="loading-state"><span class="spinner-lg"></span><p>Cargando información…</p></div>
-    {:else if filtered.length === 0}
-      <div class="empty-state">
-        <div class="empty-icon">◈</div>
-        <p>{searchText ? 'No se encontraron coincidencias' : 'Aún no has registrado ninguna solicitud'}</p>
-        <button class="btn-primary" onclick={openCreate}>Radicar mi primera PQR</button>
-      </div>
+      <div class="loading-state"><span class="spinner-lg"></span><p>Sincronizando información...</p></div>
     {:else}
       <div class="table-wrap">
         <table>
@@ -170,8 +152,7 @@
               <th>ID</th>
               <th>Descripción</th>
               <th>Tipo</th>
-              {#if isAdmin}<th>Departamento</th>{/if}
-              {#if isAdmin}<th>Prioridad</th>{/if}
+              {#if isAdmin}<th>Dpto</th>{/if}
               <th>Estado</th>
               <th>Fecha</th>
               <th>Acciones</th>
@@ -181,22 +162,16 @@
             {#each filtered as pqr (pqr.id_pqr)}
               <tr onclick={() => openDetail(pqr)} class="clickable-row">
                 <td><span class="id-badge">#{pqr.id_pqr}</span></td>
-                <td class="desc-cell">{pqr.descripcion?.slice(0,60)}...</td>
+                <td class="desc-cell">{pqr.descripcion?.slice(0,55)}...</td>
                 <td><span class="chip">{getLabelTipo(pqr.id_tipo)}</span></td>
-                
                 {#if isAdmin}<td>{getLabelDep(pqr.id_departamento)}</td>{/if}
-                {#if isAdmin}<td><span class="prio p{pqr.id_prioridad}">{getLabelPrio(pqr.id_prioridad)}</span></td>{/if}
-                
                 <td><span class="status-badge s{pqr.id_estado}">{getLabelEstado(pqr.id_estado)}</span></td>
                 <td class="date-cell">{new Date(pqr.fecha).toLocaleDateString('es-CO')}</td>
                 <td onclick={(e) => e.stopPropagation()}>
                   <div class="row-actions">
-                    <button class="icon-btn edit" title="Ver/Editar" onclick={(e) => { e.stopPropagation(); openEdit(pqr) }}>
-                       {isAdmin ? '✎' : '👁'}
+                    <button class="icon-btn edit" onclick={(e) => { e.stopPropagation(); openEdit(pqr) }}>
+                      {isAdmin ? '✎' : '👁'}
                     </button>
-                    {#if isAdmin}
-                      <button class="icon-btn delete" onclick={(e) => { e.stopPropagation(); deletePqr(pqr.id_pqr) }}>✕</button>
-                    {/if}
                   </div>
                 </td>
               </tr>
@@ -207,48 +182,51 @@
     {/if}
 
   {:else if view === 'form'}
-    <div class="form-card">
-      <div class="form-grid">
-        <div class="field full">
-          <label>¿Qué deseas reportar? <span class="req">*</span></label>
-          <textarea bind:value={form.descripcion} rows="5" placeholder="Describe detalladamente los hechos..."></textarea>
-        </div>
-        <div class="field">
-          <label>Tipo de Solicitud <span class="req">*</span></label>
-          <select bind:value={form.id_tipo}>
-            <option value="">Seleccionar...</option>
-            {#each tipos as t}<option value={t.id_tipo}>{t.nombre}</option>{/each}
-          </select>
-        </div>
-        <div class="field">
-          <label>Departamento Destino <span class="req">*</span></label>
-          <select bind:value={form.id_departamento}>
-            <option value="">Seleccionar departamento...</option>
-            {#each departamentos as d}<option value={d.id_departamento}>{d.nombre}</option>{/each}
-          </select>
-        </div>
-
-        {#if isAdmin}
+    <div class="form-container">
+      <div class="form-card">
+        <div class="form-grid">
+          <div class="field full">
+            <label>¿Qué deseas reportar? <span class="req">*</span></label>
+            <textarea bind:value={form.descripcion} rows="5" placeholder="Describe detalladamente los hechos..."></textarea>
+          </div>
           <div class="field">
-            <label>Prioridad Administrativa</label>
-            <select bind:value={form.id_prioridad}>
-              {#each prioridades as pr}<option value={pr.id_prioridad}>{pr.nombre}</option>{/each}
+            <label>Tipo de Solicitud <span class="req">*</span></label>
+            <select bind:value={form.id_tipo}>
+              <option value="">Seleccionar...</option>
+              {#each tipos as t}<option value={t.id_tipo}>{t.nombre}</option>{/each}
             </select>
           </div>
           <div class="field">
-            <label>Estado del Trámite</label>
-            <select bind:value={form.id_estado}>
-              {#each estados as e}<option value={e.id_estado}>{e.nombre}</option>{/each}
+            <label>Departamento Destino <span class="req">*</span></label>
+            <select bind:value={form.id_departamento}>
+              <option value="">Seleccionar departamento...</option>
+              {#each departamentos as d}<option value={d.id_departamento}>{d.nombre}</option>{/each}
             </select>
           </div>
-        {/if}
+          {#if isAdmin}
+            <div class="field">
+              <label>Prioridad</label>
+              <select bind:value={form.id_prioridad}>
+                {#each prioridades as pr}<option value={pr.id_prioridad}>{pr.nombre}</option>{/each}
+              </select>
+            </div>
+            <div class="field">
+              <label>Estado</label>
+              <select bind:value={form.id_estado}>
+                {#each estados as e}<option value={e.id_estado}>{e.nombre}</option>{/each}
+              </select>
+            </div>
+          {/if}
+        </div>
+        <div class="form-actions">
+          <button class="btn-secondary" onclick={() => view = 'list'}>Cancelar</button>
+          <button class="btn-primary" onclick={savePqr} disabled={saving}>
+            {#if saving}<span class="spinner-sm"></span>{/if}
+            <span>🚀</span> {selected ? 'Guardar Cambios' : 'Enviar Solicitud'}
+          </button>
+        </div>
       </div>
-      <div class="form-actions">
-        <button class="btn-secondary" onclick={() => view = 'list'}>Cancelar</button>
-        <button class="btn-primary" onclick={savePqr} disabled={saving}>
-          {saving ? 'Guardando...' : (selected ? 'Guardar Cambios' : 'Enviar Solicitud')}
-        </button>
-      </div>
+      <p class="form-footer">Al enviar esta solicitud, aceptas el tratamiento de tus datos personales según la política institucional de la CUL.</p>
     </div>
   {/if}
 </div>
@@ -256,59 +234,64 @@
 <style>
   .module { padding: 40px; max-width: 1200px; margin: 0 auto; }
   
-  /* Cabecera */
+  /* Header */
   .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
-  h1 { font-size: 28px; font-weight: 800; color: #0f172a; margin: 0; }
-  .subtitle { color: #64748b; font-size: 14px; margin-top: 4px; }
+  h1 { font-size: 32px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -0.02em; }
+  .subtitle { color: #64748b; font-size: 15px; margin-top: 4px; }
 
-  /* Toolbar de búsqueda y filtros */
-  .toolbar { display: flex; gap: 12px; margin-bottom: 24px; align-items: center; }
+  /* Toolbar */
+  .toolbar { display: flex; gap: 16px; margin-bottom: 24px; }
   .search-wrap { position: relative; flex: 1; }
-  .search-input { 
-    width: 100%; padding: 10px 16px 10px 40px; border-radius: 10px; 
-    border: 1px solid #e2e8f0; background: white; outline: none;
-  }
-  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
-  .filter-select { padding: 10px 16px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; color: #475569; }
+  .search-input { width: 100%; padding: 12px 16px 12px 42px; border-radius: 12px; border: 1.5px solid #e2e8f0; outline: none; transition: 0.2s; }
+  .search-input:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,0.06); }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.5; }
+  .filter-select { padding: 12px 16px; border-radius: 12px; border: 1.5px solid #e2e8f0; background: white; cursor: pointer; }
 
-  /* Tabla Profesional */
-  .table-wrap { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-  table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
-  th { background: #f8fafc; padding: 14px 20px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; }
-  td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+  /* Tabla */
+  .table-wrap { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th { background: #f8fafc; padding: 16px 20px; font-size: 11px; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; }
+  td { padding: 18px 20px; border-bottom: 1px solid #f1f5f9; color: #334155; }
   .clickable-row:hover { background: #f8fafc; cursor: pointer; }
 
-  /* Badges y Chips */
-  .id-badge { background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-weight: 700; color: #475569; font-size: 12px; }
-  .chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 100px; font-size: 12px; font-weight: 600; }
-  .status-badge { padding: 6px 12px; border-radius: 100px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
-  .s1 { background: #fef3c7; color: #92400e; } /* Pendiente */
-  .s2 { background: #e0f2fe; color: #075985; } /* Proceso */
-  .s3 { background: #dcfce7; color: #166534; } /* Resuelto */
+  /* Badges */
+  .id-badge { background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-weight: 700; color: #475569; }
+  .chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 100px; font-size: 12px; font-weight: 700; }
+  .status-badge { padding: 6px 14px; border-radius: 100px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
+  .s1 { background: #fef3c7; color: #92400e; }
+  .s2 { background: #e0f2fe; color: #075985; }
+  .s3 { background: #dcfce7; color: #166534; }
 
-  .prio { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
-  .p1 { background: #f1f5f9; color: #475569; } /* Baja */
-  .p3 { background: #fee2e2; color: #991b1b; } /* Alta */
+  /* Formulario Mejorado */
+  .form-container { display: flex; flex-direction: column; align-items: center; gap: 20px; }
+  .form-card { 
+    background: white; padding: 40px; border-radius: 28px; border: 1px solid rgba(0,0,0,0.05); 
+    width: 100%; max-width: 750px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.1); 
+  }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .field { display: flex; flex-direction: column; gap: 10px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size: 14px; font-weight: 700; color: #1e293b; }
+  input, select, textarea { 
+    padding: 14px; border-radius: 14px; border: 1.5px solid #e2e8f0; 
+    background: #f8fafc; font-size: 15px; outline: none; transition: 0.2s; 
+  }
+  input:focus, select:focus, textarea:focus { border-color: #2563eb; background: white; box-shadow: 0 0 0 4px rgba(37,99,235,0.06); }
+  
+  .form-footer { font-size: 12px; color: #94a3b8; text-align: center; max-width: 500px; }
 
   /* Botones */
-  .btn-primary { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; }
-  .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
-  .btn-secondary { background: white; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
-
-  .icon-btn { border: 1px solid #e2e8f0; background: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
-  .icon-btn:hover { border-color: #2563eb; color: #2563eb; }
-
-  /* Estados de carga */
-  .loading-state { padding: 60px; text-align: center; color: #64748b; }
-  .spinner-lg { width: 40px; height: 40px; border: 4px solid #f1f5f9; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; display: block; margin: 0 auto 16px; }
+  .btn-primary { 
+    background: #2563eb; color: white; border: none; padding: 14px 28px; 
+    border-radius: 14px; font-weight: 700; cursor: pointer; transition: 0.3s; 
+    display: flex; align-items: center; gap: 10px;
+  }
+  .btn-primary:hover { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 10px 15px rgba(37,99,235,0.2); }
+  .btn-secondary { background: #f1f5f9; border: none; padding: 14px 24px; border-radius: 14px; color: #475569; font-weight: 600; cursor: pointer; }
+  
+  .form-actions { margin-top: 32px; display: flex; gap: 12px; justify-content: flex-end; }
+  
+  .toast { position: fixed; top: 24px; right: 24px; background: #1e293b; color: white; padding: 12px 24px; border-radius: 12px; z-index: 100; font-weight: 600; box-shadow: 0 10px 15px rgba(0,0,0,0.1); }
+  .spinner-lg { width: 40px; height: 40px; border: 4px solid #f1f5f9; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; display: block; margin: 40px auto; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
-  /* Formulario */
-  .form-card { background: white; padding: 32px; border-radius: 20px; border: 1px solid #e2e8f0; max-width: 800px; }
-  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .field { display: flex; flex-direction: column; gap: 8px; }
-  .field.full { grid-column: 1 / -1; }
-  label { font-size: 13px; font-weight: 700; color: #475569; }
-  input, select, textarea { padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; outline: none; }
-  input:focus, select:focus, textarea:focus { border-color: #2563eb; background: white; }
 </style>
