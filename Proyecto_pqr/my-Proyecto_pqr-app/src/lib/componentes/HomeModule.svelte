@@ -182,7 +182,7 @@
   .main-action { border-left: 5px solid #2563eb; }
 
   /* Table */
-  .table-wrap { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; }
+  .table-wrap { background: #fff; border-radius: 16px; border: 1px solid #e2e8f0; overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 14px; }
   th { background: #f8fafc; padding: 12px 16px; text-align: left; color: #64748b; font-size: 11px; font-weight: 700; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; }
   td { padding: 16px; border-bottom: 1px solid #f1f5f9; }
@@ -194,4 +194,14 @@
   .s4 { background: #f1f5f9; color: #475569; }
 
   @media (max-width: 768px) { .actions-grid { grid-template-columns: 1fr; } .page-header { flex-direction: column; } }
+
+@media (max-width: 640px) {
+  .home { padding: 16px; }
+  .user-name { font-size: 22px; }
+  .stat-num { font-size: 28px; }
+  .page-header { gap: 12px; }
+  td, th { padding: 10px 12px; font-size: 12px; }
+  .desc-cell { max-width: 120px; }
+}
+
 </style>

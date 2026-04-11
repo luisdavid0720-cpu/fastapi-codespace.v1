@@ -211,4 +211,14 @@
   .btn-submit:hover { background: #f9a01b; transform: translateY(-2px); }
 
   .card-footer { padding: 25px; background: rgba(248, 250, 252, 0.5); text-align: center; font-size: 13px; border-top: 1px solid #f1f5f9; }
+
+ @media (max-width: 400px) {
+  .login-content { padding: 24px 16px; }
+  .card-header { padding: 24px 16px 16px; }
+  .roles-selection { gap: 12px; }
+  .role-card { padding: 14px; }
+  .welcome-text h3 { font-size: 20px; }
+}
+
+
 </style>

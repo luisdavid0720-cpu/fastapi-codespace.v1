@@ -220,8 +220,15 @@
   .error-msg span { font-size: 40px; display: block; margin-bottom: 10px; }
 
   @media (max-width: 768px) {
-    .sidebar { width: 70px; min-width: 70px; padding: 20px 10px; }
-    .brand-text, .user-info, .nav-item span:not(.nav-icon) { display: none; }
-    .nav-item { justify-content: center; padding: 12px 0; }
-  }
+  .layout { flex-direction: column; height: auto; min-height: 100vh; }
+  .sidebar { width: 100%; min-width: unset; height: auto; flex-direction: row; padding: 12px 16px; justify-content: space-between; align-items: center; }
+  .sidebar-top { flex-direction: row; align-items: center; gap: 12px; }
+  .brand { padding: 0; border: none; margin: 0; }
+  nav { flex-direction: row; gap: 4px; }
+  .nav-item { padding: 8px 10px; font-size: 12px; }
+  .brand-text, .user-info { display: none; }
+  .sidebar-bottom { flex-direction: row; border: none; padding: 0; }
+  .main { height: auto; flex: 1; }
+  .scrollable-content { padding: 16px; }
+}
 </style>
