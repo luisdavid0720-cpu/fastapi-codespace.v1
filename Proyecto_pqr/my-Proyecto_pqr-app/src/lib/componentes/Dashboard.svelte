@@ -10,7 +10,6 @@
   // Seguridad: Solo el rol 1 accede a la analítica avanzada y gestión de usuarios
   let isAdmin = $derived($currentUser?.id_rol === 1)
 
-  // NUEVO: Agregamos el ítem "Analítica" restringido para administradores
   const navItems = [
     { id: 'home',      label: 'Inicio',    icon: '⊞', always: true },
     { id: 'pqrs',      label: 'PQRS',      icon: '◈', always: true },
@@ -84,22 +83,22 @@
       </div>
 
     {:else if page === 'home'}
-      <div class="full-width-module">
+      <div class="full-width-module scrollable-content">
         <HomeModule onnavigate={(p) => navigateTo(p)} />
       </div>
 
     {:else if page === 'pqrs'}
-      <div class="full-width-module">
+      <div class="full-width-module scrollable-content">
         <PqrModule />
       </div>
 
     {:else if page === 'usuarios' && isAdmin}
-      <div class="full-width-module">
+      <div class="full-width-module scrollable-content">
         <UsuariosModule />
       </div>
 
     {:else if page === 'analitica' && isAdmin}
-      <div class="full-width-module">
+      <div class="full-width-module analitica-wrapper">
         <section class="powerbi-section">
           <div class="section-header">
             <div class="header-info">
@@ -116,7 +115,7 @@
             <iframe 
               title="gestion pqrs" 
               width="100%" 
-              height="650" 
+              height="100%" 
               src="https://app.powerbi.com/view?r=eyJrIjoiZmFlM2Y3YzEtMDIwNS00OGM2LTk4OGUtMzc2YjgwZWYzNmE0IiwidCI6ImFjYTUxNjMxLTAwZmUtNDkwZC05MWFiLTE2M2VmODcyNjBlZSIsImMiOjR9" 
               frameborder="0" 
               allowFullScreen="true">
@@ -134,7 +133,8 @@
 <style>
   .layout {
     display: flex;
-    min-height: 100vh;
+    height: 100vh; /* Forzamos a que el layout ocupe exactamente la pantalla */
+    overflow: hidden; /* Evitamos scroll global, cada panel manejará el suyo */
   }
 
   .sidebar {
@@ -146,8 +146,6 @@
     flex-direction: column;
     justify-content: space-between;
     padding: 24px 16px;
-    position: sticky;
-    top: 0;
     height: 100vh;
   }
 
@@ -160,93 +158,64 @@
     margin-bottom: 20px;
   }
 
-  .brand-text {
-    font-weight: 700;
-    font-size: 16px;
-    letter-spacing: -0.02em;
-  }
-
-  nav {
-    display: flex;
-    flex-direction: column;
-    gap: 4px;
-  }
+  .brand-text { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
+  
+  nav { display: flex; flex-direction: column; gap: 4px; }
 
   .nav-item {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
-    border-radius: 8px;
-    border: none;
-    background: transparent;
-    color: #ccc;
-    font-size: 14px;
-    font-weight: 500;
-    transition: all 0.2s ease;
-    text-align: left;
-    width: 100%;
-    cursor: pointer;
+    display: flex; align-items: center; gap: 10px; padding: 12px;
+    border-radius: 8px; border: none; background: transparent; color: #ccc;
+    font-size: 14px; font-weight: 500; transition: all 0.2s ease;
+    text-align: left; width: 100%; cursor: pointer;
   }
 
   .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
   .nav-item.active { background: #2563eb; color: #fff; }
 
   .sidebar-bottom {
-    border-top: 1px solid rgba(255,255,255,0.1);
-    padding-top: 16px;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
+    border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;
+    display: flex; flex-direction: column; gap: 12px;
   }
 
-  .user-card {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 12px;
-    background: rgba(255,255,255,0.05);
-    border-radius: 8px;
-  }
-
-  .avatar {
-    width: 36px;
-    height: 36px;
-    border-radius: 50%;
-    background: #2563eb;
-    color: white;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-weight: 800;
-  }
-
+  .user-card { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; }
   .user-name { font-size: 13px; font-weight: 600; color: #fff; }
   .user-role { font-size: 11px; color: #aaa; }
 
   .btn-logout {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 12px;
-    border-radius: 8px;
-    border: 1px solid rgba(255,255,255,0.11);
-    background: rgba(255,255,255,0.05);
-    color: #ddd;
-    cursor: pointer;
+    display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+    border-radius: 8px; border: 1px solid rgba(255,255,255,0.11);
+    background: rgba(255,255,255,0.05); color: #ddd; cursor: pointer;
   }
 
+  /* MAIN CONTENEDOR FLEX */
   .main {
     flex: 1;
-    overflow-y: auto;
     background: #f4f6f9;
-    padding-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
   }
 
   .full-width-module {
     width: 100%;
-    padding: 24px 24px 0 24px;
     box-sizing: border-box;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Los módulos normales tienen scroll */
+  .scrollable-content {
+    overflow-y: auto;
+    padding: 24px 24px 40px 24px;
+    flex: 1;
+  }
+
+  /* El módulo de analítica ocupa el alto y desactiva su propio scroll vertical si PBI ya lo tiene */
+  .analitica-wrapper {
+    flex: 1;
+    padding: 24px;
+    height: 100%; 
   }
 
   .powerbi-section {
@@ -254,55 +223,51 @@
     border-radius: 16px;
     border: 1px solid rgba(0,0,0,0.05);
     box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex: 1; /* Estira la tarjeta hacia abajo */
   }
 
   .section-header {
-    padding: 20px 24px;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    border-bottom: 1px solid #f0f0f0;
+    padding: 20px 24px; display: flex; justify-content: space-between;
+    align-items: center; border-bottom: 1px solid #f0f0f0; flex-shrink: 0;
   }
 
   .header-info h3 { margin: 0; font-size: 18px; font-weight: 700; color: #111; }
   .header-info p { margin: 4px 0 0; font-size: 12.5px; color: #666; }
 
   .live-status {
+    display: flex; align-items: center; gap: 8px; font-size: 11px;
+    font-weight: 800; color: #2563eb; background: #eff6ff;
+    padding: 6px 12px; border-radius: 20px;
+  }
+
+  .pulse-dot { width: 8px; height: 8px; background: #2563eb; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.7; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.7; } }
+
+  .iframe-container {
+    flex: 1; /* Estira el contenedor del iframe hacia abajo */
+    width: 100%;
     display: flex;
-    align-items: center;
-    gap: 8px;
-    font-size: 11px;
-    font-weight: 800;
-    color: #2563eb;
-    background: #eff6ff;
-    padding: 6px 12px;
-    border-radius: 20px;
+    flex-direction: column;
   }
 
-  .pulse-dot {
-    width: 8px;
-    height: 8px;
-    background: #2563eb;
-    border-radius: 50%;
-    animation: pulse 2s infinite;
+  /* El iframe ocupará el 100% del contenedor flexible */
+  iframe {
+    flex: 1;
   }
 
-  @keyframes pulse {
-    0% { transform: scale(0.95); opacity: 0.7; }
-    50% { transform: scale(1.2); opacity: 1; }
-    100% { transform: scale(0.95); opacity: 0.7; }
-  }
-
-  .iframe-container { width: 100%; line-height: 0; }
-
-  .loading-container { padding: 40px; display: flex; flex-direction: column; align-items: center; gap: 15px; }
+  .loading-container { padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 15px; }
   .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
   .no-access { padding: 40px; color: #666; text-align: center; font-weight: 500;}
 
   @media (max-width: 768px) {
-    .full-width-module { padding: 12px; }
+    .layout { flex-direction: column; height: auto; overflow: visible; }
+    .sidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 16px; gap: 8px; }
+    .main { height: auto; }
+    .analitica-wrapper { padding: 12px; height: 80vh; }
+    .scrollable-content { padding: 12px; }
   }
 </style>
