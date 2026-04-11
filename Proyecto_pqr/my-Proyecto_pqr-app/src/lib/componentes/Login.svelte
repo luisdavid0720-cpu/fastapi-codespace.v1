@@ -1,17 +1,22 @@
 <script>
-  // Simulación de estados para la visualización
+  import { onMount } from 'svelte';
+  
+  // Variables de estado
   let username = $state('');
   let password = $state('');
   let showPassword = $state(false);
   let isLoggingIn = $state(false);
 
-  function handleLogin() {
+  // Función para simular el ingreso manual por rol
+  function fastAccess(role) {
     isLoggingIn = true;
-    // Simulación de proceso de entrada
+    console.log("Acceso rápido como:", role);
+    
+    // Aquí simulas la redirección
     setTimeout(() => {
       isLoggingIn = false;
-      console.log("Credenciales enviadas:", { username, password });
-    }, 2000);
+      alert(`Accediendo como ${role}... (Aquí iría la redirección al Dashboard)`);
+    }, 1000);
   }
 </script>
 
@@ -29,43 +34,47 @@
 
     <div class="divider"></div>
 
-    <main class="login-form">
+    <main class="login-content">
       <div class="welcome-text">
-        <h3>Iniciar Sesión</h3>
-        <p>Ingresa tus credenciales para continuar</p>
+        <h3>Bienvenido</h3>
+        <p>Selecciona un rol para acceso rápido o ingresa tus datos</p>
       </div>
 
-      <form onsubmit={(e) => { e.preventDefault(); handleLogin(); }}>
+      <div class="role-selector">
+        <button class="role-btn admin" onclick={() => fastAccess('Administrador')}>
+          <span class="role-icon">⭐</span>
+          <div class="role-info">
+            <span class="role-name">Administrador</span>
+            <span class="role-desc">Gestión y Analítica</span>
+          </div>
+        </button>
+
+        <button class="role-btn user" onclick={() => fastAccess('Usuario')}>
+          <span class="role-icon">👤</span>
+          <div class="role-info">
+            <span class="role-name">Usuario</span>
+            <span class="role-desc">Mis solicitudes</span>
+          </div>
+        </button>
+      </div>
+
+      <div class="separator">
+        <span>O ingresa con credenciales</span>
+      </div>
+
+      <form onsubmit={(e) => { e.preventDefault(); fastAccess('Login Manual'); }}>
         <div class="input-group">
           <label for="user">Usuario</label>
           <div class="input-wrapper">
-            <span class="icon">👤</span>
-            <input 
-              type="text" 
-              id="user" 
-              bind:value={username} 
-              placeholder="Usuario o correo institucional"
-              required
-            />
+            <input type="text" id="user" bind:value={username} placeholder="Usuario o correo" />
           </div>
         </div>
 
         <div class="input-group">
           <label for="pass">Contraseña</label>
           <div class="input-wrapper">
-            <span class="icon">🔒</span>
-            <input 
-              type={showPassword ? "text" : "password"} 
-              id="pass" 
-              bind:value={password} 
-              placeholder="••••••••"
-              required
-            />
-            <button 
-              type="button" 
-              class="toggle-pass" 
-              onclick={() => showPassword = !showPassword}
-            >
+            <input type={showPassword ? "text" : "password"} id="pass" bind:value={password} placeholder="••••••••" />
+            <button type="button" class="toggle-pass" onclick={() => showPassword = !showPassword}>
               {showPassword ? '👁️' : '🙈'}
             </button>
           </div>
@@ -74,7 +83,6 @@
         <button type="submit" class="btn-submit" disabled={isLoggingIn}>
           {#if isLoggingIn}
             <span class="loader"></span>
-            Verificando...
           {:else}
             Ingresar →
           {/if}
@@ -83,18 +91,15 @@
     </main>
 
     <footer class="card-footer">
-      <a href="#olvido">¿Olvidaste tu contraseña?</a>
-      <p>Aviso de Privacidad</p>
+      <p>¿Problemas para acceder? <b>Soporte Técnico</b></p>
     </footer>
   </div>
 </div>
 
 <style>
-  /* CONFIGURACIÓN DE COLORES INSTITUCIONALES */
   :root {
-    --cul-blue: #0b1f3f; /* Azul oscuro del escudo */
-    --cul-gold: #fbb03b; /* Amarillo/Naranja del escudo */
-    --bg-gray: #f1f5f9;
+    --cul-blue: #0b1f3f;
+    --cul-gold: #fbb03b;
   }
 
   .login-page {
@@ -102,193 +107,86 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, var(--bg-gray) 0%, #e2e8f0 100%);
-    font-family: 'Inter', system-ui, sans-serif;
+    background: #f1f5f9;
+    font-family: 'Inter', sans-serif;
     padding: 20px;
   }
 
   .login-card {
     background: white;
     width: 100%;
-    max-width: 420px;
+    max-width: 440px;
     border-radius: 20px;
-    box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    box-shadow: 0 15px 35px rgba(0,0,0,0.1);
     overflow: hidden;
-    animation: slideUp 0.5s ease-out;
   }
 
-  @keyframes slideUp {
-    from { opacity: 0; transform: translateY(20px); }
-    to { opacity: 1; transform: translateY(0); }
-  }
+  .card-header { padding: 25px; text-align: center; }
+  .cul-logo { width: 80px; height: auto; }
+  .header-titles h2 { font-size: 14px; color: var(--cul-blue); margin: 10px 0 0; }
+  .header-titles p { font-size: 12px; color: #64748b; margin: 2px 0 0; }
+  
+  .divider { height: 4px; background: linear-gradient(to right, var(--cul-blue), var(--cul-gold)); }
 
-  /* CABECERA */
-  .card-header {
-    padding: 30px 20px;
-    text-align: center;
-    background: #fff;
-  }
+  .login-content { padding: 30px; }
+  
+  .welcome-text { margin-bottom: 20px; text-align: center; }
+  .welcome-text h3 { font-size: 20px; margin: 0; color: #1e293b; }
+  .welcome-text p { font-size: 13px; color: #64748b; }
 
-  .logo-wrapper {
-    margin-bottom: 15px;
-  }
-
-  .cul-logo {
-    width: 100px;
-    height: auto;
-    object-fit: contain;
-  }
-
-  .header-titles h2 {
-    font-size: 16px;
-    color: var(--cul-blue);
-    margin: 0;
-    font-weight: 700;
-  }
-
-  .header-titles p {
-    font-size: 13px;
-    color: #64748b;
-    margin: 5px 0 0;
-    font-weight: 500;
-  }
-
-  .divider {
-    height: 4px;
-    background: linear-gradient(to right, var(--cul-blue), var(--cul-gold));
-  }
-
-  /* CUERPO DEL LOGIN */
-  .login-form {
-    padding: 40px 35px;
-  }
-
-  .welcome-text {
-    margin-bottom: 30px;
-  }
-
-  .welcome-text h3 {
-    font-size: 24px;
-    color: #0f172a;
-    margin: 0;
-  }
-
-  .welcome-text p {
-    font-size: 14px;
-    color: #64748b;
-    margin-top: 5px;
-  }
-
-  .input-group {
-    margin-bottom: 20px;
-  }
-
-  .input-group label {
-    display: block;
-    font-size: 14px;
-    font-weight: 600;
-    color: #475569;
-    margin-bottom: 8px;
-  }
-
-  .input-wrapper {
-    position: relative;
+  /* ESTILO DE LOS BOTONES DE ROL */
+  .role-selector { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 25px; }
+  
+  .role-btn {
     display: flex;
+    flex-direction: column;
     align-items: center;
-  }
-
-  .input-wrapper .icon {
-    position: absolute;
-    left: 12px;
-    font-size: 16px;
-  }
-
-  .input-wrapper input {
-    width: 100%;
-    padding: 12px 40px;
-    border: 2px solid #e2e8f0;
+    padding: 15px;
     border-radius: 12px;
-    font-size: 15px;
-    transition: all 0.3s;
-    outline: none;
-  }
-
-  .input-wrapper input:focus {
-    border-color: var(--cul-blue);
-    box-shadow: 0 0 0 4px rgba(11, 31, 63, 0.1);
-  }
-
-  .toggle-pass {
-    position: absolute;
-    right: 12px;
-    background: none;
-    border: none;
-    cursor: pointer;
-    font-size: 16px;
-  }
-
-  /* BOTÓN INGRESAR */
-  .btn-submit {
-    width: 100%;
-    padding: 14px;
-    background: var(--cul-gold);
-    border: none;
-    border-radius: 12px;
-    color: var(--cul-blue);
-    font-size: 16px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s;
-    margin-top: 10px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .btn-submit:hover {
-    background: #e69d2f;
-    transform: translateY(-2px);
-  }
-
-  .btn-submit:disabled {
-    background: #cbd5e1;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  /* FOOTER */
-  .card-footer {
-    padding: 20px;
-    text-align: center;
+    border: 1px solid #e2e8f0;
     background: #f8fafc;
-    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
   }
 
-  .card-footer a {
-    color: var(--cul-blue);
-    text-decoration: none;
-    font-weight: 600;
+  .role-btn:hover { border-color: var(--cul-blue); background: #eff6ff; transform: translateY(-2px); }
+  
+  .role-icon { font-size: 20px; margin-bottom: 8px; }
+  .role-name { display: block; font-size: 13px; font-weight: 700; color: #1e293b; }
+  .role-desc { display: block; font-size: 10px; color: #64748b; }
+
+  .separator { 
+    display: flex; align-items: center; text-align: center; 
+    margin: 20px 0; font-size: 11px; color: #94a3b8; text-transform: uppercase;
+  }
+  .separator::before, .separator::after { content: ''; flex: 1; border-bottom: 1px solid #e2e8f0; }
+  .separator span { padding: 0 10px; }
+
+  /* FORMULARIO */
+  .input-group { margin-bottom: 15px; }
+  .input-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 5px; color: #475569; }
+  .input-wrapper { position: relative; }
+  .input-wrapper input { 
+    width: 100%; padding: 10px 15px; border: 1px solid #cbd5e1; 
+    border-radius: 10px; outline: none; box-sizing: border-box;
+  }
+  
+  .toggle-pass { position: absolute; right: 10px; top: 8px; border: none; background: none; cursor: pointer; }
+
+  .btn-submit { 
+    width: 100%; padding: 12px; background: var(--cul-gold); 
+    border: none; border-radius: 10px; font-weight: 700; color: var(--cul-blue);
+    cursor: pointer; margin-top: 10px;
   }
 
-  .card-footer p {
-    color: #94a3b8;
-    margin-top: 10px;
-  }
+  .btn-submit:hover { background: #e69d2f; }
 
-  /* LOADER */
-  .loader {
-    width: 18px;
-    height: 18px;
-    border: 2px solid white;
-    border-bottom-color: transparent;
-    border-radius: 50%;
-    display: inline-block;
-    animation: rotation 1s linear infinite;
+  .card-footer { padding: 15px; background: #f8fafc; text-align: center; font-size: 12px; color: #64748b; }
+  
+  .loader { 
+    width: 16px; height: 16px; border: 2px solid var(--cul-blue); 
+    border-bottom-color: transparent; border-radius: 50%; display: inline-block; 
+    animation: rotation 1s linear infinite; 
   }
-
-  @keyframes rotation {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
-  }
+  @keyframes rotation { to { transform: rotate(360deg); } }
 </style>
