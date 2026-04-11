@@ -7,7 +7,7 @@
   let { page = $bindable('home') } = $props()
   let loading = $state(false);
   
-  // Seguridad: Solo el rol 1 accede a la analítica avanzada y gestión de usuarios
+  // Seguridad: Determinamos si el usuario es administrador
   let isAdmin = $derived($currentUser?.id_rol === 1)
 
   const navItems = [
@@ -17,11 +17,22 @@
     { id: 'analitica', label: 'Analítica', icon: '📊', admin: true  },
   ]
 
+  // GUARDIA DE SEGURIDAD: 
+  // Si la página cambia a una prohibida para el usuario, lo redirigimos a home.
+  $effect(() => {
+    if (!isAdmin && (page === 'usuarios' || page === 'analitica')) {
+      page = 'home';
+    }
+  });
+
   function handleLogout() {
     logout()
   }
 
   function navigateTo(id) {
+    // Bloqueo preventivo en la función de navegación
+    if (!isAdmin && (id === 'usuarios' || id === 'analitica')) return;
+
     loading = true;
     setTimeout(() => {
       page = id;
@@ -125,149 +136,87 @@
       </div>
 
     {:else}
-      <div class="no-access">No tienes acceso a esta sección.</div>
+      <div class="no-access">
+        <div class="error-msg">
+           <span>⚠️</span>
+           <p>No tienes permisos para acceder a esta sección.</p>
+           <button class="btn-secondary" onclick={() => page = 'home'}>Ir al Inicio</button>
+        </div>
+      </div>
     {/if}
   </main>
 </div>
 
 <style>
-  .layout {
-    display: flex;
-    height: 100vh; /* Forzamos a que el layout ocupe exactamente la pantalla */
-    overflow: hidden; /* Evitamos scroll global, cada panel manejará el suyo */
-  }
+  /* Estilos base del Layout */
+  .layout { display: flex; height: 100vh; overflow: hidden; }
 
+  /* Sidebar con diseño Dark Industrial */
   .sidebar {
     width: 240px;
     min-width: 240px;
-    background: linear-gradient(180deg, #000, #111);
+    background: linear-gradient(180deg, #0b1f3f 0%, #050d1a 100%);
     color: #fff;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
     padding: 24px 16px;
     height: 100vh;
+    border-right: 1px solid rgba(255,255,255,0.05);
   }
 
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 0 8px 28px;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
-    margin-bottom: 20px;
-  }
-
+  .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 28px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
   .brand-text { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
   
   nav { display: flex; flex-direction: column; gap: 4px; }
 
   .nav-item {
     display: flex; align-items: center; gap: 10px; padding: 12px;
-    border-radius: 8px; border: none; background: transparent; color: #ccc;
+    border-radius: 10px; border: none; background: transparent; color: #94a3b8;
     font-size: 14px; font-weight: 500; transition: all 0.2s ease;
     text-align: left; width: 100%; cursor: pointer;
   }
 
   .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
-  .nav-item.active { background: #2563eb; color: #fff; }
+  .nav-item.active { background: #2563eb; color: #fff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
 
-  .sidebar-bottom {
-    border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px;
-    display: flex; flex-direction: column; gap: 12px;
-  }
-
-  .user-card { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; }
-  .avatar { width: 36px; height: 36px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; }
-  .user-name { font-size: 13px; font-weight: 600; color: #fff; }
-  .user-role { font-size: 11px; color: #aaa; }
+  .sidebar-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+  .user-card { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: #fbb03b; color: #0b1f3f; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+  .user-name { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .user-role { font-size: 11px; color: #94a3b8; }
 
   .btn-logout {
     display: flex; align-items: center; gap: 8px; padding: 10px 12px;
-    border-radius: 8px; border: 1px solid rgba(255,255,255,0.11);
-    background: rgba(255,255,255,0.05); color: #ddd; cursor: pointer;
+    border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.03); color: #cbd5e1; cursor: pointer; font-size: 13px;
   }
+  .btn-logout:hover { background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.2); }
 
-  /* MAIN CONTENEDOR FLEX */
-  .main {
-    flex: 1;
-    background: #f4f6f9;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-  }
+  /* Main Container */
+  .main { flex: 1; background: #f1f5f9; display: flex; flex-direction: column; height: 100vh; }
+  .full-width-module { width: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
+  .scrollable-content { overflow-y: auto; padding: 32px; flex: 1; }
 
-  .full-width-module {
-    width: 100%;
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-  }
+  /* Power BI Wrapper */
+  .analitica-wrapper { flex: 1; padding: 24px; height: 100%; }
+  .powerbi-section { background: white; border-radius: 20px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+  .section-header { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 1px solid #f1f5f9; }
+  .header-info h3 { margin: 0; font-size: 18px; font-weight: 800; color: #0f172a; }
+  .iframe-container { flex: 1; width: 100%; background: #f8fafc; }
 
-  /* Los módulos normales tienen scroll */
-  .scrollable-content {
-    overflow-y: auto;
-    padding: 24px 24px 40px 24px;
-    flex: 1;
-  }
-
-  /* El módulo de analítica ocupa el alto y desactiva su propio scroll vertical si PBI ya lo tiene */
-  .analitica-wrapper {
-    flex: 1;
-    padding: 24px;
-    height: 100%; 
-  }
-
-  .powerbi-section {
-    background: white;
-    border-radius: 16px;
-    border: 1px solid rgba(0,0,0,0.05);
-    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
-    display: flex;
-    flex-direction: column;
-    flex: 1; /* Estira la tarjeta hacia abajo */
-  }
-
-  .section-header {
-    padding: 20px 24px; display: flex; justify-content: space-between;
-    align-items: center; border-bottom: 1px solid #f0f0f0; flex-shrink: 0;
-  }
-
-  .header-info h3 { margin: 0; font-size: 18px; font-weight: 700; color: #111; }
-  .header-info p { margin: 4px 0 0; font-size: 12.5px; color: #666; }
-
-  .live-status {
-    display: flex; align-items: center; gap: 8px; font-size: 11px;
-    font-weight: 800; color: #2563eb; background: #eff6ff;
-    padding: 6px 12px; border-radius: 20px;
-  }
-
-  .pulse-dot { width: 8px; height: 8px; background: #2563eb; border-radius: 50%; animation: pulse 2s infinite; }
-  @keyframes pulse { 0% { transform: scale(0.95); opacity: 0.7; } 50% { transform: scale(1.2); opacity: 1; } 100% { transform: scale(0.95); opacity: 0.7; } }
-
-  .iframe-container {
-    flex: 1; /* Estira el contenedor del iframe hacia abajo */
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-  }
-
-  /* El iframe ocupará el 100% del contenedor flexible */
-  iframe {
-    flex: 1;
-  }
-
+  /* Utils */
   .loading-container { padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 15px; }
-  .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
+  .spinner { width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .no-access { padding: 40px; color: #666; text-align: center; font-weight: 500;}
+  .no-access { padding: 60px; display: flex; justify-content: center; }
+  .error-msg { text-align: center; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+  .error-msg span { font-size: 40px; display: block; margin-bottom: 10px; }
 
   @media (max-width: 768px) {
-    .layout { flex-direction: column; height: auto; overflow: visible; }
-    .sidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 16px; gap: 8px; }
-    .main { height: auto; }
-    .analitica-wrapper { padding: 12px; height: 80vh; }
-    .scrollable-content { padding: 12px; }
+    .sidebar { width: 70px; min-width: 70px; padding: 20px 10px; }
+    .brand-text, .user-info, .nav-item span:not(.nav-icon) { display: none; }
+    .nav-item { justify-content: center; padding: 12px 0; }
   }
 </style>
