@@ -14,6 +14,7 @@
   let deleting = $state(false)
  
   let tipos = $state([]), estados = $state([]), departamentos = $state([])
+  let prioridades = $state([]), usuarios = $state([])
  
   function defaultForm() {
     return { descripcion: '', id_tipo: '', id_departamento: '' }
@@ -31,13 +32,16 @@
   onMount(async () => {
     loading = true
     try {
-      const [p, t, e, d] = await Promise.allSettled([
-        api.getPqrs(), api.getTiposPqr(), api.getEstados(), api.getDepartamentos()
+      const [p, t, e, d, pr, u] = await Promise.allSettled([
+        api.getPqrs(), api.getTiposPqr(), api.getEstados(),
+        api.getDepartamentos(), api.getPrioridades(), api.getUsuarios()
       ])
-      pqrs = p.value?.resultado || []
-      tipos = t.value || []
-      estados = e.value || []
-      departamentos = d.value || []
+      pqrs         = p.value?.resultado  || []
+      tipos        = t.value             || []
+      estados      = e.value             || []
+      departamentos= d.value             || []
+      prioridades  = pr.value            || []
+      usuarios     = u.value?.resultado  || u.value || []
     } catch(e) { console.error(e) }
     loading = false
   })
@@ -51,7 +55,8 @@
       descripcion: pqr.descripcion,
       id_tipo: pqr.id_tipo,
       id_departamento: pqr.id_departamento,
-      id_estado: pqr.id_estado
+      id_estado: pqr.id_estado,
+      id_prioridad: pqr.id_prioridad
     }
     view = 'edit'
   }
@@ -107,9 +112,21 @@
  
   function showToast(msg) { toastMsg = msg; setTimeout(() => toastMsg = '', 3000) }
  
-  const getLabelEstado = (id) => estados.find(e => e.id_estado == id)?.nombre || 'PENDIENTE'
-  const getLabelTipo = (id) => tipos.find(t => t.id_tipo == id)?.nombre || 'Petición'
-  const getLabelDep = (id) => departamentos.find(d => d.id_departamento == id)?.nombre || 'Sistemas'
+  const getLabelEstado    = (id) => estados.find(e => e.id_estado == id)?.nombre          || 'PENDIENTE'
+  const getLabelTipo      = (id) => tipos.find(t => t.id_tipo == id)?.nombre               || '—'
+  const getLabelDep       = (id) => departamentos.find(d => d.id_departamento == id)?.nombre || '—'
+  const getLabelPrioridad = (id) => prioridades.find(p => p.id_prioridad == id)?.nombre    || '—'
+  const getLabelUsuario   = (id) => {
+    const u = usuarios.find(u => u.id_usuario == id)
+    return u ? (u.nombre || u.correo || `#${id}`) : `#${id}`
+  }
+ 
+  const prioridadColor = (id) => {
+    const nombre = getLabelPrioridad(id)?.toLowerCase()
+    if (nombre.includes('alta') || nombre.includes('urgen') || nombre.includes('crít')) return 'prio-alta'
+    if (nombre.includes('media')) return 'prio-media'
+    return 'prio-baja'
+  }
 </script>
  
 <div class="module">
@@ -147,15 +164,20 @@
     </div>
  
     {#if loading}
-      <div class="loader-wrap"><span class="spinner"></span><p>Sincronizando...</p></div>
+      <div class="loader-wrap"><p>Sincronizando...</p></div>
     {:else}
       <div class="table-container">
         <table>
           <thead>
             <tr>
               <th>ID</th>
-              <th>Descripción Breve</th>
+              <th>Descripción</th>
               <th>Categoría</th>
+              {#if isAdmin}
+                <th>Usuario</th>
+                <th>Departamento</th>
+                <th>Prioridad</th>
+              {/if}
               <th>Estado</th>
               <th>Fecha</th>
               <th class="text-center">Acciones</th>
@@ -165,20 +187,25 @@
             {#each filtered as pqr}
               <tr>
                 <td><span class="id-tag">#{pqr.id_pqr}</span></td>
-                <td class="text-main">{pqr.descripcion?.slice(0, 45)}...</td>
+                <td class="text-main">{pqr.descripcion?.slice(0, 40)}...</td>
                 <td><span class="type-chip">{getLabelTipo(pqr.id_tipo)}</span></td>
+                {#if isAdmin}
+                  <td class="text-usuario">{getLabelUsuario(pqr.id_usuario)}</td>
+                  <td class="text-dep">{getLabelDep(pqr.id_departamento)}</td>
+                  <td><span class="prio-chip {prioridadColor(pqr.id_prioridad)}">{getLabelPrioridad(pqr.id_prioridad)}</span></td>
+                {/if}
                 <td><span class="status-pill s{pqr.id_estado}">{getLabelEstado(pqr.id_estado)}</span></td>
                 <td class="date-text">{new Date(pqr.fecha).toLocaleDateString('es-CO')}</td>
                 <td class="text-center actions-cell">
                   {#if isAdmin}
                     <button class="action-btn edit-btn" onclick={() => openEdit(pqr)} title="Editar">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                       </svg>
                     </button>
                     <button class="action-btn delete-btn" onclick={() => deletePqr(pqr)} title="Eliminar" disabled={deleting}>
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <polyline points="3 6 5 6 21 6"/>
                         <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
                         <path d="M10 11v6M14 11v6"/>
@@ -187,7 +214,7 @@
                     </button>
                   {:else}
                     <button class="action-btn view-btn" onclick={() => openDetail(pqr)} title="Ver detalle">
-                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/>
                         <circle cx="12" cy="12" r="3"/>
                       </svg>
@@ -255,11 +282,19 @@
               </select>
             </div>
           </div>
-          <div class="field">
-            <label class="section-label">Estado</label>
-            <select bind:value={editForm.id_estado}>
-              {#each estados as e}<option value={e.id_estado}>{e.nombre}</option>{/each}
-            </select>
+          <div class="field-group">
+            <div class="field">
+              <label class="section-label">Estado</label>
+              <select bind:value={editForm.id_estado}>
+                {#each estados as e}<option value={e.id_estado}>{e.nombre}</option>{/each}
+              </select>
+            </div>
+            <div class="field">
+              <label class="section-label">Prioridad</label>
+              <select bind:value={editForm.id_prioridad}>
+                {#each prioridades as p}<option value={p.id_prioridad}>{p.nombre}</option>{/each}
+              </select>
+            </div>
           </div>
           <button class="btn-send" onclick={saveEdit} disabled={saving}>
             {saving ? 'Guardando...' : '💾 Guardar cambios'}
@@ -308,33 +343,52 @@
   h1 { font-size: 32px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -1px; }
   .subtitle { color: #64748b; font-size: 15px; }
  
-  .btn-create { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2); }
+  .btn-create { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
   .btn-back { background: white; border: 1.5px solid #e2e8f0; padding: 10px 20px; border-radius: 10px; color: #475569; font-weight: 700; cursor: pointer; }
  
   .toolbar { margin-bottom: 25px; }
   .search-container { position: relative; max-width: 400px; }
   .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.4; }
   .modern-input { width: 100%; padding: 12px 12px 12px 42px; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 14px; outline: none; transition: 0.3s; }
-  .modern-input:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.05); }
+  .modern-input:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,0.05); }
  
   .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
   table { width: 100%; border-collapse: collapse; }
-  th { background: #f8fafc; padding: 18px 20px; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #f1f5f9; }
-  td { padding: 18px 20px; border-bottom: 1px solid #f1f5f9; font-size: 14px; color: #334155; }
+  th { background: #f8fafc; padding: 14px 16px; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+  td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; font-size: 13px; color: #334155; }
+  tr:last-child td { border-bottom: none; }
  
-  /* Botones de acción */
-  .actions-cell { display: flex; align-items: center; justify-content: center; gap: 8px; }
-  .action-btn { width: 34px; height: 34px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-  .view-btn  { background: #eff6ff; color: #2563eb; }
-  .view-btn:hover  { background: #2563eb; color: white; transform: scale(1.1); }
-  .edit-btn  { background: #f0fdf4; color: #16a34a; }
-  .edit-btn:hover  { background: #16a34a; color: white; transform: scale(1.1); }
+  .text-usuario { font-weight: 600; color: #1e293b; }
+  .text-dep { color: #475569; font-size: 12px; }
+ 
+  /* Acciones */
+  .actions-cell { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .action-btn { width: 32px; height: 32px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .view-btn   { background: #eff6ff; color: #2563eb; }
+  .view-btn:hover   { background: #2563eb; color: white; transform: scale(1.1); }
+  .edit-btn   { background: #f0fdf4; color: #16a34a; }
+  .edit-btn:hover   { background: #16a34a; color: white; transform: scale(1.1); }
   .delete-btn { background: #fef2f2; color: #dc2626; }
   .delete-btn:hover { background: #dc2626; color: white; transform: scale(1.1); }
   .delete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
  
+  /* Pills y chips */
+  .id-tag { color: #94a3b8; font-weight: 700; font-family: monospace; font-size: 12px; }
+  .type-chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 11px; white-space: nowrap; }
+  .status-pill { padding: 5px 12px; border-radius: 100px; font-size: 10px; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
+  .s1  { background: #fef3c7; color: #92400e; }
+  .s2  { background: #dbeafe; color: #1e40af; }
+  .s3  { background: #d1fae5; color: #065f46; }
+  .s4  { background: #e0e7ff; color: #3730a3; }
+ 
+  .prio-chip { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; white-space: nowrap; }
+  .prio-alta  { background: #fef2f2; color: #dc2626; }
+  .prio-media { background: #fff7ed; color: #c2410c; }
+  .prio-baja  { background: #f0fdf4; color: #16a34a; }
+ 
+  /* Card / form */
   .center-container { display: flex; justify-content: center; padding: 20px 0 60px; }
-  .card { background: white; width: 100%; max-width: 680px; border-radius: 32px; border: 1px solid #e2e8f0; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1); overflow-x: auto; }
+  .card { background: white; width: 100%; max-width: 680px; border-radius: 32px; border: 1px solid #e2e8f0; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1); overflow: hidden; }
   .form-padding { padding: 45px; }
   .card-title { font-size: 26px; font-weight: 800; color: #0f172a; margin-bottom: 30px; }
   .card-top { padding: 35px 45px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; }
@@ -349,28 +403,25 @@
   .label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
   .value { font-weight: 700; color: #1e293b; font-size: 15px; }
  
-  .field { display: flex; flex-direction: column; gap: 10px; margin-bottom: 25px; }
+  .field { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
   .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .section-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
-  textarea, select { padding: 15px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: #fcfcfc; font-size: 14px; outline: none; }
+  textarea, select { padding: 15px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: #fcfcfc; font-size: 14px; outline: none; font-family: inherit; }
   textarea { min-height: 120px; resize: none; }
-  .btn-send { width: 100%; background: #2563eb; color: white; border: none; padding: 18px; border-radius: 16px; font-weight: 800; font-size: 16px; cursor: pointer; margin-top: 15px; }
- 
-  .id-tag { color: #94a3b8; font-weight: 700; font-family: monospace; }
-  .status-pill { padding: 6px 14px; border-radius: 100px; font-size: 10px; font-weight: 800; text-transform: uppercase; }
-  .s1 { background: #fef3c7; color: #92400e; }
-  .type-chip { background: #eff6ff; color: #2563eb; padding: 5px 12px; border-radius: 8px; font-weight: 700; font-size: 12px; }
+  .btn-send { width: 100%; background: #2563eb; color: white; border: none; padding: 18px; border-radius: 16px; font-weight: 800; font-size: 16px; cursor: pointer; margin-top: 10px; font-family: inherit; }
  
   .toast { position: fixed; bottom: 30px; right: 30px; background: #0f172a; color: white; padding: 16px 28px; border-radius: 16px; font-weight: 600; z-index: 100; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
   .animate-up { animation: slideUp 0.4s ease-out; }
   @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+  .loader-wrap { padding: 60px; text-align: center; color: #94a3b8; }
  
   @media (max-width: 768px) {
     .module { padding: 16px; }
     .page-header { flex-direction: column; gap: 12px; }
     h1 { font-size: 22px; }
-    .toolbar { flex-direction: column; gap: 10px; }
-    table { min-width: 600px; }
-    th, td { padding: 10px 12px; font-size: 12px; }
+    table { min-width: 700px; }
+    th, td { padding: 10px 12px; font-size: 11px; }
+    .form-padding, .card-top, .card-body { padding: 24px; }
+    .field-group { grid-template-columns: 1fr; }
   }
 </style>
