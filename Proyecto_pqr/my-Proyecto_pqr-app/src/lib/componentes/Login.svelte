@@ -7,7 +7,7 @@
     } else {
       currentUser.set({ nombre: 'Juan Pérez', correo: 'user@pqr.com', cedula: '654321', id_rol: 2 });
     }
-    
+  }
 </script>
  
 <div class="login-bg">
@@ -15,11 +15,7 @@
   <div class="login-card">
     <div class="brand">
       <div class="brand-icon">
-  <img src="/logo_cul.png" alt="Logo CUL" style="width: 40px; height: 40px; object-fit: contain;" />
-</div>
-          <rect width="32" height="32" rx="8" fill="var(--accent)"/>
-          <path d="M8 10h16M8 16h10M8 22h13" stroke="#0a0a0f" stroke-width="2.5" stroke-linecap="round"/>
-        </svg>
+        <img src="/logo_cul.png" alt="Logo CUL" style="width: 40px; height: 40px; object-fit: contain;" />
       </div>
       <span class="brand-name">Sistema PQRS</span>
     </div>
