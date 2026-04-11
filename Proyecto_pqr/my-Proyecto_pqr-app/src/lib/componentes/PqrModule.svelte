@@ -254,6 +254,61 @@
 </div>
 
 <style>
-  /* Aquí mantienes tus estilos originales, ya funcionan bien */
-  /* Los IF de Svelte se encargan de ocultar los elementos visualmente */
+  .module { padding: 40px; max-width: 1200px; margin: 0 auto; }
+  
+  /* Cabecera */
+  .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 32px; }
+  h1 { font-size: 28px; font-weight: 800; color: #0f172a; margin: 0; }
+  .subtitle { color: #64748b; font-size: 14px; margin-top: 4px; }
+
+  /* Toolbar de búsqueda y filtros */
+  .toolbar { display: flex; gap: 12px; margin-bottom: 24px; align-items: center; }
+  .search-wrap { position: relative; flex: 1; }
+  .search-input { 
+    width: 100%; padding: 10px 16px 10px 40px; border-radius: 10px; 
+    border: 1px solid #e2e8f0; background: white; outline: none;
+  }
+  .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #94a3b8; }
+  .filter-select { padding: 10px 16px; border-radius: 10px; border: 1px solid #e2e8f0; background: white; color: #475569; }
+
+  /* Tabla Profesional */
+  .table-wrap { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
+  table { width: 100%; border-collapse: collapse; text-align: left; font-size: 14px; }
+  th { background: #f8fafc; padding: 14px 20px; font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #f1f5f9; }
+  td { padding: 16px 20px; border-bottom: 1px solid #f1f5f9; color: #334155; }
+  .clickable-row:hover { background: #f8fafc; cursor: pointer; }
+
+  /* Badges y Chips */
+  .id-badge { background: #f1f5f9; padding: 4px 8px; border-radius: 6px; font-weight: 700; color: #475569; font-size: 12px; }
+  .chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 100px; font-size: 12px; font-weight: 600; }
+  .status-badge { padding: 6px 12px; border-radius: 100px; font-size: 11px; font-weight: 800; text-transform: uppercase; }
+  .s1 { background: #fef3c7; color: #92400e; } /* Pendiente */
+  .s2 { background: #e0f2fe; color: #075985; } /* Proceso */
+  .s3 { background: #dcfce7; color: #166534; } /* Resuelto */
+
+  .prio { padding: 4px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; }
+  .p1 { background: #f1f5f9; color: #475569; } /* Baja */
+  .p3 { background: #fee2e2; color: #991b1b; } /* Alta */
+
+  /* Botones */
+  .btn-primary { background: #2563eb; color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; cursor: pointer; transition: 0.2s; }
+  .btn-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+  .btn-secondary { background: white; border: 1px solid #e2e8f0; padding: 10px 20px; border-radius: 10px; font-weight: 600; cursor: pointer; }
+
+  .icon-btn { border: 1px solid #e2e8f0; background: white; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; transition: 0.2s; }
+  .icon-btn:hover { border-color: #2563eb; color: #2563eb; }
+
+  /* Estados de carga */
+  .loading-state { padding: 60px; text-align: center; color: #64748b; }
+  .spinner-lg { width: 40px; height: 40px; border: 4px solid #f1f5f9; border-top-color: #2563eb; border-radius: 50%; animation: spin 1s linear infinite; display: block; margin: 0 auto 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  /* Formulario */
+  .form-card { background: white; padding: 32px; border-radius: 20px; border: 1px solid #e2e8f0; max-width: 800px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .field { display: flex; flex-direction: column; gap: 8px; }
+  .field.full { grid-column: 1 / -1; }
+  label { font-size: 13px; font-weight: 700; color: #475569; }
+  input, select, textarea { padding: 12px; border-radius: 10px; border: 1px solid #e2e8f0; background: #f8fafc; outline: none; }
+  input:focus, select:focus, textarea:focus { border-color: #2563eb; background: white; }
 </style>
