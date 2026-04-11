@@ -1,276 +1,352 @@
 <script>
-  import { currentUser } from '../../stores/auth.js';
- 
-  function loginAs(rol) {
-    if (rol === 'admin') {
-      currentUser.set({ nombre: 'Administrador', correo: 'admin@pqr.com', cedula: '123456', id_rol: 1 });
-    } else {
-      currentUser.set({ nombre: 'Juan Pérez', correo: 'user@pqr.com', cedula: '654321', id_rol: 2 });
-    }
+  // En el futuro, aquí manejarás la lógica de autenticación
+  // import { login } from '../stores/auth.js';
+  
+  // Para la demostración visual, simularemos la navegación
+  let isLoggingIn = false;
+
+  function simulateLogin(role) {
+    isLoggingIn = true;
+    // Aquí, más adelante, llamarás a tu API de FastAPI
+    console.log(`Intentando iniciar sesión como: ${role}`);
+    
+    // Simulamos un retraso de red
+    setTimeout(() => {
+      isLoggingIn = false;
+      alert(`Simulación: Sesión iniciada como ${role}. Serías redirigido al Dashboard.`);
+      // window.location.href = '/dashboard'; // Redirección real futura
+    }, 1500);
   }
 </script>
- 
-<div class="login-bg">
-  <div class="login-card">
- 
-    <!-- Header -->
-    <div class="header">
-      <div class="brand">
-        <img src="/logo_cul.png" alt="Logo CUL" class="logo" />
-        <div class="brand-text">
-          <span class="brand-name">Corporación Universitaria</span>
-          <span class="brand-sub">Latinoamericana</span>
-          <span class="brand-loc">Barranquilla, Colombia</span>
-        </div>
-      </div>
-      <div class="system-badge">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <rect x="2" y="3" width="20" height="18" rx="2"/>
-          <line x1="8" y1="3" x2="8" y2="21"/>
+
+<div class="login-container">
+  <div class="brand-section">
+    <div class="brand-content">
+      <div class="logo-container">
+        <svg width="60" height="60" viewBox="0 0 40 40" fill="none">
+          <circle cx="20" cy="20" r="18" fill="#fff" stroke="#facc15" stroke-width="2"/>
+          <path d="M12 12C12 12 14.5 9.5 20 9.5C25.5 9.5 28 12 28 12M12 28C12 28 14.5 30.5 20 30.5C25.5 30.5 28 28 28 28" stroke="#1d4ed8" stroke-width="2.5" stroke-linecap="round"/>
+          <path d="M20 9.5V30.5" stroke="#1d4ed8" stroke-width="2.5" stroke-linecap="round"/>
         </svg>
-        Sistema PQRS
+      </div>
+      
+      <h1 class="brand-title">Universidad CUL</h1>
+      <p class="brand-subtitle">Corporación Universitaria Latinoamericana</p>
+      
+      <div class="system-badge">
+        <span class="badge-icon">◈</span>
+        <span class="badge-text">Sistema de Gestión PQRS</span>
       </div>
     </div>
- 
-    <div class="divider-gradient"></div>
- 
-    <h1>Iniciar sesión</h1>
-    <p class="subtitle">Acceso de administrador al sistema</p>
- 
-    <!-- Roles -->
-    <div class="roles-grid">
-      <button class="role-card admin" onclick={() => loginAs('admin')}>
-        <div class="role-icon admin-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <path d="M12 1l3 6.5L22 8.7l-5 4.9 1.2 7L12 17.2l-6.2 3.4L7 13.6 2 8.7l7-1.2z"/>
-          </svg>
+    
+    <div class="decorative-blob"></div>
+  </div>
+
+  <div class="login-section">
+    <div class="login-card">
+      <div class="login-header">
+        <h2>Bienvenido</h2>
+        <p>Selecciona tu tipo de acceso para continuar</p>
+      </div>
+
+      <div class="role-selector">
+        <button 
+          class="role-btn admin-btn" 
+          onclick={() => simulateLogin('admin')}
+          disabled={isLoggingIn}
+        >
+          <div class="role-icon-wrapper">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+            </svg>
+          </div>
+          <div class="role-text">
+            <h3>Administrador</h3>
+            <p>Acceso completo al sistema y analítica</p>
+          </div>
+          <div class="arrow-icon">→</div>
+        </button>
+
+        <button 
+          class="role-btn user-btn" 
+          onclick={() => simulateLogin('user')}
+          disabled={isLoggingIn}
+        >
+          <div class="role-icon-wrapper">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+              <circle cx="12" cy="7" r="4"/>
+            </svg>
+          </div>
+          <div class="role-text">
+            <h3>Usuario</h3>
+            <p>Gestión de PQRs propias</p>
+          </div>
+          <div class="arrow-icon">→</div>
+        </button>
+      </div>
+
+      {#if isLoggingIn}
+        <div class="loading-state">
+          <div class="spinner"></div>
+          <span>Iniciando sesión...</span>
         </div>
-        <div class="role-info">
-          <span class="role-title">Administrador</span>
-          <span class="role-desc">Acceso completo al sistema</span>
-        </div>
-        <span class="role-arrow">→</span>
-      </button>
- 
-      <button class="role-card user" onclick={() => loginAs('usuario')}>
-        <div class="role-icon user-icon">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-            <circle cx="12" cy="8" r="4"/>
-            <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
-          </svg>
-        </div>
-        <div class="role-info">
-          <span class="role-title">Usuario</span>
-          <span class="role-desc">Gestión de PQRs propias</span>
-        </div>
-        <span class="role-arrow">→</span>
-      </button>
+      {/if}
+      
+      <div class="login-footer">
+        <p>¿Problemas para acceder? <a href="#">Contactar soporte</a></p>
+      </div>
     </div>
- 
   </div>
 </div>
- 
+
 <style>
-  .login-bg {
+  /* CONFIGURACIÓN BASE DEL LAYOUT SPLIT */
+  :global(body) {
+    margin: 0;
+    font-family: 'Inter', system-ui, sans-serif;
+  }
+
+  .login-container {
+    display: flex;
     min-height: 100vh;
+    width: 100%;
+    background-color: #f8fafc;
+  }
+
+  /* --- LADO IZQUIERDO: BRANDING --- */
+  .brand-section {
+    flex: 1;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+    color: white;
     display: flex;
     align-items: center;
     justify-content: center;
-    background: #1a1a1a;
-    padding: 2rem;
+    position: relative;
+    overflow: hidden;
   }
- 
-  .login-card {
-    background: #2a2a2a;
-    border-radius: 16px;
-    padding: 2rem;
-    width: 100%;
-    max-width: 420px;
-    border: 0.5px solid rgba(255, 255, 255, 0.1);
-    animation: fadeUp 0.4s ease;
+
+  .brand-content {
+    position: relative;
+    z-index: 10;
+    text-align: center;
+    padding: 40px;
+    max-width: 400px;
   }
- 
-  @keyframes fadeUp {
-    from { opacity: 0; transform: translateY(16px); }
-    to   { opacity: 1; transform: translateY(0); }
-  }
- 
-  /* Header */
-  .header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 1.5rem;
-    padding-bottom: 1.5rem;
-    border-bottom: 0.5px solid rgba(255, 255, 255, 0.1);
-  }
- 
-  .brand {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    flex: 1;
-  }
- 
-  .logo {
-    width: 52px;
-    height: 52px;
-    border-radius: 8px;
-    object-fit: contain;
-    flex-shrink: 0;
-    mix-blend-mode: lighten;
-  }
- 
-  .brand-text {
-    display: flex;
-    flex-direction: column;
-  }
- 
-  .brand-name {
-    font-size: 13px;
-    font-weight: 600;
-    color: #E8921A;
-    line-height: 1.3;
-  }
- 
-  .brand-sub {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.5);
-    line-height: 1.3;
-  }
- 
-  .brand-loc {
-    font-size: 11px;
-    color: rgba(255, 255, 255, 0.35);
-    line-height: 1.3;
-  }
- 
-  .system-badge {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+
+  .logo-container {
+    margin-bottom: 24px;
+    display: inline-block;
+    padding: 10px;
     background: rgba(255, 255, 255, 0.05);
-    border: 0.5px solid rgba(255, 255, 255, 0.1);
-    border-radius: 8px;
-    padding: 6px 10px;
-    font-size: 13px;
-    font-weight: 500;
-    color: rgba(255, 255, 255, 0.8);
-    white-space: nowrap;
-    flex-shrink: 0;
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
   }
- 
-  .divider-gradient {
-    height: 2px;
-    background: linear-gradient(to right, #E8921A, #1B6B3A, #1B4A7A);
-    border-radius: 2px;
-    margin-bottom: 1.5rem;
+
+  .brand-title {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0 0 8px 0;
+    letter-spacing: -1px;
+    color: #f8fafc;
   }
- 
-  h1 {
-    margin: 0 0 4px;
-    font-size: 22px;
-    font-weight: 700;
-    color: white;
+
+  .brand-subtitle {
+    font-size: 1rem;
+    color: #94a3b8;
+    margin: 0 0 32px 0;
+    line-height: 1.5;
   }
- 
-  .subtitle {
-    margin: 0 0 1.5rem;
-    font-size: 13px;
-    color: rgba(255, 255, 255, 0.5);
+
+  .system-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: rgba(37, 99, 235, 0.15);
+    border: 1px solid rgba(37, 99, 235, 0.3);
+    padding: 8px 16px;
+    border-radius: 100px;
   }
- 
-  /* Roles */
-  .roles-grid {
+
+  .badge-icon { color: #60a5fa; }
+  .badge-text { font-size: 0.85rem; font-weight: 600; color: #bfdbfe; letter-spacing: 0.5px;}
+
+  /* Detalle decorativo sutil en el fondo */
+  .decorative-blob {
+    position: absolute;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(37,99,235,0.1) 0%, rgba(15,23,42,0) 70%);
+    top: -100px;
+    left: -100px;
+    border-radius: 50%;
+    z-index: 1;
+  }
+
+  /* --- LADO DERECHO: LOGIN FORM --- */
+  .login-section {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 40px;
+    background-color: #ffffff;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 440px;
+  }
+
+  .login-header {
+    margin-bottom: 40px;
+  }
+
+  .login-header h2 {
+    font-size: 2rem;
+    font-weight: 800;
+    color: #0f172a;
+    margin: 0 0 8px 0;
+    letter-spacing: -0.5px;
+  }
+
+  .login-header p {
+    color: #64748b;
+    font-size: 1rem;
+    margin: 0;
+  }
+
+  /* --- BOTONES DE SELECCIÓN DE ROL --- */
+  .role-selector {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 16px;
   }
- 
-  .role-card {
+
+  .role-btn {
     display: flex;
     align-items: center;
     gap: 16px;
-    padding: 18px 20px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 0.5px solid rgba(255, 255, 255, 0.12);
-    border-radius: 12px;
+    padding: 20px;
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
     cursor: pointer;
     text-align: left;
-    transition: all 0.2s;
-    width: 100%;
-    color: white;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
   }
- 
-  .role-card:hover {
+
+  .role-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .role-btn:hover:not(:disabled) {
+    border-color: #2563eb;
+    box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.1);
     transform: translateY(-2px);
   }
- 
-  .role-card.admin:hover {
-    border-color: #E8921A;
-    background: rgba(232, 146, 26, 0.08);
+
+  /* Colores específicos de los iconos */
+  .admin-btn .role-icon-wrapper {
+    background: #eff6ff;
+    color: #2563eb;
   }
- 
-  .role-card.user:hover {
-    border-color: #4a6fa5;
-    background: rgba(74, 111, 165, 0.08);
+  
+  .user-btn .role-icon-wrapper {
+    background: #f8fafc;
+    color: #64748b;
   }
- 
-  .role-icon {
+
+  .role-btn:hover .admin-btn .role-icon-wrapper { background: #2563eb; color: white; }
+  .role-btn:hover .user-btn .role-icon-wrapper { background: #334155; color: white; }
+
+  .role-icon-wrapper {
     width: 48px;
     height: 48px;
-    border-radius: 10px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: all 0.3s ease;
   }
- 
-  .admin-icon {
-    background: rgba(232, 146, 26, 0.15);
-    color: #E8921A;
+
+  .role-text { flex: 1; }
+
+  .role-text h3 {
+    margin: 0 0 4px 0;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #0f172a;
   }
- 
-  .user-icon {
-    background: rgba(74, 111, 165, 0.15);
-    color: #7aadff;
+
+  .role-text p {
+    margin: 0;
+    font-size: 0.85rem;
+    color: #64748b;
   }
- 
-  .role-info {
-    display: flex;
-    flex-direction: column;
-    gap: 3px;
-    flex: 1;
+
+  .arrow-icon {
+    color: #cbd5e1;
+    font-size: 1.2rem;
+    font-weight: bold;
+    transition: transform 0.2s;
   }
- 
-  .role-title {
-    font-size: 15px;
-    font-weight: 600;
-    color: white;
-  }
- 
-  .role-desc {
-    font-size: 12px;
-    color: rgba(255, 255, 255, 0.45);
-  }
- 
-  .role-arrow {
-    font-size: 18px;
-    color: rgba(255, 255, 255, 0.3);
-    transition: transform 0.2s, color 0.2s;
-  }
- 
-  .role-card:hover .role-arrow {
+
+  .role-btn:hover:not(:disabled) .arrow-icon {
+    color: #2563eb;
     transform: translateX(4px);
   }
- 
-  .admin:hover .role-arrow { color: #E8921A; }
-  .user:hover  .role-arrow { color: #7aadff; }
- 
-  @media (max-width: 480px) {
-    .login-card { padding: 1.5rem; }
-    h1 { font-size: 20px; }
-    .header { flex-wrap: wrap; }
-    .system-badge { font-size: 11px; padding: 5px 8px; }
+
+  /* --- ESTADOS DE CARGA Y FOOTER --- */
+  .loading-state {
+    margin-top: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: #2563eb;
+    font-weight: 600;
+    font-size: 0.9rem;
+    background: #eff6ff;
+    padding: 12px;
+    border-radius: 8px;
+  }
+
+  .spinner {
+    width: 18px;
+    height: 18px;
+    border: 2px solid #bfdbfe;
+    border-top-color: #2563eb;
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .login-footer {
+    margin-top: 40px;
+    text-align: center;
+    font-size: 0.85rem;
+    color: #64748b;
+  }
+
+  .login-footer a {
+    color: #2563eb;
+    text-decoration: none;
+    font-weight: 600;
+  }
+
+  .login-footer a:hover { text-decoration: underline; }
+
+  /* --- RESPONSIVIDAD --- */
+  @media (max-width: 900px) {
+    .login-container { flex-direction: column; }
+    .brand-section { padding: 40px 20px; flex: none; }
+    .decorative-blob { display: none; }
+    .brand-content { padding: 0; }
+    .login-section { padding: 32px 20px; align-items: flex-start; }
   }
 </style>
