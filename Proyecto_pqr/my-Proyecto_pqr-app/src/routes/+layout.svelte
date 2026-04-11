@@ -1,19 +1,25 @@
 <script>
   let { children } = $props()
+
   import { currentUser } from '../stores/auth.js';
   import Login from '../lib/componentes/Login.svelte';
   import Dashboard from '../lib/componentes/Dashboard.svelte';
+  import Footer from '../lib/componentes/Footer.svelte';
 
   let page = $state('home')
 </script>
 
-{#if $currentUser}
-  <Dashboard bind:page />
-{:else}
-  <Login />
-{/if}
-
-{@render children()}
+<div class="app">
+  {#if $currentUser}
+    <div class="content">
+      <Dashboard bind:page />
+      {@render children()}
+    </div>
+    <Footer />
+  {:else}
+    <Login />
+  {/if}
+</div>
 
 <style>
   :global(*) {
@@ -21,6 +27,7 @@
     margin: 0;
     padding: 0;
   }
+
   :global(:root) {
     --bg: #eef0f4;
     --surface: #ffffff;
@@ -40,17 +47,31 @@
     --shadow: 0 2px 16px rgba(0,0,0,0.07);
     --shadow-accent: 0 4px 24px rgba(45,45,58,0.12);
   }
+
   :global(body) {
     background: var(--bg);
     color: var(--text);
     font-family: var(--font-body);
     min-height: 100vh;
   }
+
   :global(button) {
     cursor: pointer;
     font-family: var(--font-body);
   }
+
   :global(input), :global(select), :global(textarea) {
     font-family: var(--font-body);
+  }
+
+  /* 🔥 Esto hace que el footer quede abajo siempre */
+  .app {
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .content {
+    flex: 1;
   }
 </style>
