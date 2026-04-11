@@ -219,7 +219,7 @@
   .error-msg { text-align: center; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
   .error-msg span { font-size: 40px; display: block; margin-bottom: 10px; }
 
-  @media (max-width: 768px) {
+ @media (max-width: 768px) {
   .layout { flex-direction: column; height: auto; min-height: 100vh; }
   .sidebar { width: 100%; min-width: unset; height: auto; flex-direction: row; padding: 12px 16px; justify-content: space-between; align-items: center; }
   .sidebar-top { flex-direction: row; align-items: center; gap: 12px; }
@@ -231,4 +231,5 @@
   .main { height: auto; flex: 1; }
   .scrollable-content { padding: 16px; }
 }
+
 </style>

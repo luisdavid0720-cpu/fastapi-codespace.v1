@@ -195,13 +195,18 @@
 
   @media (max-width: 768px) { .actions-grid { grid-template-columns: 1fr; } .page-header { flex-direction: column; } }
 
-@media (max-width: 640px) {
-  .home { padding: 16px; }
-  .user-name { font-size: 22px; }
-  .stat-num { font-size: 28px; }
-  .page-header { gap: 12px; }
-  td, th { padding: 10px 12px; font-size: 12px; }
-  .desc-cell { max-width: 120px; }
-}
+
+  @media (max-width: 640px) {
+    .home { padding: 16px; }
+    .user-name { font-size: 22px; }
+    .stat-num { font-size: 28px; }
+    .page-header { gap: 12px; }
+    td, th { padding: 10px 12px; font-size: 12px; }
+    .desc-cell { max-width: 120px; }
+  }
+
+
+
+
 
 </style>
