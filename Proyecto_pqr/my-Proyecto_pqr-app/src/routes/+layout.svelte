@@ -30,22 +30,8 @@
 
   :global(:root) {
     --bg: #eef0f4;
-    --surface: #ffffff;
-    --surface2: #f5f6f9;
-    --border: #dde0e8;
-    --accent: #2d2d3a;
-    --accent2: #4a6fa5;
-    --danger: #d63031;
-    --success: #00b894;
-    --warning: #e17055;
     --text: #1a1a2e;
-    --text-muted: #8890a0;
-    --font-display: 'Syne', sans-serif;
     --font-body: 'DM Sans', sans-serif;
-    --radius: 12px;
-    --radius-sm: 8px;
-    --shadow: 0 2px 16px rgba(0,0,0,0.07);
-    --shadow-accent: 0 4px 24px rgba(45,45,58,0.12);
   }
 
   :global(body) {
@@ -55,16 +41,7 @@
     min-height: 100vh;
   }
 
-  :global(button) {
-    cursor: pointer;
-    font-family: var(--font-body);
-  }
-
-  :global(input), :global(select), :global(textarea) {
-    font-family: var(--font-body);
-  }
-
-  /* 🔥 Layout para mantener footer abajo */
+  /* 🔥 Layout correcto */
   .app {
     display: flex;
     flex-direction: column;
