@@ -1,4 +1,5 @@
-import { currentUser, logout } from '../../stores/auth.js'
+<script>
+  import { currentUser, logout } from '../../stores/auth.js'
   import PqrModule      from './PqrModule.svelte'
   import UsuariosModule from './UsuariosModule.svelte'
   import HomeModule     from './HomeModule.svelte'
