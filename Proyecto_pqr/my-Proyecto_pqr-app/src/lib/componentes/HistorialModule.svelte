@@ -312,8 +312,8 @@
   .filter-field.align-end { justify-content: flex-end; }
 
   .input-wrap { position: relative; }
-  .input-icon { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; }
-  .input-wrap input { padding-left: 32px; }
+  .input-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; }
+  .input-wrap input { padding-left: 36px !important; }
 
   .filter-field input, .filter-field select {
     padding: 10px 12px; border-radius: 10px; border: 1.5px solid #e2e8f0;

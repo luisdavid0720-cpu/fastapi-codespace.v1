@@ -2,7 +2,7 @@
   import { onMount } from 'svelte'
   import { currentUser } from '../../stores/auth.js'
   import { api } from '../api.js'
- 
+
   let pqrs = $state([])
   let loading = $state(true)
   let view = $state('list')
@@ -14,18 +14,17 @@
   let toastMsg = $state('')
   let editForm = $state(null)
   let deleting = $state(false)
-  let generatingPdf = $state(false)
- 
+
   let tipos = $state([]), estados = $state([]), departamentos = $state([])
   let prioridades = $state([]), usuarios = $state([])
- 
+
   function defaultForm() {
     return { descripcion: '', id_tipo: '', id_departamento: '' }
   }
   let form = $state(defaultForm())
- 
+
   let isAdmin = $derived($currentUser?.id_rol === 1)
- 
+
   let filtered = $derived(
     pqrs
       .filter(p => {
@@ -37,7 +36,7 @@
       })
       .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
   )
- 
+
   onMount(async () => {
     loading = true
     try {
@@ -54,10 +53,10 @@
     } catch(e) { console.error(e) }
     loading = false
   })
- 
+
   function openCreate() { form = defaultForm(); view = 'form' }
   function openDetail(pqr) { selected = pqr; view = 'detail' }
- 
+
   function openEdit(pqr) {
     editForm = {
       id_pqr: pqr.id_pqr,
@@ -69,7 +68,7 @@
     }
     view = 'edit'
   }
- 
+
   async function saveEdit() {
     if (!editForm.descripcion || !editForm.id_tipo || !editForm.id_departamento) {
       showToast('⚠️ Completa todos los campos'); return
@@ -84,7 +83,7 @@
     } catch(e) { showToast('❌ Error al actualizar') }
     saving = false
   }
- 
+
   async function deletePqr(pqr) {
     if (!confirm(`¿Eliminar la PQR #${pqr.id_pqr}? Esta acción no se puede deshacer.`)) return
     deleting = true
@@ -95,7 +94,7 @@
     } catch(e) { showToast('❌ Error al eliminar') }
     deleting = false
   }
- 
+
   async function savePqr() {
     if (!form.descripcion || !form.id_tipo || !form.id_departamento) {
       showToast('⚠️ Completa todos los campos'); return
@@ -118,99 +117,10 @@
     } catch(e) { showToast('❌ Error al enviar') }
     saving = false
   }
- 
-  async function exportarPDF() {
-    generatingPdf = true
-    try {
-      const { jsPDF } = await import('https://esm.sh/jspdf@2.5.1')
-      const { default: autoTable } = await import('https://esm.sh/jspdf-autotable@3.8.2')
- 
-      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
- 
-      // Encabezado
-      doc.setFillColor(37, 99, 235)
-      doc.rect(0, 0, 297, 22, 'F')
-      doc.setTextColor(255, 255, 255)
-      doc.setFontSize(14)
-      doc.setFont('helvetica', 'bold')
-      doc.text('Corporación Universitaria Latinoamericana — Sistema PQRS', 14, 10)
-      doc.setFontSize(9)
-      doc.setFont('helvetica', 'normal')
-      doc.text('Historial de Solicitudes', 14, 17)
- 
-      // Fecha de generación
-      const ahora = new Date().toLocaleString('es-CO')
-      doc.setTextColor(200, 220, 255)
-      doc.text(`Generado: ${ahora}`, 297 - 14, 17, { align: 'right' })
- 
-      // Filtros activos
-      doc.setTextColor(100, 116, 139)
-      doc.setFontSize(8)
-      const filtrosTexto = []
-      if (searchText)   filtrosTexto.push(`Búsqueda: "${searchText}"`)
-      if (filterEstado) filtrosTexto.push(`Estado: ${getLabelEstado(filterEstado)}`)
-      if (filterTipo)   filtrosTexto.push(`Categoría: ${getLabelTipo(filterTipo)}`)
-      const filtrosLabel = filtrosTexto.length ? filtrosTexto.join('  |  ') : 'Sin filtros aplicados'
-      doc.text(`Filtros: ${filtrosLabel}  —  Total: ${filtered.length} registros`, 14, 28)
- 
-      // Tabla
-      autoTable(doc, {
-        startY: 32,
-        head: [[
-          { content: 'ID',          styles: { halign: 'center', cellWidth: 12 } },
-          { content: 'Descripción', styles: { cellWidth: 60 } },
-          { content: 'Categoría',   styles: { cellWidth: 28 } },
-          { content: 'Usuario',     styles: { cellWidth: 36 } },
-          { content: 'Departamento',styles: { cellWidth: 36 } },
-          { content: 'Prioridad',   styles: { halign: 'center', cellWidth: 22 } },
-          { content: 'Estado',      styles: { halign: 'center', cellWidth: 24 } },
-          { content: 'Fecha',       styles: { halign: 'center', cellWidth: 22 } },
-        ]],
-        body: filtered.map(p => [
-          `#${p.id_pqr}`,
-          p.descripcion?.slice(0, 80) || '—',
-          getLabelTipo(p.id_tipo),
-          getLabelUsuario(p.id_usuario),
-          getLabelDep(p.id_departamento),
-          getLabelPrioridad(p.id_prioridad),
-          getLabelEstado(p.id_estado),
-          new Date(p.fecha).toLocaleDateString('es-CO'),
-        ]),
-        headStyles: {
-          fillColor: [37, 99, 235],
-          textColor: 255,
-          fontSize: 9,
-          fontStyle: 'bold',
-        },
-        bodyStyles: { fontSize: 8, textColor: [51, 65, 85] },
-        alternateRowStyles: { fillColor: [248, 250, 252] },
-        columnStyles: { 0: { halign: 'center' }, 5: { halign: 'center' }, 6: { halign: 'center' }, 7: { halign: 'center' } },
-        margin: { left: 14, right: 14 },
-        didDrawPage: (data) => {
-          // Footer con número de página
-          const pageCount = doc.internal.getNumberOfPages()
-          doc.setFontSize(7)
-          doc.setTextColor(148, 163, 184)
-          doc.text(
-            `Página ${data.pageNumber} de ${pageCount}`,
-            297 / 2, 205,
-            { align: 'center' }
-          )
-        }
-      })
- 
-      const fecha = new Date().toISOString().slice(0, 10)
-      doc.save(`historial_pqrs_${fecha}.pdf`)
-      showToast('✅ PDF descargado correctamente')
-    } catch(e) {
-      console.error(e)
-      showToast('❌ Error al generar el PDF')
-    }
-    generatingPdf = false
-  }
- 
+
+
   function showToast(msg) { toastMsg = msg; setTimeout(() => toastMsg = '', 3000) }
- 
+
   const getLabelEstado    = (id) => estados.find(e => e.id_estado == id)?.nombre             || 'PENDIENTE'
   const getLabelTipo      = (id) => tipos.find(t => t.id_tipo == id)?.nombre                  || '—'
   const getLabelDep       = (id) => departamentos.find(d => d.id_departamento == id)?.nombre  || '—'
@@ -226,10 +136,10 @@
     return 'prio-baja'
   }
 </script>
- 
+
 <div class="module">
   {#if toastMsg}<div class="toast">{toastMsg}</div>{/if}
- 
+
   <header class="page-header">
     <div class="header-content">
       <h1>
@@ -252,7 +162,7 @@
       {/if}
     </div>
   </header>
- 
+
   {#if view === 'list'}
     <div class="toolbar">
       <div class="search-container">
@@ -272,26 +182,13 @@
             <option value={t.id_tipo}>{t.nombre}</option>
           {/each}
         </select>
-        <button class="btn-pdf" onclick={exportarPDF} disabled={generatingPdf}>
-          {#if generatingPdf}
-            <span class="spinner"></span> Generando...
-          {:else}
-            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-              <polyline points="14 2 14 8 20 8"/>
-              <line x1="12" y1="18" x2="12" y2="12"/>
-              <line x1="9" y1="15" x2="15" y2="15"/>
-            </svg>
-            Descargar PDF
-          {/if}
-        </button>
       {/if}
     </div>
- 
+
     <div class="results-count">
       {filtered.length} {filtered.length === 1 ? 'solicitud encontrada' : 'solicitudes encontradas'}
     </div>
- 
+
     {#if loading}
       <div class="loader-wrap"><p>Sincronizando...</p></div>
     {:else}
@@ -361,7 +258,7 @@
         </table>
       </div>
     {/if}
- 
+
   {:else if view === 'detail'}
     <div class="center-container">
       <div class="card animate-up">
@@ -390,7 +287,7 @@
         </div>
       </div>
     </div>
- 
+
   {:else if view === 'edit'}
     <div class="center-container">
       <div class="card animate-up">
@@ -436,7 +333,7 @@
         </div>
       </div>
     </div>
- 
+
   {:else if view === 'form'}
     <div class="center-container">
       <div class="card animate-up">
@@ -470,16 +367,16 @@
     </div>
   {/if}
 </div>
- 
+
 <style>
   .module { padding: 40px; font-family: 'Inter', sans-serif; background: #fcfdfe; min-height: 100vh; }
   .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
   h1 { font-size: 32px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -1px; }
   .subtitle { color: #64748b; font-size: 15px; }
- 
+
   .btn-create { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
   .btn-back   { background: white; border: 1.5px solid #e2e8f0; padding: 10px 20px; border-radius: 10px; color: #475569; font-weight: 700; cursor: pointer; }
- 
+
   /* Toolbar */
   .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
   .search-container { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
@@ -488,9 +385,8 @@
   .modern-input:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,0.05); }
   .filter-select { padding: 11px 14px; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 14px; outline: none; background: white; color: #334155; cursor: pointer; transition: 0.2s; }
   .filter-select:focus { border-color: #2563eb; }
- 
+
   /* Botón PDF */
-  .btn-pdf {
     display: flex; align-items: center; gap: 8px;
     background: #dc2626; color: white; border: none;
     padding: 11px 18px; border-radius: 12px; font-weight: 700;
@@ -498,14 +394,10 @@
     box-shadow: 0 4px 12px rgba(220,38,38,0.2);
     white-space: nowrap;
   }
-  .btn-pdf:hover    { background: #b91c1c; }
-  .btn-pdf:disabled { opacity: 0.6; cursor: not-allowed; }
- 
-  .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; display: inline-block; animation: spin 0.7s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
- 
+
+
   .results-count { font-size: 13px; color: #94a3b8; font-weight: 500; margin-bottom: 16px; }
- 
+
   /* Tabla */
   .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
   table { width: 100%; border-collapse: collapse; }
@@ -515,7 +407,7 @@
   .empty-row { text-align: center; color: #94a3b8; padding: 40px !important; }
   .text-usuario { font-weight: 600; color: #1e293b; }
   .text-dep { color: #475569; font-size: 12px; }
- 
+
   /* Acciones */
   .actions-cell { display: flex; align-items: center; justify-content: center; gap: 6px; }
   .action-btn { width: 32px; height: 32px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
@@ -526,7 +418,7 @@
   .delete-btn { background: #fef2f2; color: #dc2626; }
   .delete-btn:hover { background: #dc2626; color: white; transform: scale(1.1); }
   .delete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
- 
+
   /* Pills */
   .id-tag { color: #94a3b8; font-weight: 700; font-family: monospace; font-size: 12px; }
   .type-chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 11px; white-space: nowrap; }
@@ -539,7 +431,7 @@
   .prio-alta  { background: #fef2f2; color: #dc2626; }
   .prio-media { background: #fff7ed; color: #c2410c; }
   .prio-baja  { background: #f0fdf4; color: #16a34a; }
- 
+
   /* Card / form */
   .center-container { display: flex; justify-content: center; padding: 20px 0 60px; }
   .card { background: white; width: 100%; max-width: 680px; border-radius: 32px; border: 1px solid #e2e8f0; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1); overflow: hidden; }
@@ -556,26 +448,25 @@
   .info-item { display: flex; flex-direction: column; gap: 6px; }
   .label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
   .value { font-weight: 700; color: #1e293b; font-size: 15px; }
- 
+
   .field { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
   .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .section-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
   textarea, select { padding: 15px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: #fcfcfc; font-size: 14px; outline: none; font-family: inherit; }
   textarea { min-height: 120px; resize: none; }
   .btn-send { width: 100%; background: #2563eb; color: white; border: none; padding: 18px; border-radius: 16px; font-weight: 800; font-size: 16px; cursor: pointer; margin-top: 10px; font-family: inherit; }
- 
+
   .toast { position: fixed; bottom: 30px; right: 30px; background: #0f172a; color: white; padding: 16px 28px; border-radius: 16px; font-weight: 600; z-index: 100; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
   .animate-up { animation: slideUp 0.4s ease-out; }
   @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
   .loader-wrap { padding: 60px; text-align: center; color: #94a3b8; }
- 
+
   @media (max-width: 768px) {
     .module { padding: 16px; }
     .page-header { flex-direction: column; gap: 12px; }
     h1 { font-size: 22px; }
     .toolbar { flex-direction: column; align-items: stretch; }
     .search-container { max-width: 100%; }
-    .filter-select, .btn-pdf { width: 100%; }
     table { min-width: 700px; }
     th, td { padding: 10px 12px; font-size: 11px; }
     .form-padding, .card-top, .card-body { padding: 24px; }
