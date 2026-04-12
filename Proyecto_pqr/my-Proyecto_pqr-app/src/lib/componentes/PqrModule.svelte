@@ -14,6 +14,7 @@
   let toastMsg = $state('')
   let editForm = $state(null)
   let deleting = $state(false)
+  let generatingPdf = $state(false)
  
   let tipos = $state([]), estados = $state([]), departamentos = $state([])
   let prioridades = $state([]), usuarios = $state([])
@@ -118,6 +119,96 @@
     saving = false
   }
  
+  async function exportarPDF() {
+    generatingPdf = true
+    try {
+      const { jsPDF } = await import('https://esm.sh/jspdf@2.5.1')
+      const { default: autoTable } = await import('https://esm.sh/jspdf-autotable@3.8.2')
+ 
+      const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
+ 
+      // Encabezado
+      doc.setFillColor(37, 99, 235)
+      doc.rect(0, 0, 297, 22, 'F')
+      doc.setTextColor(255, 255, 255)
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.text('Corporación Universitaria Latinoamericana — Sistema PQRS', 14, 10)
+      doc.setFontSize(9)
+      doc.setFont('helvetica', 'normal')
+      doc.text('Historial de Solicitudes', 14, 17)
+ 
+      // Fecha de generación
+      const ahora = new Date().toLocaleString('es-CO')
+      doc.setTextColor(200, 220, 255)
+      doc.text(`Generado: ${ahora}`, 297 - 14, 17, { align: 'right' })
+ 
+      // Filtros activos
+      doc.setTextColor(100, 116, 139)
+      doc.setFontSize(8)
+      const filtrosTexto = []
+      if (searchText)   filtrosTexto.push(`Búsqueda: "${searchText}"`)
+      if (filterEstado) filtrosTexto.push(`Estado: ${getLabelEstado(filterEstado)}`)
+      if (filterTipo)   filtrosTexto.push(`Categoría: ${getLabelTipo(filterTipo)}`)
+      const filtrosLabel = filtrosTexto.length ? filtrosTexto.join('  |  ') : 'Sin filtros aplicados'
+      doc.text(`Filtros: ${filtrosLabel}  —  Total: ${filtered.length} registros`, 14, 28)
+ 
+      // Tabla
+      autoTable(doc, {
+        startY: 32,
+        head: [[
+          { content: 'ID',          styles: { halign: 'center', cellWidth: 12 } },
+          { content: 'Descripción', styles: { cellWidth: 60 } },
+          { content: 'Categoría',   styles: { cellWidth: 28 } },
+          { content: 'Usuario',     styles: { cellWidth: 36 } },
+          { content: 'Departamento',styles: { cellWidth: 36 } },
+          { content: 'Prioridad',   styles: { halign: 'center', cellWidth: 22 } },
+          { content: 'Estado',      styles: { halign: 'center', cellWidth: 24 } },
+          { content: 'Fecha',       styles: { halign: 'center', cellWidth: 22 } },
+        ]],
+        body: filtered.map(p => [
+          `#${p.id_pqr}`,
+          p.descripcion?.slice(0, 80) || '—',
+          getLabelTipo(p.id_tipo),
+          getLabelUsuario(p.id_usuario),
+          getLabelDep(p.id_departamento),
+          getLabelPrioridad(p.id_prioridad),
+          getLabelEstado(p.id_estado),
+          new Date(p.fecha).toLocaleDateString('es-CO'),
+        ]),
+        headStyles: {
+          fillColor: [37, 99, 235],
+          textColor: 255,
+          fontSize: 9,
+          fontStyle: 'bold',
+        },
+        bodyStyles: { fontSize: 8, textColor: [51, 65, 85] },
+        alternateRowStyles: { fillColor: [248, 250, 252] },
+        columnStyles: { 0: { halign: 'center' }, 5: { halign: 'center' }, 6: { halign: 'center' }, 7: { halign: 'center' } },
+        margin: { left: 14, right: 14 },
+        didDrawPage: (data) => {
+          // Footer con número de página
+          const pageCount = doc.internal.getNumberOfPages()
+          doc.setFontSize(7)
+          doc.setTextColor(148, 163, 184)
+          doc.text(
+            `Página ${data.pageNumber} de ${pageCount}`,
+            297 / 2, 205,
+            { align: 'center' }
+          )
+        }
+      })
+ 
+      const fecha = new Date().toISOString().slice(0, 10)
+      doc.save(`historial_pqrs_${fecha}.pdf`)
+      showToast('✅ PDF descargado correctamente')
+    } catch(e) {
+      console.error(e)
+      showToast('❌ Error al generar el PDF')
+    }
+    generatingPdf = false
+  }
+ 
   function showToast(msg) { toastMsg = msg; setTimeout(() => toastMsg = '', 3000) }
  
   const getLabelEstado    = (id) => estados.find(e => e.id_estado == id)?.nombre             || 'PENDIENTE'
@@ -181,6 +272,19 @@
             <option value={t.id_tipo}>{t.nombre}</option>
           {/each}
         </select>
+        <button class="btn-pdf" onclick={exportarPDF} disabled={generatingPdf}>
+          {#if generatingPdf}
+            <span class="spinner"></span> Generando...
+          {:else}
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="12" y1="18" x2="12" y2="12"/>
+              <line x1="9" y1="15" x2="15" y2="15"/>
+            </svg>
+            Descargar PDF
+          {/if}
+        </button>
       {/if}
     </div>
  
@@ -374,28 +478,41 @@
   .subtitle { color: #64748b; font-size: 15px; }
  
   .btn-create { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.2); }
-  .btn-back { background: white; border: 1.5px solid #e2e8f0; padding: 10px 20px; border-radius: 10px; color: #475569; font-weight: 700; cursor: pointer; }
+  .btn-back   { background: white; border: 1.5px solid #e2e8f0; padding: 10px 20px; border-radius: 10px; color: #475569; font-weight: 700; cursor: pointer; }
  
   /* Toolbar */
   .toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
-  .search-container { position: relative; flex: 1; min-width: 200px; max-width: 360px; }
+  .search-container { position: relative; flex: 1; min-width: 200px; max-width: 320px; }
   .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); opacity: 0.4; }
   .modern-input { width: 100%; padding: 11px 12px 11px 42px; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 14px; outline: none; transition: 0.3s; background: white; }
   .modern-input:focus { border-color: #2563eb; box-shadow: 0 0 0 4px rgba(37,99,235,0.05); }
   .filter-select { padding: 11px 14px; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 14px; outline: none; background: white; color: #334155; cursor: pointer; transition: 0.2s; }
   .filter-select:focus { border-color: #2563eb; }
  
-  /* Contador */
+  /* Botón PDF */
+  .btn-pdf {
+    display: flex; align-items: center; gap: 8px;
+    background: #dc2626; color: white; border: none;
+    padding: 11px 18px; border-radius: 12px; font-weight: 700;
+    font-size: 14px; cursor: pointer; transition: 0.2s;
+    box-shadow: 0 4px 12px rgba(220,38,38,0.2);
+    white-space: nowrap;
+  }
+  .btn-pdf:hover    { background: #b91c1c; }
+  .btn-pdf:disabled { opacity: 0.6; cursor: not-allowed; }
+ 
+  .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; display: inline-block; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+ 
   .results-count { font-size: 13px; color: #94a3b8; font-weight: 500; margin-bottom: 16px; }
  
-  /* Table */
+  /* Tabla */
   .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
   table { width: 100%; border-collapse: collapse; }
   th { background: #f8fafc; padding: 14px 16px; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
   td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; font-size: 13px; color: #334155; }
   tr:last-child td { border-bottom: none; }
   .empty-row { text-align: center; color: #94a3b8; padding: 40px !important; }
- 
   .text-usuario { font-weight: 600; color: #1e293b; }
   .text-dep { color: #475569; font-size: 12px; }
  
@@ -414,10 +531,10 @@
   .id-tag { color: #94a3b8; font-weight: 700; font-family: monospace; font-size: 12px; }
   .type-chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 11px; white-space: nowrap; }
   .status-pill { padding: 5px 12px; border-radius: 100px; font-size: 10px; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
-  .s1  { background: #fef3c7; color: #92400e; }
-  .s2  { background: #dbeafe; color: #1e40af; }
-  .s3  { background: #d1fae5; color: #065f46; }
-  .s4  { background: #e0e7ff; color: #3730a3; }
+  .s1 { background: #fef3c7; color: #92400e; }
+  .s2 { background: #dbeafe; color: #1e40af; }
+  .s3 { background: #d1fae5; color: #065f46; }
+  .s4 { background: #e0e7ff; color: #3730a3; }
   .prio-chip { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; white-space: nowrap; }
   .prio-alta  { background: #fef2f2; color: #dc2626; }
   .prio-media { background: #fff7ed; color: #c2410c; }
@@ -458,7 +575,7 @@
     h1 { font-size: 22px; }
     .toolbar { flex-direction: column; align-items: stretch; }
     .search-container { max-width: 100%; }
-    .filter-select { width: 100%; }
+    .filter-select, .btn-pdf { width: 100%; }
     table { min-width: 700px; }
     th, td { padding: 10px 12px; font-size: 11px; }
     .form-padding, .card-top, .card-body { padding: 24px; }
