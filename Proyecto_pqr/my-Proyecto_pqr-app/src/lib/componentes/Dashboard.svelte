@@ -1,43 +1,28 @@
 <script>
   import { currentUser, logout } from '../../stores/auth.js'
-  import PqrModule from './PqrModule.svelte'
+  import PqrModule      from './PqrModule.svelte'
   import UsuariosModule from './UsuariosModule.svelte'
-  import HomeModule from './HomeModule.svelte'
+  import HomeModule     from './HomeModule.svelte'
+  import HistorialModule from './HistorialModule.svelte'
 
   let { page = $bindable('home') } = $props()
-  let loading = $state(false);
-  
-  // Seguridad: Determinamos si el usuario es administrador
+  let loading = $state(false)
+
   let isAdmin = $derived($currentUser?.id_rol === 1)
 
   const navItems = [
-    { id: 'home',      label: 'Inicio',    icon: '⊞', always: true },
-    { id: 'pqrs',      label: 'PQRS',      icon: '◈', always: true },
-    { id: 'usuarios',  label: 'Usuarios',  icon: '◉', admin: true  },
-    { id: 'analitica', label: 'Analítica', icon: '📊', admin: true  },
+    { id: 'home',      label: 'Inicio',    icon: 'home',     always: true },
+    { id: 'pqrs',      label: 'PQRS',      icon: 'pqrs',     always: true },
+    { id: 'usuarios',  label: 'Usuarios',  icon: 'usuarios', admin: true  },
+    { id: 'historial', label: 'Historial', icon: 'historial',admin: true  },
+    { id: 'analitica', label: 'Analítica', icon: 'analitica',admin: true  },
   ]
 
-  // GUARDIA DE SEGURIDAD: 
-  // Si la página cambia a una prohibida para el usuario, lo redirigimos a home.
-  $effect(() => {
-    if (!isAdmin && (page === 'usuarios' || page === 'analitica')) {
-      page = 'home';
-    }
-  });
-
-  function handleLogout() {
-    logout()
-  }
+  function handleLogout() { logout() }
 
   function navigateTo(id) {
-    // Bloqueo preventivo en la función de navegación
-    if (!isAdmin && (id === 'usuarios' || id === 'analitica')) return;
-
-    loading = true;
-    setTimeout(() => {
-      page = id;
-      loading = false;
-    }, 300);
+    loading = true
+    setTimeout(() => { page = id; loading = false }, 300)
   }
 </script>
 
@@ -60,8 +45,42 @@
             <button
               class="nav-item {page === item.id ? 'active' : ''}"
               onclick={() => navigateTo(item.id)}
-            > 
-              <span class="nav-icon">{item.icon}</span>
+            >
+              <!-- Íconos SVG por item -->
+              {#if item.icon === 'home'}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+                  <polyline points="9 22 9 12 15 12 15 22"/>
+                </svg>
+              {:else if item.icon === 'pqrs'}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="16" y1="13" x2="8" y2="13"/>
+                  <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
+                </svg>
+              {:else if item.icon === 'usuarios'}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                  <circle cx="9" cy="7" r="4"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
+                </svg>
+              {:else if item.icon === 'historial'}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                  <polyline points="14 2 14 8 20 8"/>
+                  <line x1="12" y1="18" x2="12" y2="12"/>
+                  <line x1="9" y1="15" x2="15" y2="15"/>
+                </svg>
+              {:else if item.icon === 'analitica'}
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="18" y1="20" x2="18" y2="10"/>
+                  <line x1="12" y1="20" x2="12" y2="4"/>
+                  <line x1="6"  y1="20" x2="6"  y2="14"/>
+                </svg>
+              {/if}
               <span>{item.label}</span>
             </button>
           {/if}
@@ -73,14 +92,9 @@
       <div class="user-card">
         <div class="avatar">{$currentUser?.nombre?.charAt(0)?.toUpperCase() || '?'}</div>
         <div class="user-info">
-  <p class="user-name">{$currentUser?.nombre || 'Usuario'}</p>
-  
-  <p style="color: #fbb03b; font-size: 10px; font-weight: bold; margin: 0;">
-    DEBUG ID: {$currentUser?.id_usuario ?? 'SIN ID'}
-  </p>
-
-  <p class="user-role">{isAdmin ? 'Administrador' : 'Usuario'}</p>
-</div>
+          <p class="user-name">{$currentUser?.nombre || 'Usuario'}</p>
+          <p class="user-role">{isAdmin ? 'Administrador' : 'Usuario'}</p>
+        </div>
       </div>
       <button class="btn-logout" onclick={handleLogout}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -113,6 +127,11 @@
         <UsuariosModule />
       </div>
 
+    {:else if page === 'historial' && isAdmin}
+      <div class="full-width-module scrollable-content">
+        <HistorialModule />
+      </div>
+
     {:else if page === 'analitica' && isAdmin}
       <div class="full-width-module analitica-wrapper">
         <section class="powerbi-section">
@@ -126,14 +145,13 @@
               MODO ADMIN
             </div>
           </div>
-
           <div class="iframe-container">
-            <iframe 
-              title="gestion pqrs" 
-              width="100%" 
-              height="100%" 
-              src="https://app.powerbi.com/view?r=eyJrIjoiZmFlM2Y3YzEtMDIwNS00OGM2LTk4OGUtMzc2YjgwZWYzNmE0IiwidCI6ImFjYTUxNjMxLTAwZmUtNDkwZC05MWFiLTE2M2VmODcyNjBlZSIsImMiOjR9" 
-              frameborder="0" 
+            <iframe
+              title="gestion pqrs"
+              width="100%"
+              height="100%"
+              src="https://app.powerbi.com/view?r=eyJrIjoiZmFlM2Y3YzEtMDIwNS00OGM2LTk4OGUtMzc2YjgwZWYzNmE0IiwidCI6ImFjYTUxNjMxLTAwZmUtNDkwZC05MWFiLTE2M2VmODcyNjBlZSIsImMiOjR9"
+              frameborder="0"
               allowFullScreen="true">
             </iframe>
           </div>
@@ -141,95 +159,91 @@
       </div>
 
     {:else}
-      <div class="no-access">
-        <div class="error-msg">
-           <span>⚠️</span>
-           <p>No tienes permisos para acceder a esta sección.</p>
-           <button class="btn-secondary" onclick={() => page = 'home'}>Ir al Inicio</button>
-        </div>
-      </div>
+      <div class="no-access">No tienes acceso a esta sección.</div>
     {/if}
   </main>
 </div>
 
 <style>
-  /* Estilos base del Layout */
   .layout { display: flex; height: 100vh; overflow: hidden; }
 
-  /* Sidebar con diseño Dark Industrial */
   .sidebar {
-    width: 240px;
-    min-width: 240px;
-    background: linear-gradient(180deg, #0b1f3f 0%, #050d1a 100%);
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-    padding: 24px 16px;
-    height: 100vh;
-    border-right: 1px solid rgba(255,255,255,0.05);
+    width: 240px; min-width: 240px;
+    background: linear-gradient(180deg, #000, #111);
+    color: #fff; display: flex; flex-direction: column;
+    justify-content: space-between; padding: 24px 16px; height: 100vh;
   }
 
-  .brand { display: flex; align-items: center; gap: 10px; padding: 0 8px 28px; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    padding: 0 8px 28px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 20px;
+  }
   .brand-text { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
-  
+
   nav { display: flex; flex-direction: column; gap: 4px; }
 
   .nav-item {
     display: flex; align-items: center; gap: 10px; padding: 12px;
-    border-radius: 10px; border: none; background: transparent; color: #94a3b8;
+    border-radius: 8px; border: none; background: transparent; color: #ccc;
     font-size: 14px; font-weight: 500; transition: all 0.2s ease;
     text-align: left; width: 100%; cursor: pointer;
   }
+  .nav-item:hover  { background: rgba(255,255,255,0.05); color: #fff; }
+  .nav-item.active { background: #2563eb; color: #fff; }
 
-  .nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
-  .nav-item.active { background: #2563eb; color: #fff; box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3); }
+  .sidebar-bottom {
+    border-top: 1px solid rgba(255,255,255,0.1);
+    padding-top: 16px; display: flex; flex-direction: column; gap: 12px;
+  }
 
-  .sidebar-bottom { border-top: 1px solid rgba(255,255,255,0.1); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; }
-  .user-card { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 10px; }
-  .avatar { width: 36px; height: 36px; border-radius: 50%; background: #fbb03b; color: #0b1f3f; display: flex; align-items: center; justify-content: center; font-weight: 800; }
-  .user-name { font-size: 13px; font-weight: 600; color: #fff; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .user-role { font-size: 11px; color: #94a3b8; }
+  .user-card { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; }
+  .user-name { font-size: 13px; font-weight: 600; color: #fff; margin: 0; }
+  .user-role { font-size: 11px; color: #aaa; margin: 0; }
 
   .btn-logout {
     display: flex; align-items: center; gap: 8px; padding: 10px 12px;
-    border-radius: 10px; border: 1px solid rgba(255,255,255,0.1);
-    background: rgba(255,255,255,0.03); color: #cbd5e1; cursor: pointer; font-size: 13px;
+    border-radius: 8px; border: 1px solid rgba(255,255,255,0.11);
+    background: rgba(255,255,255,0.05); color: #ddd; cursor: pointer;
+    font-size: 14px; font-family: inherit; transition: 0.2s;
   }
-  .btn-logout:hover { background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.2); }
+  .btn-logout:hover { background: rgba(255,255,255,0.1); }
 
-  /* Main Container */
-  .main { flex: 1; background: #f1f5f9; display: flex; flex-direction: column; height: 100vh; }
+  .main { flex: 1; background: #f4f6f9; display: flex; flex-direction: column; height: 100vh; }
+
   .full-width-module { width: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
-  .scrollable-content { overflow-y: auto; padding: 32px; flex: 1; }
+  .scrollable-content { overflow-y: auto; padding: 24px 24px 40px 24px; flex: 1; }
+  .analitica-wrapper  { flex: 1; padding: 24px; height: 100%; }
 
-  /* Power BI Wrapper */
-  .analitica-wrapper { flex: 1; padding: 24px; height: 100%; }
-  .powerbi-section { background: white; border-radius: 20px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; flex: 1; overflow: hidden; }
-  .section-header { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; background: #fff; border-bottom: 1px solid #f1f5f9; }
-  .header-info h3 { margin: 0; font-size: 18px; font-weight: 800; color: #0f172a; }
-  .iframe-container { flex: 1; width: 100%; background: #f8fafc; }
+  .powerbi-section {
+    background: white; border-radius: 16px;
+    border: 1px solid rgba(0,0,0,0.05);
+    box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+    display: flex; flex-direction: column; flex: 1;
+  }
+  .section-header { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
+  .header-info h3 { margin: 0; font-size: 18px; font-weight: 700; color: #111; }
+  .header-info p  { margin: 4px 0 0; font-size: 12.5px; color: #666; }
 
-  /* Utils */
+  .live-status { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; color: #2563eb; background: #eff6ff; padding: 6px 12px; border-radius: 20px; }
+  .pulse-dot { width: 8px; height: 8px; background: #2563eb; border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { transform: scale(0.95); opacity: 0.7; } 50% { transform: scale(1.2); opacity: 1; } }
+
+  .iframe-container { flex: 1; width: 100%; display: flex; flex-direction: column; }
+  iframe { flex: 1; }
+
   .loading-container { padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 15px; }
-  .spinner { width: 32px; height: 32px; border: 3px solid #e2e8f0; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
+  .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
 
-  .no-access { padding: 60px; display: flex; justify-content: center; }
-  .error-msg { text-align: center; background: white; padding: 40px; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-  .error-msg span { font-size: 40px; display: block; margin-bottom: 10px; }
+  .no-access { padding: 40px; color: #666; text-align: center; font-weight: 500; }
 
- @media (max-width: 768px) {
-  .layout { flex-direction: column; height: auto; min-height: 100vh; }
-  .sidebar { width: 100%; min-width: unset; height: auto; flex-direction: row; padding: 12px 16px; justify-content: space-between; align-items: center; }
-  .sidebar-top { flex-direction: row; align-items: center; gap: 12px; }
-  .brand { padding: 0; border: none; margin: 0; }
-  nav { flex-direction: row; gap: 4px; }
-  .nav-item { padding: 8px 10px; font-size: 12px; }
-  .brand-text, .user-info { display: none; }
-  .sidebar-bottom { flex-direction: row; border: none; padding: 0; }
-  .main { height: auto; flex: 1; }
-  .scrollable-content { padding: 16px; }
-}
-
+  @media (max-width: 768px) {
+    .layout { flex-direction: column; height: auto; overflow: visible; }
+    .sidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 16px; gap: 8px; }
+    .main { height: auto; }
+    .analitica-wrapper { padding: 12px; height: 80vh; }
+    .scrollable-content { padding: 12px; }
+  }
 </style>
