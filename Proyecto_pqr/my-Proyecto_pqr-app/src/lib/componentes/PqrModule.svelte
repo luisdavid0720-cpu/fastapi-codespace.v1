@@ -386,14 +386,6 @@
   .filter-select { padding: 11px 14px; border-radius: 12px; border: 1.5px solid #e2e8f0; font-size: 14px; outline: none; background: white; color: #334155; cursor: pointer; transition: 0.2s; }
   .filter-select:focus { border-color: #2563eb; }
 
-  /* Botón PDF */
-    display: flex; align-items: center; gap: 8px;
-    background: #dc2626; color: white; border: none;
-    padding: 11px 18px; border-radius: 12px; font-weight: 700;
-    font-size: 14px; cursor: pointer; transition: 0.2s;
-    box-shadow: 0 4px 12px rgba(220,38,38,0.2);
-    white-space: nowrap;
-  }
 
 
   .results-count { font-size: 13px; color: #94a3b8; font-weight: 500; margin-bottom: 16px; }
