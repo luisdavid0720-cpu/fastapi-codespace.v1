@@ -1,9 +1,7 @@
-<script>
-  import { currentUser, logout } from '../../stores/auth.js'
+import { currentUser, logout } from '../../stores/auth.js'
   import PqrModule      from './PqrModule.svelte'
   import UsuariosModule from './UsuariosModule.svelte'
   import HomeModule     from './HomeModule.svelte'
-  import HistorialModule from './HistorialModule.svelte'
 
   let { page = $bindable('home') } = $props()
   let loading = $state(false)
@@ -14,7 +12,6 @@
     { id: 'home',      label: 'Inicio',    icon: 'home',     always: true },
     { id: 'pqrs',      label: 'PQRS',      icon: 'pqrs',     always: true },
     { id: 'usuarios',  label: 'Usuarios',  icon: 'usuarios', admin: true  },
-    { id: 'historial', label: 'Historial', icon: 'historial',admin: true  },
     { id: 'analitica', label: 'Analítica', icon: 'analitica',admin: true  },
   ]
 
@@ -67,13 +64,6 @@
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
                 </svg>
-              {:else if item.icon === 'historial'}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="12" y1="18" x2="12" y2="12"/>
-                  <line x1="9" y1="15" x2="15" y2="15"/>
-                </svg>
               {:else if item.icon === 'analitica'}
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <line x1="18" y1="20" x2="18" y2="10"/>
@@ -125,11 +115,6 @@
     {:else if page === 'usuarios' && isAdmin}
       <div class="full-width-module scrollable-content">
         <UsuariosModule />
-      </div>
-
-    {:else if page === 'historial' && isAdmin}
-      <div class="full-width-module scrollable-content">
-        <HistorialModule />
       </div>
 
     {:else if page === 'analitica' && isAdmin}
