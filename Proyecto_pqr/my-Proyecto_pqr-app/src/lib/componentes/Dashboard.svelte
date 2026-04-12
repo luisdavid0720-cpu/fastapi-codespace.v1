@@ -119,30 +119,33 @@
       </div>
 
     {:else if page === 'analitica' && isAdmin}
-      <div class="full-width-module analitica-wrapper">
-        <section class="powerbi-section">
-          <div class="section-header">
-            <div class="header-info">
-              <h3>Panel de Analítica Avanzada</h3>
-              <p>Visualización de datos en tiempo real desde Power BI</p>
-            </div>
-            <div class="live-status">
-              <span class="pulse-dot"></span>
-              MODO ADMIN
-            </div>
-          </div>
-          <div class="iframe-container">
-            <iframe
-              title="gestion pqrs"
-              width="100%"
-              height="100%"
-              src="https://app.powerbi.com/view?r=eyJrIjoiZmFlM2Y3YzEtMDIwNS00OGM2LTk4OGUtMzc2YjgwZWYzNmE0IiwidCI6ImFjYTUxNjMxLTAwZmUtNDkwZC05MWFiLTE2M2VmODcyNjBlZSIsImMiOjR9"
-              frameborder="0"
-              allowFullScreen="true">
-            </iframe>
-          </div>
-        </section>
+  <div class="full-width-module analitica-wrapper">
+
+    <section class="powerbi-section">
+
+      <div class="section-header">
+        <div class="header-info">
+          <h3>Panel de Analítica</h3>
+          <p>Visualización de datos en tiempo real</p>
+        </div>
+
+        <div class="live-status">
+          <span class="pulse-dot"></span>
+          ADMIN
+        </div>
       </div>
+
+      <div class="dashboard-frame">
+        <iframe
+          title="gestion pqrs"
+          src="https://app.powerbi.com/view?r=eyJrIjoiZmFlM2Y3YzEtMDIwNS00OGM2LTk4OGUtMzc2YjgwZWYzNmE0IiwidCI6ImFjYTUxNjMxLTAwZmUtNDkwZC05MWFiLTE2M2VmODcyNjBlZSIsImMiOjR9"
+          allowFullScreen="true">
+        </iframe>
+      </div>
+
+    </section>
+
+  </div>
 
     {:else}
       <div class="no-access">No tienes acceso a esta sección.</div>
