@@ -67,16 +67,18 @@
   function openDetail(pqr) { selected = pqr; view = 'detail' }
 
   function openEdit(pqr) {
-    editForm = {
-      id_pqr: pqr.id_pqr,
-      descripcion: pqr.descripcion,
-      id_tipo: pqr.id_tipo,
-      id_departamento: pqr.id_departamento,
-      id_estado: pqr.id_estado,
-      id_prioridad: pqr.id_prioridad
-    }
-    view = 'edit'
+  editForm = {
+    id_pqr: pqr.id_pqr,
+    descripcion: pqr.descripcion,
+    fecha: pqr.fecha,           
+    id_usuario: pqr.id_usuario, 
+    id_tipo: pqr.id_tipo,
+    id_departamento: pqr.id_departamento,
+    id_estado: pqr.id_estado,
+    id_prioridad: pqr.id_prioridad
   }
+  view = 'edit'
+}
 
   // ── CRUD ────────────────────────────────────────────────
   async function saveEdit() {
