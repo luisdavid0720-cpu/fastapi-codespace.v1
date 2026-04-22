@@ -12,7 +12,7 @@
       id_usuario: 1,
       nombre: 'Administrador',
       correo: 'admin@cul.edu.co',
-      id_rol: 1
+      id_rol: 3
     });
   }
 
@@ -21,16 +21,16 @@
       id_usuario: 2,
       nombre: 'Coordinador',
       correo: 'coordinador@cul.edu.co',
-      id_rol: 2
+      id_rol: 4
     });
   }
 
   else {
     currentUser.set({
       id_usuario: 3,
-      nombre: 'Luis Estudiante',
+      nombre: 'Estudiante',
       correo: 'estudiante@cul.edu.co',
-      id_rol: 3
+      id_rol: 1
     });
   }
 }

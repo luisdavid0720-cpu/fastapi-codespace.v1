@@ -28,12 +28,14 @@
   }
   let form = $state(defaultForm())
 
-  let isAdmin = $derived($currentUser?.id_rol === 1)
+  let isAdmin = $derived($currentUser?.id_rol === 3)
+  let isCoord = $derived($currentUser?.id_rol === 4)
+  let isUser  = $derived($currentUser?.id_rol === 1)
 
   let filtered = $derived(
     pqrs
       .filter(p => {
-        const belongsToMe = isAdmin || Number(p.id_usuario) === Number($currentUser?.id_usuario)
+        const belongsToMe = isAdmin || isCoord || Number(p.id_usuario) === Number($currentUser?.id_usuario)
         const matchText   = !searchText   || p.descripcion?.toLowerCase().includes(searchText.toLowerCase())
         const matchEstado = !filterEstado || String(p.id_estado) === String(filterEstado)
         const matchTipo   = !filterTipo   || String(p.id_tipo)   === String(filterTipo)
@@ -289,7 +291,7 @@
             {/if}
           </button>
         {/if}
-        {#if !isAdmin}
+        {#if isUser}
           <button class="btn-create" onclick={openCreate}>＋ Crear PQR</button>
         {/if}
       {:else}

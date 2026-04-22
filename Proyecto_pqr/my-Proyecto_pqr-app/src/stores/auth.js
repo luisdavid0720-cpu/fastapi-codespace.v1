@@ -1,9 +1,9 @@
 import { writable } from 'svelte/store'
 
-// 1. Verificamos si estamos en el navegador para evitar errores
 const isBrowser = typeof window !== 'undefined'
 
 const stored = isBrowser ? localStorage.getItem('pqr_user') : null
+
 export const currentUser = writable(stored ? JSON.parse(stored) : null)
 
 currentUser.subscribe(val => {
@@ -15,6 +15,35 @@ currentUser.subscribe(val => {
     }
   }
 })
+
+export function login(rol) {
+  if (rol === 'admin') {
+    currentUser.set({
+      id_usuario: 1,
+      nombre: 'Administrador',
+      correo: 'admin@cul.edu.co',
+      id_rol: 3
+    })
+  }
+
+  else if (rol === 'coordinador') {
+    currentUser.set({
+      id_usuario: 2,
+      nombre: 'Coordinador',
+      correo: 'coord@cul.edu.co',
+      id_rol: 4
+    })
+  }
+
+  else {
+    currentUser.set({
+      id_usuario: 3,
+      nombre: 'Estudiante',
+      correo: 'user@cul.edu.co',
+      id_rol: 1
+    })
+  }
+}
 
 export function logout() {
   currentUser.set(null)

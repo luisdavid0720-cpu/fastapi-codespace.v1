@@ -7,21 +7,29 @@
   let { page = $bindable('home') } = $props()
   let loading = $state(false)
 
-  let isAdmin = $derived($currentUser?.id_rol === 1)
+  let isAdmin = $derived($currentUser?.id_rol === 3)
+  let isCoord = $derived($currentUser?.id_rol === 4)
+  let isUser  = $derived($currentUser?.id_rol === 1)
 
   const navItems = [
-    { id: 'home',      label: 'Inicio',    icon: 'home',     always: true },
-    { id: 'pqrs',      label: 'PQRS',      icon: 'pqrs',     always: true },
-    { id: 'usuarios',  label: 'Usuarios',  icon: 'usuarios', admin: true  },
-    { id: 'analitica', label: 'Analítica', icon: 'analitica',admin: true  },
-  ]
+  { id: 'home', label: 'Inicio', icon: 'home', always: true },
+  { id: 'pqrs', label: 'PQRS', icon: 'pqrs', always: true },
+  { id: 'usuarios', label: 'Usuarios', icon: 'usuarios', admin: true },
+  { id: 'analitica', label: 'Analítica', icon: 'analitica', staff: true }
+]
 
   function handleLogout() { logout() }
 
   function navigateTo(id) {
-    loading = true
-    setTimeout(() => { page = id; loading = false }, 300)
-  }
+  if (id === 'usuarios' && !isAdmin) return
+  if (id === 'analitica' && !(isAdmin || isCoord)) return
+
+  loading = true
+  setTimeout(() => {
+    page = id
+    loading = false
+  }, 300)
+}
 </script>
 
 <div class="layout">
@@ -39,7 +47,7 @@
 
       <nav>
         {#each navItems as item}
-          {#if item.always || (item.admin && isAdmin)}
+          {#if item.always || (item.admin && isAdmin) || (item.staff && (isAdmin || isCoord))}
             <button
               class="nav-item {page === item.id ? 'active' : ''}"
               onclick={() => navigateTo(item.id)}
@@ -84,7 +92,9 @@
         <div class="avatar">{$currentUser?.nombre?.charAt(0)?.toUpperCase() || '?'}</div>
         <div class="user-info">
           <p class="user-name">{$currentUser?.nombre || 'Usuario'}</p>
-          <p class="user-role">{isAdmin ? 'Administrador' : 'Usuario'}</p>
+          <p class="user-role">
+            {isAdmin ? 'Administrador' : isCoord ? 'Coordinador' : 'Estudiante'}
+          </p>
         </div>
       </div>
       <button class="btn-logout" onclick={handleLogout}>
@@ -118,7 +128,7 @@
         <UsuariosModule />
       </div>
 
-    {:else if page === 'analitica' && isAdmin}
+    {:else if page === 'analitica' && (isAdmin || isCoord)}
       <div class="full-width-module analitica-wrapper">
         <section class="powerbi-section">
           <div class="section-header">
@@ -128,7 +138,7 @@
             </div>
             <div class="live-status">
               <span class="pulse-dot"></span>
-              MODO ADMIN
+              {isAdmin ? 'MODO ADMIN' : 'MODO COORDINADOR'}
             </div>
           </div>
           <div class="iframe-container">
