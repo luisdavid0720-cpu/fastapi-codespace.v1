@@ -1,5 +1,4 @@
-<script>
-  import { currentUser, logout } from '../../stores/auth.js'
+import { currentUser, logout } from '../../stores/auth.js'
   import PqrModule      from './PqrModule.svelte'
   import UsuariosModule from './UsuariosModule.svelte'
   import HomeModule     from './HomeModule.svelte'
@@ -7,13 +6,14 @@
   let { page = $bindable('home') } = $props()
   let loading = $state(false)
 
-  let isAdmin = $derived($currentUser?.id_rol === 1)
+  let isAdmin = $derived($currentUser?.id_rol === 3)
+  let isCoordinador = $derived($currentUser?.id_rol === 4)
 
   const navItems = [
-    { id: 'home',      label: 'Inicio',    icon: 'home',     always: true },
-    { id: 'pqrs',      label: 'PQRS',      icon: 'pqrs',     always: true },
-    { id: 'usuarios',  label: 'Usuarios',  icon: 'usuarios', admin: true  },
-    { id: 'analitica', label: 'Analítica', icon: 'analitica',admin: true  },
+    { id: 'home',      label: 'Inicio',       icon: 'home',     always: true },
+    { id: 'pqrs',      label: 'PQRS',         icon: 'pqrs',     always: true },
+    { id: 'usuarios',  label: 'Usuarios',     icon: 'usuarios', admin: true  },
+    { id: 'analitica', label: 'Analítica',    icon: 'analitica',admin: true  },
   ]
 
   function handleLogout() { logout() }
@@ -21,6 +21,12 @@
   function navigateTo(id) {
     loading = true
     setTimeout(() => { page = id; loading = false }, 300)
+  }
+
+  function getRoleLabel() {
+    if (isAdmin) return 'Administrador'
+    if (isCoordinador) return 'Coordinador'
+    return 'Usuario'
   }
 </script>
 
@@ -84,7 +90,7 @@
         <div class="avatar">{$currentUser?.nombre?.charAt(0)?.toUpperCase() || '?'}</div>
         <div class="user-info">
           <p class="user-name">{$currentUser?.nombre || 'Usuario'}</p>
-          <p class="user-role">{isAdmin ? 'Administrador' : 'Usuario'}</p>
+          <p class="user-role">{getRoleLabel()}</p>
         </div>
       </div>
       <button class="btn-logout" onclick={handleLogout}>
