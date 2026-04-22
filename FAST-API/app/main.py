@@ -22,12 +22,13 @@ origins = [
     "http://localhost",
     "http://localhost:5173",
     "https://zany-dollop-97r6rvrq7qq62jx5-5173.app.github.dev",
-    FRONTEND_URL
+    "https://fastapi-codespace-v1.vercel.app",
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",  
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
