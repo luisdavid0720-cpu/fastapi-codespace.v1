@@ -7,23 +7,33 @@
 
   // FUNCIÓN CORREGIDA: Ahora envía el id_usuario para que el filtro funcione
   function loginAs(rol) {
-    if (rol === 'admin') {
-      currentUser.set({ 
-        id_usuario: 1, // ID base para pruebas
-        nombre: 'Administrador', 
-        correo: 'admin@cul.edu.co', 
-        id_rol: 1 
-      });
-    } else {
-      currentUser.set({ 
-        id_usuario: 1, // <--- CLAVE: Ahora tus trámites aparecerán
-        nombre: 'Luis Estudiante', 
-        correo: 'estudiante@cul.edu.co', 
-        id_rol: 2 
-      });
-    }
-    // Nota: Aquí podrías añadir un goto('/dashboard') si usas SvelteKit routing
+  if (rol === 'admin') {
+    currentUser.set({
+      id_usuario: 1,
+      nombre: 'Administrador',
+      correo: 'admin@cul.edu.co',
+      id_rol: 1
+    });
   }
+
+  else if (rol === 'coordinador') {
+    currentUser.set({
+      id_usuario: 2,
+      nombre: 'Coordinador',
+      correo: 'coordinador@cul.edu.co',
+      id_rol: 2
+    });
+  }
+
+  else {
+    currentUser.set({
+      id_usuario: 3,
+      nombre: 'Luis Estudiante',
+      correo: 'estudiante@cul.edu.co',
+      id_rol: 3
+    });
+  }
+}
 </script>
 
 <div class="login-page">
