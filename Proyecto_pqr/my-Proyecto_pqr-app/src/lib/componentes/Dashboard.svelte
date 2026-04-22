@@ -1,4 +1,3 @@
-<!-- Dashboard.svelte -->
 <script>
   import { currentUser, logout } from '../../stores/auth.js'
   import PqrModule from './PqrModule.svelte'
