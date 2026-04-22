@@ -28,19 +28,24 @@
   }
   let form = $state(defaultForm())
 
-  let isAdmin = $derived($currentUser?.id_rol === 1)
+  // ── Roles ─────────────────────────────────────────────
+  // Admin = ID 3, Coordinador = ID 4, Usuario = ID 1
+  let isAdmin = $derived($currentUser?.id_rol === 3)
+  let isCoordinador = $derived($currentUser?.id_rol === 4)
+  let isGestor = $derived(isAdmin || isCoordinador)
 
   let filtered = $derived(
     pqrs
       .filter(p => {
-        const belongsToMe = isAdmin || Number(p.id_usuario) === Number($currentUser?.id_usuario)
+        // Admin y Coordinador ven todas las PQRS
+        const canSeeAll = isGestor || Number(p.id_usuario) === Number($currentUser?.id_usuario)
         const matchText   = !searchText   || p.descripcion?.toLowerCase().includes(searchText.toLowerCase())
         const matchEstado = !filterEstado || String(p.id_estado) === String(filterEstado)
         const matchTipo   = !filterTipo   || String(p.id_tipo)   === String(filterTipo)
         const fecha       = new Date(p.fecha)
         const matchDesde  = !filterDesde  || fecha >= new Date(filterDesde)
         const matchHasta  = !filterHasta  || fecha <= new Date(filterHasta + 'T23:59:59')
-        return belongsToMe && matchText && matchEstado && matchTipo && matchDesde && matchHasta
+        return canSeeAll && matchText && matchEstado && matchTipo && matchDesde && matchHasta
       })
       .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
   )
@@ -67,18 +72,16 @@
   function openDetail(pqr) { selected = pqr; view = 'detail' }
 
   function openEdit(pqr) {
-  editForm = {
-    id_pqr: pqr.id_pqr,
-    descripcion: pqr.descripcion,
-    fecha: pqr.fecha,           
-    id_usuario: pqr.id_usuario, 
-    id_tipo: pqr.id_tipo,
-    id_departamento: pqr.id_departamento,
-    id_estado: pqr.id_estado,
-    id_prioridad: pqr.id_prioridad
+    editForm = {
+      id_pqr: pqr.id_pqr,
+      descripcion: pqr.descripcion,
+      id_tipo: pqr.id_tipo,
+      id_departamento: pqr.id_departamento,
+      id_estado: pqr.id_estado,
+      id_prioridad: pqr.id_prioridad
+    }
+    view = 'edit'
   }
-  view = 'edit'
-}
 
   // ── CRUD ────────────────────────────────────────────────
   async function saveEdit() {
@@ -97,6 +100,7 @@
   }
 
   async function deletePqr(pqr) {
+    if (!isAdmin) return // Solo Admin puede eliminar
     if (!confirm(`¿Eliminar la PQR #${pqr.id_pqr}? Esta acción no se puede deshacer.`)) return
     deleting = true
     try {
@@ -164,6 +168,7 @@
         doc.addImage(b64, 'PNG', 6, 3, 20, 20)
       } catch(_) {}
 
+      const rolText = isAdmin ? 'Administrador' : 'Coordinador'
       doc.setTextColor(255, 255, 255)
       doc.setFontSize(13)
       doc.setFont('helvetica', 'bold')
@@ -171,7 +176,7 @@
       doc.setFontSize(9)
       doc.setFont('helvetica', 'normal')
       doc.setTextColor(148, 163, 184)
-      doc.text('Sistema PQRS — Gestión de Solicitudes', 30, 18)
+      doc.text(`Sistema PQRS — Reporte (${rolText})`, 30, 18)
 
       const ahora = new Date().toLocaleString('es-CO')
       doc.setTextColor(148, 163, 184)
@@ -250,6 +255,22 @@
     if (n.includes('media')) return 'prio-media'
     return 'prio-baja'
   }
+
+  function getTitle() {
+    if (view === 'detail') return 'Detalle del Radicado'
+    if (view === 'edit') return 'Editar PQR'
+    if (view === 'form') return 'Nueva Solicitud'
+    if (isAdmin) return 'Gestión de PQRs'
+    if (isCoordinador) return 'Gestión de PQRs'
+    return 'Mis Solicitudes'
+  }
+
+  function getSubtitle() {
+    if (view === 'detail' || view === 'edit' || view === 'form') return ''
+    if (isAdmin) return 'Administra todas las solicitudes del sistema'
+    if (isCoordinador) return 'Gestiona y procesa todas las solicitudes del sistema'
+    return 'Gestiona y consulta el estado de tus trámites'
+  }
 </script>
 
 <div class="module">
@@ -257,24 +278,14 @@
 
   <header class="page-header">
     <div class="header-content">
-      <h1>
-        {#if view === 'list'}
-          {isAdmin ? 'Gestión de PQRs' : 'Mis Solicitudes'}
-        {:else if view === 'detail'}
-          Detalle del Radicado
-        {:else if view === 'edit'}
-          Editar PQR
-        {:else}
-          Nueva Solicitud
-        {/if}
-      </h1>
-      <p class="subtitle">
-        {isAdmin ? 'Administra todas las solicitudes del sistema' : 'Gestiona y consulta el estado de tus trámites'}
-      </p>
+      <h1>{getTitle()}</h1>
+      {#if getSubtitle()}
+        <p class="subtitle">{getSubtitle()}</p>
+      {/if}
     </div>
     <div class="header-actions">
       {#if view === 'list'}
-        {#if isAdmin}
+        {#if isGestor}
           <button class="btn-pdf" onclick={descargarPDF} disabled={generando || filtered.length === 0}>
             {#if generando}
               <span class="spinner"></span> Generando...
@@ -289,7 +300,7 @@
             {/if}
           </button>
         {/if}
-        {#if !isAdmin}
+        {#if !isGestor}
           <button class="btn-create" onclick={openCreate}>＋ Crear PQR</button>
         {/if}
       {:else}
@@ -310,7 +321,7 @@
             <input type="text" placeholder="Palabra clave..." bind:value={searchText} />
           </div>
         </div>
-        {#if isAdmin}
+        {#if isGestor}
           <div class="filter-field">
             <label>Estado</label>
             <select bind:value={filterEstado}>
@@ -336,8 +347,6 @@
           <div class="filter-field align-end">
             <button class="btn-clear" onclick={limpiarFiltros}>Limpiar filtros</button>
           </div>
-        {:else}
-          <!-- Usuarios no admin ven búsqueda y resultados -->
         {/if}
       </div>
     </div>
@@ -361,7 +370,7 @@
               <th>ID</th>
               <th>Descripción</th>
               <th>Categoría</th>
-              {#if isAdmin}
+              {#if isGestor}
                 <th>Usuario</th>
                 <th>Departamento</th>
                 <th>Prioridad</th>
@@ -377,7 +386,7 @@
                 <td><span class="id-tag">#{pqr.id_pqr}</span></td>
                 <td class="text-main">{pqr.descripcion?.slice(0, 40)}...</td>
                 <td><span class="type-chip">{getLabelTipo(pqr.id_tipo)}</span></td>
-                {#if isAdmin}
+                {#if isGestor}
                   <td class="text-usuario">{getLabelUsuario(pqr.id_usuario)}</td>
                   <td class="text-dep">{getLabelDep(pqr.id_departamento)}</td>
                   <td><span class="prio-chip {prioridadColor(pqr.id_prioridad)}">{getLabelPrioridad(pqr.id_prioridad)}</span></td>
@@ -385,21 +394,23 @@
                 {/if}
                 <td class="date-text">{new Date(pqr.fecha).toLocaleDateString('es-CO')}</td>
                 <td class="text-center actions-cell">
-                  {#if isAdmin}
+                  {#if isGestor}
                     <button class="action-btn edit-btn" onclick={() => openEdit(pqr)} title="Editar">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
                       </svg>
                     </button>
-                    <button class="action-btn delete-btn" onclick={() => deletePqr(pqr)} title="Eliminar" disabled={deleting}>
-                      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                        <polyline points="3 6 5 6 21 6"/>
-                        <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
-                        <path d="M10 11v6M14 11v6"/>
-                        <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
-                      </svg>
-                    </button>
+                    {#if isAdmin}
+                      <button class="action-btn delete-btn" onclick={() => deletePqr(pqr)} title="Eliminar" disabled={deleting}>
+                        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                          <polyline points="3 6 5 6 21 6"/>
+                          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/>
+                          <path d="M10 11v6M14 11v6"/>
+                          <path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/>
+                        </svg>
+                      </button>
+                    {/if}
                   {:else}
                     <button class="action-btn view-btn" onclick={() => openDetail(pqr)} title="Ver detalle">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -413,7 +424,7 @@
             {/each}
             {#if filtered.length === 0}
               <tr>
-                <td colspan={isAdmin ? 9 : 5} class="empty-row">No se encontraron solicitudes</td>
+                <td colspan={isGestor ? 9 : 5} class="empty-row">No se encontraron solicitudes</td>
               </tr>
             {/if}
           </tbody>
@@ -445,6 +456,16 @@
               <span class="label">Área Destino</span>
               <span class="value">{getLabelDep(selected.id_departamento)}</span>
             </div>
+            {#if isGestor}
+              <div class="info-item">
+                <span class="label">Usuario</span>
+                <span class="value">{getLabelUsuario(selected.id_usuario)}</span>
+              </div>
+              <div class="info-item">
+                <span class="label">Prioridad</span>
+                <span class="value">{getLabelPrioridad(selected.id_prioridad)}</span>
+              </div>
+            {/if}
           </div>
         </div>
       </div>
