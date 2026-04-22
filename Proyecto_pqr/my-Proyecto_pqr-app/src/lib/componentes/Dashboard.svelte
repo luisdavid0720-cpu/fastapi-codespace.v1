@@ -1,44 +1,29 @@
 <script>
   import { currentUser, logout } from '../../stores/auth.js'
-  import PqrModule       from './PqrModule.svelte'
-  import UsuariosModule  from './UsuariosModule.svelte'
-  import HomeModule      from './HomeModule.svelte'
-  import HistorialModule from './HistorialModule.svelte'
- 
+  import PqrModule      from './PqrModule.svelte'
+  import UsuariosModule from './UsuariosModule.svelte'
+  import HomeModule     from './HomeModule.svelte'
+
   let { page = $bindable('home') } = $props()
   let loading = $state(false)
- 
-  let isAdmin  = $derived($currentUser?.id_rol === 1)
-  let isGestor = $derived($currentUser?.id_rol === 3)
- 
-  const getRolLabel = () => {
-    if (isAdmin)  return 'Administrador'
-    if (isGestor) return 'Gestor'
-    return 'Usuario'
-  }
- 
+
+  let isAdmin = $derived($currentUser?.id_rol === 1)
+
   const navItems = [
-    { id: 'home',      label: 'Inicio',    icon: 'home',     always: true  },
-    { id: 'pqrs',      label: 'PQRS',      icon: 'pqrs',     always: true  },
-    { id: 'usuarios',  label: 'Usuarios',  icon: 'usuarios', admin: true   },
-    { id: 'historial', label: 'Historial', icon: 'historial',admin: true   },
-    { id: 'analitica', label: 'Analítica', icon: 'analitica',admin: true   },
+    { id: 'home',      label: 'Inicio',    icon: 'home',     always: true },
+    { id: 'pqrs',      label: 'PQRS',      icon: 'pqrs',     always: true },
+    { id: 'usuarios',  label: 'Usuarios',  icon: 'usuarios', admin: true  },
+    { id: 'analitica', label: 'Analítica', icon: 'analitica',admin: true  },
   ]
- 
+
   function handleLogout() { logout() }
- 
+
   function navigateTo(id) {
     loading = true
     setTimeout(() => { page = id; loading = false }, 300)
   }
- 
-  function canAccess(item) {
-    if (item.always)            return true
-    if (item.admin && isAdmin)  return true
-    return false
-  }
 </script>
- 
+
 <div class="layout">
   <aside class="sidebar">
     <div class="sidebar-top">
@@ -51,14 +36,15 @@
         </div>
         <span class="brand-text">Sistema PQRS</span>
       </div>
- 
+
       <nav>
         {#each navItems as item}
-          {#if canAccess(item)}
+          {#if item.always || (item.admin && isAdmin)}
             <button
               class="nav-item {page === item.id ? 'active' : ''}"
               onclick={() => navigateTo(item.id)}
             >
+              <!-- Íconos SVG por item -->
               {#if item.icon === 'home'}
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
@@ -70,6 +56,7 @@
                   <polyline points="14 2 14 8 20 8"/>
                   <line x1="16" y1="13" x2="8" y2="13"/>
                   <line x1="16" y1="17" x2="8" y2="17"/>
+                  <polyline points="10 9 9 9 8 9"/>
                 </svg>
               {:else if item.icon === 'usuarios'}
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -77,13 +64,6 @@
                   <circle cx="9" cy="7" r="4"/>
                   <path d="M23 21v-2a4 4 0 0 0-3-3.87"/>
                   <path d="M16 3.13a4 4 0 0 1 0 7.75"/>
-                </svg>
-              {:else if item.icon === 'historial'}
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
-                  <polyline points="14 2 14 8 20 8"/>
-                  <line x1="12" y1="18" x2="12" y2="12"/>
-                  <line x1="9"  y1="15" x2="15" y2="15"/>
                 </svg>
               {:else if item.icon === 'analitica'}
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -98,15 +78,13 @@
         {/each}
       </nav>
     </div>
- 
+
     <div class="sidebar-bottom">
       <div class="user-card">
-        <div class="avatar {isAdmin ? 'av-admin' : isGestor ? 'av-gestor' : 'av-user'}">
-          {$currentUser?.nombre?.charAt(0)?.toUpperCase() || '?'}
-        </div>
+        <div class="avatar">{$currentUser?.nombre?.charAt(0)?.toUpperCase() || '?'}</div>
         <div class="user-info">
           <p class="user-name">{$currentUser?.nombre || 'Usuario'}</p>
-          <p class="user-role">{getRolLabel()}</p>
+          <p class="user-role">{isAdmin ? 'Administrador' : 'Usuario'}</p>
         </div>
       </div>
       <button class="btn-logout" onclick={handleLogout}>
@@ -117,34 +95,29 @@
       </button>
     </div>
   </aside>
- 
+
   <main class="main">
     {#if loading}
       <div class="loading-container">
         <div class="spinner"></div>
         <p>Cargando módulo...</p>
       </div>
- 
+
     {:else if page === 'home'}
       <div class="full-width-module scrollable-content">
         <HomeModule onnavigate={(p) => navigateTo(p)} />
       </div>
- 
+
     {:else if page === 'pqrs'}
       <div class="full-width-module scrollable-content">
         <PqrModule />
       </div>
- 
+
     {:else if page === 'usuarios' && isAdmin}
       <div class="full-width-module scrollable-content">
         <UsuariosModule />
       </div>
- 
-    {:else if page === 'historial' && isAdmin}
-      <div class="full-width-module scrollable-content">
-        <HistorialModule />
-      </div>
- 
+
     {:else if page === 'analitica' && isAdmin}
       <div class="full-width-module analitica-wrapper">
         <section class="powerbi-section">
@@ -170,32 +143,32 @@
           </div>
         </section>
       </div>
- 
+
     {:else}
       <div class="no-access">No tienes acceso a esta sección.</div>
     {/if}
   </main>
 </div>
- 
+
 <style>
   .layout { display: flex; height: 100vh; overflow: hidden; }
- 
+
   .sidebar {
     width: 240px; min-width: 240px;
     background: linear-gradient(180deg, #000, #111);
     color: #fff; display: flex; flex-direction: column;
     justify-content: space-between; padding: 24px 16px; height: 100vh;
   }
- 
+
   .brand {
     display: flex; align-items: center; gap: 10px;
     padding: 0 8px 28px; border-bottom: 1px solid rgba(255,255,255,0.1);
     margin-bottom: 20px;
   }
   .brand-text { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
- 
+
   nav { display: flex; flex-direction: column; gap: 4px; }
- 
+
   .nav-item {
     display: flex; align-items: center; gap: 10px; padding: 12px;
     border-radius: 8px; border: none; background: transparent; color: #ccc;
@@ -204,21 +177,17 @@
   }
   .nav-item:hover  { background: rgba(255,255,255,0.05); color: #fff; }
   .nav-item.active { background: #2563eb; color: #fff; }
- 
+
   .sidebar-bottom {
     border-top: 1px solid rgba(255,255,255,0.1);
     padding-top: 16px; display: flex; flex-direction: column; gap: 12px;
   }
- 
+
   .user-card { display: flex; align-items: center; gap: 10px; padding: 12px; background: rgba(255,255,255,0.05); border-radius: 8px; }
-  .avatar { width: 36px; height: 36px; border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 14px; flex-shrink: 0; }
-  .av-admin  { background: #dc2626; }
-  .av-gestor { background: #16a34a; }
-  .av-user   { background: #2563eb; }
- 
+  .avatar { width: 36px; height: 36px; border-radius: 50%; background: #2563eb; color: white; display: flex; align-items: center; justify-content: center; font-weight: 800; }
   .user-name { font-size: 13px; font-weight: 600; color: #fff; margin: 0; }
   .user-role { font-size: 11px; color: #aaa; margin: 0; }
- 
+
   .btn-logout {
     display: flex; align-items: center; gap: 8px; padding: 10px 12px;
     border-radius: 8px; border: 1px solid rgba(255,255,255,0.11);
@@ -226,13 +195,13 @@
     font-size: 14px; font-family: inherit; transition: 0.2s;
   }
   .btn-logout:hover { background: rgba(255,255,255,0.1); }
- 
+
   .main { flex: 1; background: #f4f6f9; display: flex; flex-direction: column; height: 100vh; }
- 
+
   .full-width-module { width: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
   .scrollable-content { overflow-y: auto; padding: 24px 24px 40px 24px; flex: 1; }
   .analitica-wrapper  { flex: 1; padding: 24px; height: 100%; }
- 
+
   .powerbi-section {
     background: white; border-radius: 16px;
     border: 1px solid rgba(0,0,0,0.05);
@@ -242,20 +211,20 @@
   .section-header { padding: 20px 24px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f0f0f0; flex-shrink: 0; }
   .header-info h3 { margin: 0; font-size: 18px; font-weight: 700; color: #111; }
   .header-info p  { margin: 4px 0 0; font-size: 12.5px; color: #666; }
- 
+
   .live-status { display: flex; align-items: center; gap: 8px; font-size: 11px; font-weight: 800; color: #2563eb; background: #eff6ff; padding: 6px 12px; border-radius: 20px; }
   .pulse-dot { width: 8px; height: 8px; background: #2563eb; border-radius: 50%; animation: pulse 2s infinite; }
   @keyframes pulse { 0%,100% { transform: scale(0.95); opacity: 0.7; } 50% { transform: scale(1.2); opacity: 1; } }
- 
+
   .iframe-container { flex: 1; width: 100%; display: flex; flex-direction: column; }
   iframe { flex: 1; }
- 
+
   .loading-container { padding: 40px; display: flex; flex-direction: column; align-items: center; justify-content: center; flex: 1; gap: 15px; }
   .spinner { width: 30px; height: 30px; border: 3px solid #eee; border-top: 3px solid #2563eb; border-radius: 50%; animation: spin 1s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
- 
+
   .no-access { padding: 40px; color: #666; text-align: center; font-weight: 500; }
- 
+
   @media (max-width: 768px) {
     .layout { flex-direction: column; height: auto; overflow: visible; }
     .sidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 16px; gap: 8px; }
