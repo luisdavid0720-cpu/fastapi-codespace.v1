@@ -11,25 +11,28 @@
   let isCoord = $derived($currentUser?.id_rol === 4)
   let isUser  = $derived($currentUser?.id_rol === 1)
 
+  // 🔥 NUEVO
+  let isStaff = $derived(isAdmin || isCoord)
+
   const navItems = [
-  { id: 'home', label: 'Inicio', icon: 'home', always: true },
-  { id: 'pqrs', label: 'PQRS', icon: 'pqrs', always: true },
-  { id: 'usuarios', label: 'Usuarios', icon: 'usuarios', admin: true },
-  { id: 'analitica', label: 'Analítica', icon: 'analitica', staff: true }
-]
+    { id: 'home', label: 'Inicio', icon: 'home', always: true },
+    { id: 'pqrs', label: 'PQRS', icon: 'pqrs', always: true },
+    { id: 'usuarios', label: 'Usuarios', icon: 'usuarios', admin: true },
+    { id: 'analitica', label: 'Analítica', icon: 'analitica', staff: true }
+  ]
 
   function handleLogout() { logout() }
 
   function navigateTo(id) {
-  if (id === 'usuarios' && !isAdmin) return
-  if (id === 'analitica' && !(isAdmin || isCoord)) return
+    if (id === 'usuarios' && !isAdmin) return
+    if (id === 'analitica' && !isStaff) return
 
-  loading = true
-  setTimeout(() => {
-    page = id
-    loading = false
-  }, 300)
-}
+    loading = true
+    setTimeout(() => {
+      page = id
+      loading = false
+    }, 300)
+  }
 </script>
 
 <div class="layout">
