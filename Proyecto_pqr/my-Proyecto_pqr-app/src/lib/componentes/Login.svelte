@@ -65,6 +65,11 @@
           <span class="role-title">Administrador</span>
         </button>
 
+      <button class="role-card" onclick={() => loginAs('coordinador')}>
+        <div class="role-icon">📋</div>
+        <span class="role-title">Coordinador</span>  
+      </button>
+
         <button class="role-card" onclick={() => loginAs('usuario')}>
           <div class="role-icon">👤</div>
           <span class="role-title">Usuario</span>
@@ -163,7 +168,12 @@
   .welcome-text p { font-size: 13px; color: #64748b; text-align: center; margin-top: 5px; }
 
   /* BOTONES DE ROL */
-  .roles-selection { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin: 30px 0; }
+  .roles-selection {
+    display:grid;
+    grid-template-columns: repeat(3,1fr);
+    gap:20px;
+    margin:30px 0;
+  }
   
   .role-card {
     display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px;
