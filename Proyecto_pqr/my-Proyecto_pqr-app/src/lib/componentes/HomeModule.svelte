@@ -139,18 +139,11 @@
   </div>
  
   {#if loading}
-    <!-- Skeleton para la tabla mientras carga -->
+    <!-- Skeleton para la tabla mientras carga (fuera de la tabla para evitar HTML inválido) -->
     <div class="section">
       <h2 class="section-title">Solicitudes recientes</h2>
-      <div class="table-wrap">
-        <table>
-          <thead>
-            <tr><th>ID</th><th>Descripción</th><th>Fecha</th><th>Estado</th></tr>
-          </thead>
-          <tbody>
-            <Skeleton tipo="tabla" cantidad={4} />
-          </tbody>
-        </table>
+      <div class="table-wrap" style="padding: 16px; display: flex; flex-direction: column; gap: 8px;">
+        <Skeleton tipo="tabla" cantidad={4} />
       </div>
     </div>
   {:else if recentPqrs.length > 0}

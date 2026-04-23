@@ -17,7 +17,7 @@
   let generando = $state(false)
  
   // Modal de confirmación de eliminación
-  let modalEliminarAbierto = $bindable(false)
+  let modalEliminarAbierto = $state(false)
   let pqrAEliminar = $state(null)
  
   // Vista coordinador

@@ -21,7 +21,7 @@
   const rowsPerPage = 10
  
   // Modal de confirmación para eliminar
-  let modalEliminarAbierto = $bindable(false)
+  let modalEliminarAbierto = $state(false)
   let usuarioAEliminar = $state(null)
  
   // Variables reactivas para FormField
