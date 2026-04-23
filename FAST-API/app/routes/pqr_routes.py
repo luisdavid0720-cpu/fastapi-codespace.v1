@@ -9,7 +9,7 @@ nuevo_pqr = PqrController()
 
 @router.post("/create_pqr")
 async def create_pqr(pqr: Pqr):
-    rpta = nuevo_pqr.create_pqr(pqr)
+    rpta = await nuevo_pqr.create_pqr(pqr)
     return rpta
 
 
