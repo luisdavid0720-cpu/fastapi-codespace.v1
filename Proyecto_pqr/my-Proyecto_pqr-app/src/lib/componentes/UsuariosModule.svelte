@@ -1,7 +1,7 @@
 <script>
   import { onMount } from 'svelte'
   import { api } from '../api.js'
-  import { DataHandler, Datatable, Th, ThFilter } from '@vincjo/datatables'
+  import { DataHandler, Datatable, Th, ThFilter } from '@vincjo/datatables/legacy/local'
 
   let usuarios = $state([])
   let roles    = $state([])
