@@ -1,5 +1,6 @@
 {
   "dependencies": {
-    "@sveltejs/adapter-vercel": "^6.3.3"
+    "@sveltejs/adapter-vercel": "^6.3.3",
+    "@vincjo/datatables": "^2.8.0"
   }
 }
