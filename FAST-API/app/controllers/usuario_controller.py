@@ -43,31 +43,24 @@ class UsuarioController:
         finally:
             conn.close()
 
-    def get_usuarios(self):
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM usuario")
-            result = cursor.fetchall()
-            payload = []
-            for data in result:
-                content = {
-                    'id_usuario': data[0], 'nombre': data[1], 'cedula': data[2],
-                    'carrera': data[3], 'semestre': data[4], 'cargo': data[5],
-                    'celular': data[6], 'correo': data[7], 'id_rol': data[8]
-                }
-                payload.append(content)
-                content = {}
-            json_data = jsonable_encoder(payload)
-            if result:
-                return {"resultado": json_data}
-            else:
-                raise HTTPException(status_code=404, detail="User not found")
-        except psycopg2.Error as err:
-            print(err)
-            conn.rollback()
-        finally:
-            conn.close()
+def get_usuarios(self):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM usuario")
+        result = cursor.fetchall()
+        payload = [
+            {'id_usuario': data[0], 'nombre': data[1], 'cedula': data[2],
+             'carrera': data[3], 'semestre': data[4], 'cargo': data[5],
+             'celular': data[6], 'correo': data[7], 'id_rol': data[8]}
+            for data in result
+        ]
+        return {"resultado": jsonable_encoder(payload)}  # ✅ siempre retorna lista
+    except psycopg2.Error as err:
+        print(err)
+        conn.rollback()
+    finally:
+        conn.close()
 
     def update_usuario(self, usuario_id: int, usuario: Usuario):
         conn = get_db_connection()

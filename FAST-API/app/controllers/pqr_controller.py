@@ -77,29 +77,24 @@ class PqrController:
         finally:
             conn.close()
 
-    def get_pqrs(self):
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute("SELECT * FROM pqr")
-            result = cursor.fetchall()
-            payload = []
-            for data in result:
-                content = {
-                    'id_pqr': data[0], 'descripcion': data[1], 'fecha': data[2],
-                    'id_usuario': data[3], 'id_tipo': data[4], 'id_estado': data[5],
-                    'id_departamento': data[6], 'id_prioridad': data[7]
-                }
-                payload.append(content)
-            if result:
-                return {"resultado": jsonable_encoder(payload)}
-            else:
-                raise HTTPException(status_code=404, detail="No hay PQRs")
-        except psycopg2.Error as err:
-            print(err)
-            conn.rollback()
-        finally:
-            conn.close()
+def get_usuarios(self):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+        cursor.execute("SELECT * FROM usuario")
+        result = cursor.fetchall()
+        payload = [
+            {'id_usuario': data[0], 'nombre': data[1], 'cedula': data[2],
+             'carrera': data[3], 'semestre': data[4], 'cargo': data[5],
+             'celular': data[6], 'correo': data[7], 'id_rol': data[8]}
+            for data in result
+        ]
+        return {"resultado": jsonable_encoder(payload)}  # ✅ siempre retorna lista
+    except psycopg2.Error as err:
+        print(err)
+        conn.rollback()
+    finally:
+        conn.close()
 
     def update_pqr(self, pqr_id: int, pqr: Pqr):
         try:
