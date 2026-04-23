@@ -55,7 +55,7 @@ def root():
 @app.get("/test-email")
 async def test_email():
     await enviar_correo(
-        "TUOTROCORREO@gmail.com",
+        "luisdavid0720@gmail.com",
         "Prueba sistema PQR",
         "Correo funcionando correctamente"
     )
