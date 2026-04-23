@@ -32,26 +32,26 @@
   }
  
   onMount(async () => {
-  try {
-    const [pqrData, usrData] = await Promise.allSettled([api.getPqrs(), api.getUsuarios()])
-
-    let allPqrs = pqrData.status === 'fulfilled' ? (pqrData.value || []) : []
-    const usuarios = usrData.status === 'fulfilled' ? (usrData.value || []) : []
-
-    if (!isStaff) {
-      allPqrs = allPqrs.filter(p => Number(p.id_usuario) === Number($currentUser?.id_usuario))
+    try {
+      const [pqrData, usrData] = await Promise.allSettled([api.getPqrs(), api.getUsuarios()])
+      
+      let allPqrs = pqrData.value?.resultado || []
+      const usuarios = usrData.value?.resultado || []
+ 
+      if (!isStaff) {
+        allPqrs = allPqrs.filter(p => Number(p.id_usuario) === Number($currentUser?.id_usuario))
+      }
+ 
+      stats.pqrs       = allPqrs.length
+      stats.usuarios   = usuarios.length
+      stats.pendientes = allPqrs.filter(p => p.id_estado === 1).length
+      recentPqrs       = allPqrs.slice(0, 5)
+      
+    } catch(e) {
+      console.error("Error al cargar datos:", e)
     }
-
-    stats.pqrs       = allPqrs.length
-    stats.pendientes = allPqrs.filter(p => p.id_estado === 1).length
-    stats.usuarios   = usuarios.length
-    recentPqrs       = allPqrs.slice(0, 5)
-
-  } catch(e) {
-    console.error("Error:", e)
-  }
-  loading = false
-})
+    loading = false
+  })
 </script>
  
 <div class="home">

@@ -8,6 +8,5 @@ def get_db_connection():
         user=os.getenv("NEON_USER"),
         password=os.getenv("NEON_PASSWORD"),
         dbname=os.getenv("NEON_DBNAME"),
-        sslmode="require",
-        options="-c channel_binding=require"
+        sslmode="require"
     )

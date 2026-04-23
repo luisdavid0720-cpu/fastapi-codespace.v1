@@ -1,6 +1,3 @@
-from dotenv import load_dotenv
-load_dotenv()
-
 import os
 from fastapi import FastAPI
 from routes.usuario_routes import router as usuario_router
