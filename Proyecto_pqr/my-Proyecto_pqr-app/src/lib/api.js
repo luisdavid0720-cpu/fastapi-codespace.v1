@@ -4,7 +4,8 @@ const API = "https://fastapi-codespace-v1.onrender.com"
 // ── USUARIOS ──────────────────────────────────────────────
 export async function getUsuarios() {
   const res = await fetch(`${API}/get_usuarios/`)
-  return res.json()
+  const data = await res.json()
+  return data.resultado || []
 }
 
 export async function getUsuario(id) {
@@ -43,7 +44,8 @@ export async function getUsuariosByRol(rolId) {
 // ── PQRs ──────────────────────────────────────────────────
 export async function getPqrs() {
   const res = await fetch(`${API}/get_pqrs/`)
-  return res.json()
+  const data = await res.json()
+  return data.resultado || []
 }
 
 export async function getPqr(id) {
