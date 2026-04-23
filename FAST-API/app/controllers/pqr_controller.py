@@ -1,23 +1,21 @@
-import psycopg2
-import asyncio
 from services.email_service import enviar_correo
+import psycopg2
 from fastapi import HTTPException
 from config.db_config import get_db_connection
 from models.pqr_model import Pqr
-from fastapi.encoders import jsonable_encoder
 
 class PqrController:
-        
-    def create_pqr(self, pqr: Pqr):
+
+    async def create_pqr(self, pqr: Pqr):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
 
+            # Guardar PQR
             cursor.execute("""
                 INSERT INTO pqr
                 (descripcion,fecha,id_usuario,id_tipo,id_estado,id_departamento,id_prioridad)
                 VALUES (%s,%s,%s,%s,%s,%s,%s)
-                RETURNING id_pqr
             """, (
                 pqr.descripcion,
                 pqr.fecha,
@@ -28,27 +26,32 @@ class PqrController:
                 pqr.id_prioridad
             ))
 
-            nuevo_id = cursor.fetchone()[0]
-
             conn.commit()
 
-            # correo automático
-            asyncio.run(
-                enviar_correo(
-                    "luisdavid0720@gmail.com",
-                    f"PQR #{nuevo_id} registrada",
-                    f"Su solicitud fue registrada correctamente.\nNúmero: {nuevo_id}"
-                )
+            # Buscar correo usuario
+            cursor.execute(
+                "SELECT correo, nombre FROM usuario WHERE id_usuario = %s",
+                (pqr.id_usuario,)
             )
 
-            return {
-                "resultado": "pqr creada",
-                "id_pqr": nuevo_id
-            }
+            usuario = cursor.fetchone()
+
+            if usuario:
+                correo = usuario[0]
+                nombre = usuario[1]
+
+                await enviar_correo(
+                    correo,
+                    "PQR registrada exitosamente",
+                    f"Hola {nombre}, tu PQR fue registrada correctamente."
+                )
+
+            return {"resultado": "PQR creada y correo enviado"}
 
         except psycopg2.Error as err:
             print(err)
             conn.rollback()
+            raise HTTPException(status_code=500, detail="Error al crear PQR")
 
         finally:
             conn.close()
