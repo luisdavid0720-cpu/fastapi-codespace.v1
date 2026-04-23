@@ -2,7 +2,10 @@
   import { onMount } from 'svelte'
   import { currentUser } from '../../stores/auth.js'
   import { api } from '../api.js'
-
+  import Badge     from './Badge.svelte'
+  import Modal     from './Modal.svelte'
+  import FormField from './FormField.svelte'
+ 
   let pqrs = $state([])
   let loading = $state(true)
   let view = $state('list')
@@ -12,29 +15,41 @@
   let toastMsg = $state('')
   let editForm = $state(null)
   let generando = $state(false)
-
+ 
+  // Modal de confirmación de eliminación
+  let modalEliminarAbierto = $bindable(false)
+  let pqrAEliminar = $state(null)
+ 
   // Vista coordinador
   let coordForm = $state({ id_estado: '', respuesta: '' })
-
+ 
   // Filtros
   let searchText   = $state('')
   let filterEstado = $state('')
   let filterTipo   = $state('')
   let filterDesde  = $state('')
   let filterHasta  = $state('')
-
+ 
   let tipos = $state([]), estados = $state([]), departamentos = $state([])
   let prioridades = $state([]), usuarios = $state([])
-
+ 
+  // Valores para FormField (bind:valor requiere variables reactivas)
+  let formDescripcion    = $state('')
+  let formIdTipo         = $state('')
+  let formIdDepartamento = $state('')
+ 
   function defaultForm() {
+    formDescripcion    = ''
+    formIdTipo         = ''
+    formIdDepartamento = ''
     return { descripcion: '', id_tipo: '', id_departamento: '' }
   }
   let form = $state(defaultForm())
-
+ 
   let isAdmin = $derived($currentUser?.id_rol === 3)
   let isCoord = $derived($currentUser?.id_rol === 4)
   let isUser  = $derived($currentUser?.id_rol === 1)
-
+ 
   let filtered = $derived(
     pqrs
       .filter(p => {
@@ -49,7 +64,7 @@
       })
       .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
   )
-
+ 
   onMount(async () => {
     loading = true
     try {
@@ -66,11 +81,10 @@
     } catch(e) { console.error(e) }
     loading = false
   })
-
-  // Navegación
-  function openCreate() { form = defaultForm(); view = 'form' }
+ 
+  function openCreate() { defaultForm(); view = 'form' }
   function openDetail(pqr) { selected = pqr; view = 'detail' }
-
+ 
   function openEdit(pqr) {
     editForm = {
       id_pqr: pqr.id_pqr,
@@ -84,14 +98,19 @@
     }
     view = 'edit'
   }
-
+ 
   function openGestion(pqr) {
     selected = pqr
     coordForm = { id_estado: pqr.id_estado, respuesta: '' }
     view = 'gestion'
   }
-
-  // CRUD Admin
+ 
+  // Abrir modal de confirmación antes de eliminar
+  function pedirEliminar(pqr) {
+    pqrAEliminar = pqr
+    modalEliminarAbierto = true
+  }
+ 
   async function saveEdit() {
     if (!editForm.descripcion || !editForm.id_tipo || !editForm.id_departamento) {
       showToast('⚠️ Completa todos los campos'); return
@@ -106,26 +125,29 @@
     } catch(e) { showToast('❌ Error al actualizar') }
     saving = false
   }
-
-  async function deletePqr(pqr) {
-    if (!confirm(`¿Eliminar la PQR #${pqr.id_pqr}? Esta acción no se puede deshacer.`)) return
+ 
+  async function deletePqr() {
+    if (!pqrAEliminar) return
     deleting = true
     try {
-      await api.deletePqr(pqr.id_pqr)
-      pqrs = pqrs.filter(p => p.id_pqr !== pqr.id_pqr)
+      await api.deletePqr(pqrAEliminar.id_pqr)
+      pqrs = pqrs.filter(p => p.id_pqr !== pqrAEliminar.id_pqr)
       showToast('🗑️ PQR eliminada')
+      pqrAEliminar = null
     } catch(e) { showToast('❌ Error al eliminar') }
     deleting = false
   }
-
+ 
   async function savePqr() {
-    if (!form.descripcion || !form.id_tipo || !form.id_departamento) {
+    if (!formDescripcion || !formIdTipo || !formIdDepartamento) {
       showToast('⚠️ Completa todos los campos'); return
     }
     saving = true
     try {
       const payload = {
-        ...form,
+        descripcion: formDescripcion,
+        id_tipo: formIdTipo,
+        id_departamento: formIdDepartamento,
         id_pqr: 0,
         fecha: new Date().toISOString(),
         id_usuario: $currentUser?.id_usuario,
@@ -140,16 +162,12 @@
     } catch(e) { showToast('❌ Error al enviar') }
     saving = false
   }
-
-  // Gestión Coordinador
+ 
   async function saveGestion() {
     if (!coordForm.id_estado) { showToast('⚠️ Selecciona un estado'); return }
     saving = true
     try {
-      // Cambiar estado
       await api.updateEstadoPqr(selected.id_pqr, coordForm.id_estado)
-
-      // Agregar respuesta si escribió algo
       if (coordForm.respuesta.trim()) {
         await api.createRespuesta({
           id_pqr: selected.id_pqr,
@@ -158,7 +176,6 @@
           fecha: new Date().toISOString()
         })
       }
-
       const data = await api.getPqrs()
       pqrs = data.resultado || []
       view = 'list'
@@ -166,12 +183,12 @@
     } catch(e) { showToast('❌ Error al guardar') }
     saving = false
   }
-
+ 
   function limpiarFiltros() {
     searchText = ''; filterEstado = ''; filterTipo = ''
     filterDesde = ''; filterHasta = ''
   }
-
+ 
   async function descargarPDF() {
     if (filtered.length === 0) return
     generando = true
@@ -224,20 +241,30 @@
     } catch(e) { console.error(e) }
     generando = false
   }
-
+ 
   function showToast(msg) { toastMsg = msg; setTimeout(() => toastMsg = '', 3000) }
-
+ 
   const getLabelEstado    = (id) => estados.find(e => e.id_estado == id)?.nombre              || 'PENDIENTE'
   const getLabelTipo      = (id) => tipos.find(t => t.id_tipo == id)?.nombre                   || '—'
   const getLabelDep       = (id) => departamentos.find(d => d.id_departamento == id)?.nombre   || '—'
   const getLabelPrioridad = (id) => prioridades.find(p => p.id_prioridad == id)?.nombre        || '—'
   const getLabelUsuario   = (id) => { const u = usuarios.find(u => u.id_usuario == id); return u ? (u.nombre || u.correo || `#${id}`) : `#${id}` }
-  const prioridadColor    = (id) => { const n = getLabelPrioridad(id)?.toLowerCase(); if (n.includes('alta')||n.includes('urgen')||n.includes('muy')) return 'prio-alta'; if (n.includes('media')) return 'prio-media'; return 'prio-baja' }
 </script>
-
+ 
+<!-- Modal de confirmación para eliminar PQR -->
+<Modal
+  bind:abierto={modalEliminarAbierto}
+  titulo="¿Eliminar PQR #{pqrAEliminar?.id_pqr}?"
+  mensaje="Esta acción no se puede deshacer. La solicitud será eliminada permanentemente."
+  txtConfirm="Sí, eliminar"
+  txtCancel="Cancelar"
+  peligroso={true}
+  onconfirm={deletePqr}
+/>
+ 
 <div class="module">
   {#if toastMsg}<div class="toast">{toastMsg}</div>{/if}
-
+ 
   <header class="page-header">
     <div class="header-content">
       <h1>
@@ -271,55 +298,47 @@
       {/if}
     </div>
   </header>
-
+ 
   {#if view === 'list'}
     <div class="filters-card">
       <p class="filters-title">Filtros del reporte</p>
       <div class="filters-grid">
-        <div class="filter-field">
-          <label for="f-search">Búsqueda</label>
-          <div class="input-wrap">
-            <svg class="input-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-            <input id="f-search" type="text" placeholder="Palabra clave..." bind:value={searchText} />
-          </div>
-        </div>
+        <!-- FormField reemplaza los filter-field manuales -->
+        <FormField
+          label="Búsqueda"
+          tipo="text"
+          bind:valor={searchText}
+          placeholder="Palabra clave..."
+        />
         {#if isAdmin || isCoord}
-          <div class="filter-field">
-            <label for="f-estado">Estado</label>
-            <select id="f-estado" bind:value={filterEstado}>
-              <option value="">Todos los estados</option>
-              {#each estados as e}<option value={e.id_estado}>{e.nombre}</option>{/each}
-            </select>
-          </div>
-          <div class="filter-field">
-            <label for="f-tipo">Categoría</label>
-            <select id="f-tipo" bind:value={filterTipo}>
-              <option value="">Todas las categorías</option>
-              {#each tipos as t}<option value={t.id_tipo}>{t.nombre}</option>{/each}
-            </select>
-          </div>
+          <FormField
+            label="Estado"
+            tipo="select"
+            bind:valor={filterEstado}
+            opciones={[{ value: '', label: 'Todos los estados' }, ...estados.map(e => ({ value: e.id_estado, label: e.nombre }))]}
+          />
+          <FormField
+            label="Categoría"
+            tipo="select"
+            bind:valor={filterTipo}
+            opciones={[{ value: '', label: 'Todas las categorías' }, ...tipos.map(t => ({ value: t.id_tipo, label: t.nombre }))]}
+          />
           {#if isAdmin}
-            <div class="filter-field">
-              <label for="f-desde">Desde</label>
-              <input id="f-desde" type="date" bind:value={filterDesde} />
-            </div>
-            <div class="filter-field">
-              <label for="f-hasta">Hasta</label>
-              <input id="f-hasta" type="date" bind:value={filterHasta} />
-            </div>
+            <FormField label="Desde" tipo="date" bind:valor={filterDesde} />
+            <FormField label="Hasta" tipo="date" bind:valor={filterHasta} />
           {/if}
-          <div class="filter-field align-end">
+          <div class="filter-end">
             <button class="btn-clear" onclick={limpiarFiltros}>Limpiar filtros</button>
           </div>
         {/if}
       </div>
     </div>
-
+ 
     <div class="results-bar">
       <span class="results-count"><strong>{filtered.length}</strong> {filtered.length === 1 ? 'solicitud encontrada' : 'solicitudes encontradas'}</span>
       {#if filtered.length === 0 && !loading}<span class="no-results-hint">Ajusta los filtros para ver resultados</span>{/if}
     </div>
-
+ 
     {#if loading}
       <div class="loader-wrap"><p>Sincronizando...</p></div>
     {:else}
@@ -340,10 +359,10 @@
                 <td><span class="type-chip">{getLabelTipo(pqr.id_tipo)}</span></td>
                 {#if isAdmin || isCoord}
                   <td class="text-usuario">{getLabelUsuario(pqr.id_usuario)}</td>
-                  <td><span class="status-pill s{pqr.id_estado}">{getLabelEstado(pqr.id_estado)}</span></td>
-                {/if}
-                {#if isAdmin}
-                  <!-- columnas extra solo admin en tabla ya las tiene el header, aquí solo pintamos las de admin -->
+                  <td>
+                    <!-- Badge reemplaza span.status-pill manual -->
+                    <Badge texto={getLabelEstado(pqr.id_estado)} id={pqr.id_estado} />
+                  </td>
                 {/if}
                 <td class="date-text">{new Date(pqr.fecha).toLocaleDateString('es-CO')}</td>
                 <td class="text-center actions-cell">
@@ -351,7 +370,8 @@
                     <button class="action-btn edit-btn" onclick={() => openEdit(pqr)} title="Editar">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
-                    <button class="action-btn delete-btn" onclick={() => deletePqr(pqr)} title="Eliminar" disabled={deleting}>
+                    <!-- Modal reemplaza el confirm() del navegador -->
+                    <button class="action-btn delete-btn" onclick={() => pedirEliminar(pqr)} title="Eliminar" disabled={deleting}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     </button>
                   {:else if isCoord}
@@ -376,14 +396,15 @@
         </table>
       </div>
     {/if}
-
+ 
   {:else if view === 'detail'}
     <div class="center-container">
       <div class="card animate-up">
         <div class="card-top">
           <div class="badge-row">
             <span class="id-large">Solicitud #{selected.id_pqr}</span>
-            <span class="status-pill s{selected.id_estado}">{getLabelEstado(selected.id_estado)}</span>
+            <!-- Badge en el detalle de la PQR -->
+            <Badge texto={getLabelEstado(selected.id_estado)} id={selected.id_estado} />
           </div>
           <p class="date-sub">Registrado el {new Date(selected.fecha).toLocaleString('es-CO')}</p>
         </div>
@@ -405,15 +426,14 @@
         </div>
       </div>
     </div>
-
+ 
   {:else if view === 'gestion'}
     <div class="center-container">
       <div class="card animate-up">
-        <!-- Info de la PQR -->
         <div class="card-top">
           <div class="badge-row">
             <span class="id-large">Solicitud #{selected.id_pqr}</span>
-            <span class="status-pill s{selected.id_estado}">{getLabelEstado(selected.id_estado)}</span>
+            <Badge texto={getLabelEstado(selected.id_estado)} id={selected.id_estado} />
           </div>
           <p class="date-sub">{getLabelUsuario(selected.id_usuario)} — {new Date(selected.fecha).toLocaleDateString('es-CO')}</p>
         </div>
@@ -422,67 +442,73 @@
             <p class="section-label">Descripción de la solicitud</p>
             <div class="content-box">{selected.descripcion}</div>
           </div>
-
+ 
           <h3 class="section-divider">Gestión del Coordinador</h3>
-
-          <div class="field">
-            <label for="coord-estado" class="section-label">Cambiar estado</label>
-            <select id="coord-estado" bind:value={coordForm.id_estado}>
-              <option value="">Selecciona un estado...</option>
-              {#each estados as e}<option value={e.id_estado}>{e.nombre}</option>{/each}
-            </select>
-          </div>
-
-          <div class="field">
-            <label for="coord-resp" class="section-label">Respuesta / Comentario <small style="text-transform:none;font-weight:400;">(opcional)</small></label>
-            <textarea id="coord-resp" bind:value={coordForm.respuesta} placeholder="Escribe una respuesta o comentario para esta solicitud..."></textarea>
-          </div>
-
+ 
+          <!-- FormField reemplaza select y textarea manuales -->
+          <FormField
+            label="Cambiar estado"
+            tipo="select"
+            bind:valor={coordForm.id_estado}
+            placeholder="Selecciona un estado..."
+            opciones={estados.map(e => ({ value: e.id_estado, label: e.nombre }))}
+          />
+          <FormField
+            label="Respuesta / Comentario"
+            tipo="textarea"
+            bind:valor={coordForm.respuesta}
+            placeholder="Escribe una respuesta o comentario para esta solicitud..."
+            hint="Campo opcional"
+          />
+ 
           <button class="btn-send" onclick={saveGestion} disabled={saving}>
             {saving ? 'Guardando...' : '✅ Guardar gestión'}
           </button>
         </div>
       </div>
     </div>
-
+ 
   {:else if view === 'edit'}
     <div class="center-container">
       <div class="card animate-up">
         <div class="form-padding">
           <h2 class="card-title">Editar PQR #{editForm.id_pqr}</h2>
-          <div class="field">
-            <label for="edit-desc" class="section-label">Descripción</label>
-            <textarea id="edit-desc" bind:value={editForm.descripcion} placeholder="Descripción de la solicitud..."></textarea>
+          <!-- FormField en el formulario de edición -->
+          <FormField
+            label="Descripción"
+            tipo="textarea"
+            bind:valor={editForm.descripcion}
+            placeholder="Descripción de la solicitud..."
+          />
+          <div class="field-group">
+            <FormField
+              label="Tipo"
+              tipo="select"
+              bind:valor={editForm.id_tipo}
+              placeholder="Selecciona..."
+              opciones={tipos.map(t => ({ value: t.id_tipo, label: t.nombre }))}
+            />
+            <FormField
+              label="Departamento"
+              tipo="select"
+              bind:valor={editForm.id_departamento}
+              placeholder="Selecciona..."
+              opciones={departamentos.map(d => ({ value: d.id_departamento, label: d.nombre }))}
+            />
           </div>
           <div class="field-group">
-            <div class="field">
-              <label for="edit-tipo" class="section-label">Tipo</label>
-              <select id="edit-tipo" bind:value={editForm.id_tipo}>
-                <option value="">Selecciona...</option>
-                {#each tipos as t}<option value={t.id_tipo}>{t.nombre}</option>{/each}
-              </select>
-            </div>
-            <div class="field">
-              <label for="edit-dep" class="section-label">Departamento</label>
-              <select id="edit-dep" bind:value={editForm.id_departamento}>
-                <option value="">Selecciona...</option>
-                {#each departamentos as d}<option value={d.id_departamento}>{d.nombre}</option>{/each}
-              </select>
-            </div>
-          </div>
-          <div class="field-group">
-            <div class="field">
-              <label for="edit-estado" class="section-label">Estado</label>
-              <select id="edit-estado" bind:value={editForm.id_estado}>
-                {#each estados as e}<option value={e.id_estado}>{e.nombre}</option>{/each}
-              </select>
-            </div>
-            <div class="field">
-              <label for="edit-prio" class="section-label">Prioridad</label>
-              <select id="edit-prio" bind:value={editForm.id_prioridad}>
-                {#each prioridades as p}<option value={p.id_prioridad}>{p.nombre}</option>{/each}
-              </select>
-            </div>
+            <FormField
+              label="Estado"
+              tipo="select"
+              bind:valor={editForm.id_estado}
+              opciones={estados.map(e => ({ value: e.id_estado, label: e.nombre }))}
+            />
+            <FormField
+              label="Prioridad"
+              tipo="select"
+              bind:valor={editForm.id_prioridad}
+              opciones={prioridades.map(p => ({ value: p.id_prioridad, label: p.nombre }))}
+            />
           </div>
           <button class="btn-send" onclick={saveEdit} disabled={saving}>
             {saving ? 'Guardando...' : '💾 Guardar cambios'}
@@ -490,31 +516,37 @@
         </div>
       </div>
     </div>
-
+ 
   {:else if view === 'form'}
     <div class="center-container">
       <div class="card animate-up">
         <div class="form-padding">
           <h2 class="card-title">Radicar nueva PQR</h2>
-          <div class="field">
-            <label for="new-desc" class="section-label">¿Qué sucedió? <small>(Descripción)</small></label>
-            <textarea id="new-desc" bind:value={form.descripcion} placeholder="Explica detalladamente tu solicitud..."></textarea>
-          </div>
+          <!-- FormField en el formulario de creación -->
+          <FormField
+            label="¿Qué sucedió? (Descripción)"
+            tipo="textarea"
+            bind:valor={formDescripcion}
+            placeholder="Explica detalladamente tu solicitud..."
+            required={true}
+          />
           <div class="field-group">
-            <div class="field">
-              <label for="new-tipo" class="section-label">Tipo</label>
-              <select id="new-tipo" bind:value={form.id_tipo}>
-                <option value="">Selecciona...</option>
-                {#each tipos as t}<option value={t.id_tipo}>{t.nombre}</option>{/each}
-              </select>
-            </div>
-            <div class="field">
-              <label for="new-dep" class="section-label">Departamento</label>
-              <select id="new-dep" bind:value={form.id_departamento}>
-                <option value="">Selecciona...</option>
-                {#each departamentos as d}<option value={d.id_departamento}>{d.nombre}</option>{/each}
-              </select>
-            </div>
+            <FormField
+              label="Tipo"
+              tipo="select"
+              bind:valor={formIdTipo}
+              placeholder="Selecciona..."
+              opciones={tipos.map(t => ({ value: t.id_tipo, label: t.nombre }))}
+              required={true}
+            />
+            <FormField
+              label="Departamento"
+              tipo="select"
+              bind:valor={formIdDepartamento}
+              placeholder="Selecciona..."
+              opciones={departamentos.map(d => ({ value: d.id_departamento, label: d.nombre }))}
+              required={true}
+            />
           </div>
           <button class="btn-send" onclick={savePqr} disabled={saving}>
             {saving ? 'Procesando...' : '🚀 Enviar Solicitud'}
@@ -524,7 +556,7 @@
     </div>
   {/if}
 </div>
-
+ 
 <style>
   .module { padding: 40px; font-family: 'Inter', sans-serif; background: #fcfdfe; min-height: 100vh; }
   .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
@@ -538,26 +570,19 @@
   .btn-pdf:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
   .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; display: inline-block; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
-
+ 
   .filters-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
   .filters-title { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 16px; }
   .filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; align-items: end; }
-  .filter-field { display: flex; flex-direction: column; gap: 6px; }
-  .filter-field label { font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.4px; }
-  .filter-field.align-end { justify-content: flex-end; }
-  .input-wrap { position: relative; }
-  .input-icon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; }
-  .input-wrap input { padding-left: 36px !important; }
-  .filter-field input, .filter-field select { padding: 10px 12px; border-radius: 10px; border: 1.5px solid #e2e8f0; font-size: 13px; outline: none; background: #fafafa; font-family: inherit; color: #334155; transition: border-color 0.2s; width: 100%; box-sizing: border-box; }
-  .filter-field input:focus, .filter-field select:focus { border-color: #2563eb; background: white; }
+  .filter-end { display: flex; align-items: flex-end; }
   .btn-clear { padding: 10px 16px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white; color: #64748b; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit; width: 100%; }
   .btn-clear:hover { border-color: #cbd5e1; background: #f8fafc; }
-
+ 
   .results-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
   .results-count { font-size: 13px; color: #64748b; }
   .results-count strong { color: #0f172a; font-weight: 700; }
   .no-results-hint { font-size: 12px; color: #94a3b8; }
-
+ 
   .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
   table { width: 100%; border-collapse: collapse; }
   th { background: #f8fafc; padding: 14px 16px; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
@@ -568,7 +593,7 @@
   .text-main { max-width: 300px; }
   .text-usuario { font-weight: 600; color: #1e293b; }
   .date-text { color: #64748b; font-size: 12px; white-space: nowrap; }
-
+ 
   .actions-cell { display: flex; align-items: center; justify-content: center; gap: 6px; }
   .action-btn { width: 32px; height: 32px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
   .view-btn    { background: #eff6ff; color: #2563eb; }
@@ -580,19 +605,10 @@
   .delete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .coord-btn   { background: #fff7ed; color: #ea580c; }
   .coord-btn:hover   { background: #ea580c; color: white; transform: scale(1.1); }
-
+ 
   .id-tag { color: #94a3b8; font-weight: 700; font-family: monospace; font-size: 12px; }
   .type-chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 11px; white-space: nowrap; }
-  .status-pill { padding: 5px 12px; border-radius: 100px; font-size: 10px; font-weight: 800; text-transform: uppercase; white-space: nowrap; }
-  .s1 { background: #fef3c7; color: #92400e; }
-  .s2 { background: #dbeafe; color: #1e40af; }
-  .s3 { background: #d1fae5; color: #065f46; }
-  .s4 { background: #e0e7ff; color: #3730a3; }
-  .prio-chip { padding: 4px 10px; border-radius: 8px; font-size: 11px; font-weight: 700; white-space: nowrap; }
-  .prio-alta  { background: #fef2f2; color: #dc2626; }
-  .prio-media { background: #fff7ed; color: #c2410c; }
-  .prio-baja  { background: #f0fdf4; color: #16a34a; }
-
+ 
   .center-container { display: flex; justify-content: center; padding: 20px 0 60px; }
   .card { background: white; width: 100%; max-width: 680px; border-radius: 32px; border: 1px solid #e2e8f0; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1); overflow: hidden; }
   .form-padding { padding: 45px; }
@@ -609,20 +625,16 @@
   .label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
   .value { font-weight: 700; color: #1e293b; font-size: 15px; }
   .section-divider { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 20px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
-
-  .field { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-  .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .section-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
-  textarea, select { padding: 15px; border-radius: 14px; border: 1.5px solid #e2e8f0; background: #fcfcfc; font-size: 14px; outline: none; font-family: inherit; width: 100%; box-sizing: border-box; }
-  textarea { min-height: 120px; resize: none; }
+  .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .btn-send { width: 100%; background: #2563eb; color: white; border: none; padding: 18px; border-radius: 16px; font-weight: 800; font-size: 16px; cursor: pointer; margin-top: 10px; font-family: inherit; }
   .btn-send:disabled { opacity: 0.6; cursor: not-allowed; }
-
+ 
   .toast { position: fixed; bottom: 30px; right: 30px; background: #0f172a; color: white; padding: 16px 28px; border-radius: 16px; font-weight: 600; z-index: 100; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
   .animate-up { animation: slideUp 0.4s ease-out; }
   @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
   .loader-wrap { padding: 60px; text-align: center; color: #94a3b8; }
-
+ 
   @media (max-width: 768px) {
     .module { padding: 16px; }
     .page-header { flex-direction: column; gap: 12px; align-items: flex-start; }
