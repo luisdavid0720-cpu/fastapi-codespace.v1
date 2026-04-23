@@ -1,3 +1,4 @@
+import os
 from services.email_service import enviar_correo
 import psycopg2
 from fastapi import HTTPException
@@ -28,23 +29,21 @@ class PqrController:
 
             conn.commit()
 
-            # Buscar correo usuario
-            cursor.execute(
-                "SELECT correo, nombre FROM usuario WHERE id_usuario = %s",
-                (pqr.id_usuario,)
+            await enviar_correo(
+                "luisdavid0720@gmail.com",
+                "Nueva PQR creada",
+                f"""
+            Se creó una nueva PQR
+
+            Descripción: {pqr.descripcion}
+            Usuario ID: {pqr.id_usuario}
+            Tipo ID: {pqr.id_tipo}
+            Estado ID: {pqr.id_estado}
+            Departamento ID: {pqr.id_departamento}
+            Prioridad ID: {pqr.id_prioridad}
+            Fecha: {pqr.fecha}
+            """
             )
-
-            usuario = cursor.fetchone()
-
-            if usuario:
-                correo = usuario[0]
-                nombre = usuario[1]
-
-                await enviar_correo(
-                    correo,
-                    "PQR registrada exitosamente",
-                    f"Hola {nombre}, tu PQR fue registrada correctamente."
-                )
 
             return {"resultado": "PQR creada y correo enviado"}
 
