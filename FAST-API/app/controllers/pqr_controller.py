@@ -1,4 +1,6 @@
 import psycopg2
+import asyncio
+from services.email_service import enviar_correo
 from fastapi import HTTPException
 from config.db_config import get_db_connection
 from models.pqr_model import Pqr
@@ -6,20 +8,48 @@ from fastapi.encoders import jsonable_encoder
 
 class PqrController:
         
-    def create_pqr(self, pqr: Pqr):   
+    def create_pqr(self, pqr: Pqr):
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-            cursor.execute("INSERT INTO pqr (descripcion,fecha,id_usuario,id_tipo,id_estado,id_departamento,id_prioridad)\
-             VALUES (%s, %s, %s, %s, %s ,%s, %s)", (pqr.descripcion, pqr.fecha, pqr.id_usuario, pqr.id_tipo, pqr.id_estado, pqr.id_departamento, pqr.id_prioridad))
+
+            cursor.execute("""
+                INSERT INTO pqr
+                (descripcion,fecha,id_usuario,id_tipo,id_estado,id_departamento,id_prioridad)
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
+                RETURNING id_pqr
+            """, (
+                pqr.descripcion,
+                pqr.fecha,
+                pqr.id_usuario,
+                pqr.id_tipo,
+                pqr.id_estado,
+                pqr.id_departamento,
+                pqr.id_prioridad
+            ))
+
+            nuevo_id = cursor.fetchone()[0]
+
             conn.commit()
-            conn.close()
-            return {"resultado": "pqr creado"}
+
+            # correo automático
+            asyncio.run(
+                enviar_correo(
+                    "luisdavid0720@gmail.com",
+                    f"PQR #{nuevo_id} registrada",
+                    f"Su solicitud fue registrada correctamente.\nNúmero: {nuevo_id}"
+                )
+            )
+
+            return {
+                "resultado": "pqr creada",
+                "id_pqr": nuevo_id
+            }
+
         except psycopg2.Error as err:
             print(err)
-            # Si falla el INSERT, los datos no quedan guardados parcialmente en la base de datos
-            # Se usa para deshacer los cambios de la transacción activa cuando ocurre un error en el try.
             conn.rollback()
+
         finally:
             conn.close()
         
