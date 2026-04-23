@@ -5,3 +5,4 @@ mysql-connector-python
 pymysql
 python-dotenv
 sqlalchemy
+fastapi-mail
