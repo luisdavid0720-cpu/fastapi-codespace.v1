@@ -1,5 +1,10 @@
+from dotenv import load_dotenv
+load_dotenv()
+
 import os
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from routes.usuario_routes import router as usuario_router
 from routes.tipo_pqr_routes import router as tipo_pqr_router
 from routes.rol_routes import router as rol_router
@@ -11,25 +16,19 @@ from routes.evidencia_routes import router as evidencia_router
 from routes.estado_routes import router as estado_router
 from routes.departamento_routes import router as departamento_router
 from routes.asignacion_responsable_routes import router as asignacion_responsable_router
-from fastapi.middleware.cors import CORSMiddleware
-
 
 app = FastAPI()
-
-FRONTEND_URL = os.getenv("FRONTEND_URL", "https://fastapi-codespace-v1.vercel.app")
 
 origins = [
     "http://localhost",
     "http://localhost:5173",
-    "https://zany-dollop-97r6rvrq7qq62jx5-5173.app.github.dev",
     "https://fastapi-codespace-v1.vercel.app",
 ]
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
-    allow_origin_regex=r"https://.*\.vercel\.app",  
-    allow_credentials=True,
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
@@ -46,7 +45,6 @@ app.include_router(estado_router)
 app.include_router(departamento_router)
 app.include_router(asignacion_responsable_router)
 
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+@app.get("/")
+def root():
+    return {"message": "API OK"}
