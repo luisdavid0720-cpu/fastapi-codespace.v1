@@ -8,7 +8,7 @@
     color  = 'blue'
   } = $props()
 </script>
-
+ 
 <div class="stat-card color-{color}">
   <p class="stat-label">{label}</p>
   <p class="stat-valor">{valor}</p>
@@ -18,7 +18,7 @@
     </p>
   {/if}
 </div>
-
+ 
 <style>
   .stat-card {
     background: white; border: 1px solid #e2e8f0; border-radius: 16px;
@@ -33,7 +33,7 @@
   .color-green::after { background: #16a34a; }
   .color-yellow::after{ background: #f59e0b; }
   .color-red::after   { background: #dc2626; }
-
+ 
   .stat-label {
     font-size: 11px; font-weight: 800; text-transform: uppercase;
     letter-spacing: 0.5px; margin: 0 0 6px; color: #94a3b8;
@@ -41,9 +41,9 @@
   .stat-valor { font-size: 2rem; font-weight: 800; margin: 0; letter-spacing: -1px; }
   .color-blue  .stat-valor { color: #2563eb; }
   .color-green .stat-valor { color: #16a34a; }
-  .color-yellow.stat-valor { color: #f59e0b; }
+  .color-yellow .stat-valor { color: #f59e0b; }
   .color-red   .stat-valor { color: #dc2626; }
-
+ 
   .stat-delta { font-size: 12px; margin: 4px 0 0; font-weight: 500; }
   .up   { color: #16a34a; }
   .down { color: #dc2626; }
