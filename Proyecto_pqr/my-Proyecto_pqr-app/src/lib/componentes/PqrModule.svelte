@@ -5,7 +5,7 @@
   import Badge     from './Badge.svelte'
   import Modal     from './Modal.svelte'
   import FormField from './FormField.svelte'
- 
+
   let pqrs = $state([])
   let loading = $state(true)
   let view = $state('list')
@@ -15,29 +15,29 @@
   let toastMsg = $state('')
   let editForm = $state(null)
   let generando = $state(false)
- 
+
   // Modal de confirmación de eliminación
   let modalEliminarAbierto = $state(false)
   let pqrAEliminar = $state(null)
- 
+
   // Vista coordinador
-  let coordForm = $state({ id_estado: '', respuesta: '' })
- 
+  let coordForm = $state({ id_estado: '', respuesta: '', id_responsable: '' })
+
   // Filtros
   let searchText   = $state('')
   let filterEstado = $state('')
   let filterTipo   = $state('')
   let filterDesde  = $state('')
   let filterHasta  = $state('')
- 
+
   let tipos = $state([]), estados = $state([]), departamentos = $state([])
   let prioridades = $state([]), usuarios = $state([])
- 
-  // Valores para FormField (bind:valor requiere variables reactivas)
+
+  // Valores para FormField
   let formDescripcion    = $state('')
   let formIdTipo         = $state('')
   let formIdDepartamento = $state('')
- 
+
   function defaultForm() {
     formDescripcion    = ''
     formIdTipo         = ''
@@ -45,11 +45,11 @@
     return { descripcion: '', id_tipo: '', id_departamento: '' }
   }
   let form = $state(defaultForm())
- 
+
   let isAdmin = $derived($currentUser?.id_rol === 3)
   let isCoord = $derived($currentUser?.id_rol === 4)
   let isUser  = $derived($currentUser?.id_rol === 1)
- 
+
   let filtered = $derived(
     pqrs
       .filter(p => {
@@ -64,27 +64,42 @@
       })
       .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
   )
- 
+
   onMount(async () => {
     loading = true
     try {
-      const [p, t, e, d, pr, u] = await Promise.allSettled([
-        api.getPqrs(), api.getTiposPqr(), api.getEstados(),
-        api.getDepartamentos(), api.getPrioridades(), api.getUsuarios()
+      const [p, t, e, d, pr, u] = await Promise.all([
+        api.getPqrs(),
+        api.getTiposPqr(),
+        api.getEstados(),
+        api.getDepartamentos(),
+        api.getPrioridades(),
+        api.getUsuarios()
       ])
-      pqrs          = p.value?.resultado || []
-      tipos         = t.value            || []
-      estados       = e.value            || []
-      departamentos = d.value            || []
-      prioridades   = pr.value           || []
-      usuarios      = u.value?.resultado || u.value || []
-    } catch(e) { console.error(e) }
+
+      pqrs          = p || []
+      tipos         = t || []
+      estados       = e || []
+      departamentos = d || []
+      prioridades   = pr || []
+      usuarios      = u || []
+    } catch (e) {
+      console.error(e)
+      showToast('❌ Error cargando datos')
+    }
     loading = false
   })
- 
-  function openCreate() { defaultForm(); view = 'form' }
-  function openDetail(pqr) { selected = pqr; view = 'detail' }
- 
+
+  function openCreate() {
+    defaultForm()
+    view = 'form'
+  }
+
+  function openDetail(pqr) {
+    selected = pqr
+    view = 'detail'
+  }
+
   function openEdit(pqr) {
     editForm = {
       id_pqr: pqr.id_pqr,
@@ -98,50 +113,64 @@
     }
     view = 'edit'
   }
- 
+
   function openGestion(pqr) {
     selected = pqr
-    coordForm = { id_estado: pqr.id_estado, respuesta: '' }
+    coordForm = {
+      id_estado: pqr.id_estado,
+      respuesta: '',
+      id_responsable: ''
+    }
     view = 'gestion'
   }
- 
-  // Abrir modal de confirmación antes de eliminar
+
   function pedirEliminar(pqr) {
     pqrAEliminar = pqr
     modalEliminarAbierto = true
   }
- 
+
   async function saveEdit() {
     if (!editForm.descripcion || !editForm.id_tipo || !editForm.id_departamento) {
-      showToast('⚠️ Completa todos los campos'); return
+      showToast('⚠️ Completa todos los campos')
+      return
     }
+
     saving = true
     try {
       await api.updatePqr(editForm.id_pqr, editForm)
       const data = await api.getPqrs()
-      pqrs = data.resultado || []
+      pqrs = data || []
       view = 'list'
       showToast('✅ PQR actualizada')
-    } catch(e) { showToast('❌ Error al actualizar') }
+    } catch (e) {
+      console.error(e)
+      showToast('❌ Error al actualizar')
+    }
     saving = false
   }
- 
+
   async function deletePqr() {
     if (!pqrAEliminar) return
+
     deleting = true
     try {
       await api.deletePqr(pqrAEliminar.id_pqr)
       pqrs = pqrs.filter(p => p.id_pqr !== pqrAEliminar.id_pqr)
       showToast('🗑️ PQR eliminada')
       pqrAEliminar = null
-    } catch(e) { showToast('❌ Error al eliminar') }
+    } catch (e) {
+      console.error(e)
+      showToast('❌ Error al eliminar')
+    }
     deleting = false
   }
- 
+
   async function savePqr() {
     if (!formDescripcion || !formIdTipo || !formIdDepartamento) {
-      showToast('⚠️ Completa todos los campos'); return
+      showToast('⚠️ Completa todos los campos')
+      return
     }
+
     saving = true
     try {
       const payload = {
@@ -154,41 +183,67 @@
         id_estado: 1,
         id_prioridad: 1
       }
+
       await api.createPqr(payload)
       const data = await api.getPqrs()
-      pqrs = data.resultado || []
+      pqrs = data || []
       view = 'list'
       showToast('✅ PQR enviada con éxito')
-    } catch(e) { showToast('❌ Error al enviar') }
+    } catch (e) {
+      console.error(e)
+      showToast('❌ Error al enviar')
+    }
     saving = false
   }
- 
+
   async function saveGestion() {
-    if (!coordForm.id_estado) { showToast('⚠️ Selecciona un estado'); return }
-    saving = true
-    try {
-      await api.updateEstadoPqr(selected.id_pqr, coordForm.id_estado)
-      if (coordForm.respuesta.trim()) {
-        await api.createRespuesta({
-          id_pqr: selected.id_pqr,
-          id_usuario: $currentUser?.id_usuario,
-          contenido: coordForm.respuesta.trim(),
-          fecha: new Date().toISOString()
-        })
-      }
-      const data = await api.getPqrs()
-      pqrs = data.resultado || []
-      view = 'list'
-      showToast('✅ PQR gestionada correctamente')
-    } catch(e) { showToast('❌ Error al guardar') }
-    saving = false
+  if (!coordForm.id_estado) {
+    showToast('⚠️ Selecciona un estado')
+    return
   }
- 
+
+  saving = true
+  try {
+    await api.updateEstadoPqr(selected.id_pqr, coordForm.id_estado)
+
+    if (coordForm.id_responsable) {
+      await api.createAsignacion({
+        id_asignacion: 0,
+        id_pqr: Number(selected.id_pqr),
+        id_usuario: Number(coordForm.id_responsable),
+        fecha_asignacion: new Date().toISOString().slice(0, 10)
+      })
+    }
+
+    if (coordForm.respuesta.trim()) {
+      await api.createRespuesta({
+        id_pqr: selected.id_pqr,
+        id_usuario: $currentUser?.id_usuario,
+        contenido: coordForm.respuesta.trim(),
+        fecha: new Date().toISOString()
+      })
+    }
+
+    const data = await api.getPqrs()
+    pqrs = data.resultado || []
+    view = 'list'
+    showToast('✅ PQR gestionada correctamente')
+  } catch (e) {
+    console.error(e)
+    showToast('❌ Error al guardar')
+  }
+
+  saving = false
+}
+
   function limpiarFiltros() {
-    searchText = ''; filterEstado = ''; filterTipo = ''
-    filterDesde = ''; filterHasta = ''
+    searchText = ''
+    filterEstado = ''
+    filterTipo = ''
+    filterDesde = ''
+    filterHasta = ''
   }
- 
+
   async function descargarPDF() {
     if (filtered.length === 0) return
     generando = true
@@ -197,35 +252,54 @@
       const { default: auto } = await import('https://esm.sh/jspdf-autotable@3.8.2')
       const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' })
       const W = 297
+
       doc.setFillColor(15, 23, 42)
       doc.rect(0, 0, W, 28, 'F')
+
       try {
         const b64 = await new Promise(res => {
           const r = new FileReader()
           r.onload = () => res(r.result)
-          fetch(window.location.origin + '/logo_cul.png').then(r => r.blob()).then(b => r.readAsDataURL(b))
+          fetch(window.location.origin + '/logo_cul.png')
+            .then(r => r.blob())
+            .then(b => r.readAsDataURL(b))
         })
         doc.addImage(b64, 'PNG', 6, 3, 20, 20)
-      } catch(_) {}
-      doc.setTextColor(255,255,255); doc.setFontSize(13); doc.setFont('helvetica','bold')
+      } catch (_) {}
+
+      doc.setTextColor(255,255,255)
+      doc.setFontSize(13)
+      doc.setFont('helvetica','bold')
       doc.text('Corporación Universitaria Latinoamericana', 30, 11)
-      doc.setFontSize(9); doc.setFont('helvetica','normal'); doc.setTextColor(148,163,184)
+
+      doc.setFontSize(9)
+      doc.setFont('helvetica','normal')
+      doc.setTextColor(148,163,184)
       doc.text('Sistema PQRS — Gestión de Solicitudes', 30, 18)
+
       const ahora = new Date().toLocaleString('es-CO')
       doc.text(`Generado: ${ahora}`, W - 14, 18, { align: 'right' })
-      doc.setTextColor(100,116,139); doc.setFontSize(7.5)
+
+      doc.setTextColor(100,116,139)
+      doc.setFontSize(7.5)
       const fl = []
       if (searchText)   fl.push(`Búsqueda: "${searchText}"`)
       if (filterEstado) fl.push(`Estado: ${getLabelEstado(filterEstado)}`)
       if (filterTipo)   fl.push(`Categoría: ${getLabelTipo(filterTipo)}`)
+
       doc.text(`Filtros: ${fl.length ? fl.join('  ·  ') : 'Sin filtros'}   —   Total: ${filtered.length}`, 14, 33)
+
       auto(doc, {
         startY: 37,
         head: [['ID','Descripción','Categoría','Usuario','Departamento','Prioridad','Estado','Fecha']],
         body: filtered.map(p => [
-          `#${p.id_pqr}`, p.descripcion?.slice(0,72)||'—', getLabelTipo(p.id_tipo),
-          getLabelUsuario(p.id_usuario), getLabelDep(p.id_departamento),
-          getLabelPrioridad(p.id_prioridad), getLabelEstado(p.id_estado),
+          `#${p.id_pqr}`,
+          p.descripcion?.slice(0,72) || '—',
+          getLabelTipo(p.id_tipo),
+          getLabelUsuario(p.id_usuario),
+          getLabelDep(p.id_departamento),
+          getLabelPrioridad(p.id_prioridad),
+          getLabelEstado(p.id_estado),
           new Date(p.fecha).toLocaleDateString('es-CO')
         ]),
         headStyles: { fillColor:[37,99,235], textColor:255, fontSize:8.5, fontStyle:'bold' },
@@ -233,25 +307,34 @@
         alternateRowStyles: { fillColor:[248,250,252] },
         margin: { left:14, right:14 },
         didDrawPage: ({ pageNumber }) => {
-          doc.setFontSize(7); doc.setTextColor(148,163,184)
+          doc.setFontSize(7)
+          doc.setTextColor(148,163,184)
           doc.text(`Página ${pageNumber} de ${doc.internal.getNumberOfPages()}`, W/2, 205, { align:'center' })
         }
       })
+
       doc.save(`pqrs_reporte_${new Date().toISOString().slice(0,10)}.pdf`)
-    } catch(e) { console.error(e) }
+    } catch (e) {
+      console.error(e)
+    }
     generando = false
   }
- 
-  function showToast(msg) { toastMsg = msg; setTimeout(() => toastMsg = '', 3000) }
- 
-  const getLabelEstado    = (id) => estados.find(e => e.id_estado == id)?.nombre              || 'PENDIENTE'
-  const getLabelTipo      = (id) => tipos.find(t => t.id_tipo == id)?.nombre                   || '—'
-  const getLabelDep       = (id) => departamentos.find(d => d.id_departamento == id)?.nombre   || '—'
-  const getLabelPrioridad = (id) => prioridades.find(p => p.id_prioridad == id)?.nombre        || '—'
-  const getLabelUsuario   = (id) => { const u = usuarios.find(u => u.id_usuario == id); return u ? (u.nombre || u.correo || `#${id}`) : `#${id}` }
+
+  function showToast(msg) {
+    toastMsg = msg
+    setTimeout(() => toastMsg = '', 3000)
+  }
+
+  const getLabelEstado    = (id) => estados.find(e => e.id_estado == id)?.nombre || 'PENDIENTE'
+  const getLabelTipo      = (id) => tipos.find(t => t.id_tipo == id)?.nombre || '—'
+  const getLabelDep       = (id) => departamentos.find(d => d.id_departamento == id)?.nombre || '—'
+  const getLabelPrioridad = (id) => prioridades.find(p => p.id_prioridad == id)?.nombre || '—'
+  const getLabelUsuario   = (id) => {
+    const u = usuarios.find(u => u.id_usuario == id)
+    return u ? (u.nombre || u.correo || `#${id}`) : `#${id}`
+  }
 </script>
- 
-<!-- Modal de confirmación para eliminar PQR -->
+
 <Modal
   bind:abierto={modalEliminarAbierto}
   titulo="¿Eliminar PQR #{pqrAEliminar?.id_pqr}?"
@@ -261,10 +344,10 @@
   peligroso={true}
   onconfirm={deletePqr}
 />
- 
+
 <div class="module">
   {#if toastMsg}<div class="toast">{toastMsg}</div>{/if}
- 
+
   <header class="page-header">
     <div class="header-content">
       <h1>
@@ -298,12 +381,11 @@
       {/if}
     </div>
   </header>
- 
+
   {#if view === 'list'}
     <div class="filters-card">
       <p class="filters-title">Filtros del reporte</p>
       <div class="filters-grid">
-        <!-- FormField reemplaza los filter-field manuales -->
         <FormField
           label="Búsqueda"
           tipo="text"
@@ -333,12 +415,12 @@
         {/if}
       </div>
     </div>
- 
+
     <div class="results-bar">
       <span class="results-count"><strong>{filtered.length}</strong> {filtered.length === 1 ? 'solicitud encontrada' : 'solicitudes encontradas'}</span>
       {#if filtered.length === 0 && !loading}<span class="no-results-hint">Ajusta los filtros para ver resultados</span>{/if}
     </div>
- 
+
     {#if loading}
       <div class="loader-wrap"><p>Sincronizando...</p></div>
     {:else}
@@ -360,7 +442,6 @@
                 {#if isAdmin || isCoord}
                   <td class="text-usuario">{getLabelUsuario(pqr.id_usuario)}</td>
                   <td>
-                    <!-- Badge reemplaza span.status-pill manual -->
                     <Badge texto={getLabelEstado(pqr.id_estado)} id={pqr.id_estado} />
                   </td>
                 {/if}
@@ -370,7 +451,6 @@
                     <button class="action-btn edit-btn" onclick={() => openEdit(pqr)} title="Editar">
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
                     </button>
-                    <!-- Modal reemplaza el confirm() del navegador -->
                     <button class="action-btn delete-btn" onclick={() => pedirEliminar(pqr)} title="Eliminar" disabled={deleting}>
                       <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v2"/></svg>
                     </button>
@@ -396,14 +476,13 @@
         </table>
       </div>
     {/if}
- 
+
   {:else if view === 'detail'}
     <div class="center-container">
       <div class="card animate-up">
         <div class="card-top">
           <div class="badge-row">
             <span class="id-large">Solicitud #{selected.id_pqr}</span>
-            <!-- Badge en el detalle de la PQR -->
             <Badge texto={getLabelEstado(selected.id_estado)} id={selected.id_estado} />
           </div>
           <p class="date-sub">Registrado el {new Date(selected.fecha).toLocaleString('es-CO')}</p>
@@ -426,7 +505,7 @@
         </div>
       </div>
     </div>
- 
+
   {:else if view === 'gestion'}
     <div class="center-container">
       <div class="card animate-up">
@@ -442,10 +521,9 @@
             <p class="section-label">Descripción de la solicitud</p>
             <div class="content-box">{selected.descripcion}</div>
           </div>
- 
+
           <h3 class="section-divider">Gestión del Coordinador</h3>
- 
-          <!-- FormField reemplaza select y textarea manuales -->
+
           <FormField
             label="Cambiar estado"
             tipo="select"
@@ -453,6 +531,18 @@
             placeholder="Selecciona un estado..."
             opciones={estados.map(e => ({ value: e.id_estado, label: e.nombre }))}
           />
+
+          <FormField
+            label="Asignar responsable"
+            tipo="select"
+            bind:valor={coordForm.id_responsable}
+            placeholder="Selecciona un responsable..."
+            opciones={usuarios.map(u => ({
+              value: u.id_usuario,
+              label: u.nombre || u.correo || `Usuario ${u.id_usuario}`
+            }))}
+          />
+
           <FormField
             label="Respuesta / Comentario"
             tipo="textarea"
@@ -460,20 +550,19 @@
             placeholder="Escribe una respuesta o comentario para esta solicitud..."
             hint="Campo opcional"
           />
- 
+
           <button class="btn-send" onclick={saveGestion} disabled={saving}>
             {saving ? 'Guardando...' : '✅ Guardar gestión'}
           </button>
         </div>
       </div>
     </div>
- 
+
   {:else if view === 'edit'}
     <div class="center-container">
       <div class="card animate-up">
         <div class="form-padding">
           <h2 class="card-title">Editar PQR #{editForm.id_pqr}</h2>
-          <!-- FormField en el formulario de edición -->
           <FormField
             label="Descripción"
             tipo="textarea"
@@ -516,13 +605,12 @@
         </div>
       </div>
     </div>
- 
+
   {:else if view === 'form'}
     <div class="center-container">
       <div class="card animate-up">
         <div class="form-padding">
           <h2 class="card-title">Radicar nueva PQR</h2>
-          <!-- FormField en el formulario de creación -->
           <FormField
             label="¿Qué sucedió? (Descripción)"
             tipo="textarea"
@@ -556,7 +644,7 @@
     </div>
   {/if}
 </div>
- 
+
 <style>
   .module { padding: 40px; font-family: 'Inter', sans-serif; background: #fcfdfe; min-height: 100vh; }
   .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
@@ -570,19 +658,19 @@
   .btn-pdf:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
   .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; display: inline-block; animation: spin 0.7s linear infinite; }
   @keyframes spin { to { transform: rotate(360deg); } }
- 
+
   .filters-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
   .filters-title { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 16px; }
   .filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; align-items: end; }
   .filter-end { display: flex; align-items: flex-end; }
   .btn-clear { padding: 10px 16px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white; color: #64748b; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit; width: 100%; }
   .btn-clear:hover { border-color: #cbd5e1; background: #f8fafc; }
- 
+
   .results-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
   .results-count { font-size: 13px; color: #64748b; }
   .results-count strong { color: #0f172a; font-weight: 700; }
   .no-results-hint { font-size: 12px; color: #94a3b8; }
- 
+
   .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
   table { width: 100%; border-collapse: collapse; }
   th { background: #f8fafc; padding: 14px 16px; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
@@ -593,7 +681,7 @@
   .text-main { max-width: 300px; }
   .text-usuario { font-weight: 600; color: #1e293b; }
   .date-text { color: #64748b; font-size: 12px; white-space: nowrap; }
- 
+
   .actions-cell { display: flex; align-items: center; justify-content: center; gap: 6px; }
   .action-btn { width: 32px; height: 32px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
   .view-btn    { background: #eff6ff; color: #2563eb; }
@@ -605,10 +693,10 @@
   .delete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
   .coord-btn   { background: #fff7ed; color: #ea580c; }
   .coord-btn:hover   { background: #ea580c; color: white; transform: scale(1.1); }
- 
+
   .id-tag { color: #94a3b8; font-weight: 700; font-family: monospace; font-size: 12px; }
   .type-chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 11px; white-space: nowrap; }
- 
+
   .center-container { display: flex; justify-content: center; padding: 20px 0 60px; }
   .card { background: white; width: 100%; max-width: 680px; border-radius: 32px; border: 1px solid #e2e8f0; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1); overflow: hidden; }
   .form-padding { padding: 45px; }
@@ -629,12 +717,12 @@
   .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
   .btn-send { width: 100%; background: #2563eb; color: white; border: none; padding: 18px; border-radius: 16px; font-weight: 800; font-size: 16px; cursor: pointer; margin-top: 10px; font-family: inherit; }
   .btn-send:disabled { opacity: 0.6; cursor: not-allowed; }
- 
+
   .toast { position: fixed; bottom: 30px; right: 30px; background: #0f172a; color: white; padding: 16px 28px; border-radius: 16px; font-weight: 600; z-index: 100; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
   .animate-up { animation: slideUp 0.4s ease-out; }
   @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
   .loader-wrap { padding: 60px; text-align: center; color: #94a3b8; }
- 
+
   @media (max-width: 768px) {
     .module { padding: 16px; }
     .page-header { flex-direction: column; gap: 12px; align-items: flex-start; }
