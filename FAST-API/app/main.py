@@ -17,6 +17,8 @@ from routes.estado_routes import router as estado_router
 from routes.departamento_routes import router as departamento_router
 from routes.asignacion_responsable_routes import router as asignacion_responsable_router
 
+from services.email_service import enviar_correo
+
 app = FastAPI()
 
 origins = [
@@ -33,6 +35,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Rutas
 app.include_router(usuario_router)
 app.include_router(tipo_pqr_router)
 app.include_router(rol_router)
@@ -48,3 +51,12 @@ app.include_router(asignacion_responsable_router)
 @app.get("/")
 def root():
     return {"message": "API OK"}
+
+@app.get("/test-email")
+async def test_email():
+    await enviar_correo(
+        "TUOTROCORREO@gmail.com",
+        "Prueba sistema PQR",
+        "Correo funcionando correctamente"
+    )
+    return {"msg": "Correo enviado"}
