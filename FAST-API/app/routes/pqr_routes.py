@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException
-from controllers.pqr_controller import *
+from from controllers.pqr_controller import PqrController
 from models.pqr_model import Pqr
 
 router = APIRouter()
