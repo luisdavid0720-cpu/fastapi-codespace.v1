@@ -66,29 +66,55 @@
   )
 
   onMount(async () => {
-    loading = true
-    try {
-      const [p, t, e, d, pr, u] = await Promise.all([
-        api.getPqrs(),
-        api.getTiposPqr(),
-        api.getEstados(),
-        api.getDepartamentos(),
-        api.getPrioridades(),
-        api.getUsuarios()
-      ])
+  loading = true
+  try {
+    const [p, t, e, d, pr, u] = await Promise.allSettled([
+      api.getPqrs(),
+      api.getTiposPqr(),
+      api.getEstados(),
+      api.getDepartamentos(),
+      api.getPrioridades(),
+      api.getUsuarios()
+    ])
 
-      pqrs          = p || []
-      tipos         = t || []
-      estados       = e || []
-      departamentos = d || []
-      prioridades   = pr || []
-      usuarios      = u || []
-    } catch (e) {
-      console.error(e)
-      showToast('❌ Error cargando datos')
-    }
+    console.log('PQRs:', p)
+    console.log('Tipos:', t)
+    console.log('Estados:', e)
+    console.log('Departamentos:', d)
+    console.log('Prioridades:', pr)
+    console.log('Usuarios:', u)
+
+    pqrs = p.status === 'fulfilled'
+      ? (p.value?.resultado || p.value || [])
+      : []
+
+    tipos = t.status === 'fulfilled'
+      ? (t.value?.resultado || t.value || [])
+      : []
+
+    estados = e.status === 'fulfilled'
+      ? (e.value?.resultado || e.value || [])
+      : []
+
+    departamentos = d.status === 'fulfilled'
+      ? (d.value?.resultado || d.value || [])
+      : []
+
+    prioridades = pr.status === 'fulfilled'
+      ? (pr.value?.resultado || pr.value || [])
+      : []
+
+    usuarios = u.status === 'fulfilled'
+      ? (u.value?.resultado || u.value || [])
+      : []
+
+  } catch (e) {
+    console.error('Error cargando datos:', e)
+    showToast('❌ Error cargando datos')
+  } finally {
     loading = false
-  })
+  }
+})
 
   function openCreate() {
     defaultForm()
