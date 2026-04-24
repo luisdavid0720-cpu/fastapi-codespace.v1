@@ -98,12 +98,11 @@
   }
  
 function openCreate() { 
-  console.log('openCreate llamado, view antes:', view)
+  selected = null;
   defaultForm(); 
-  selected = null; 
   view = 'form'
-  console.log('view después:', view)
 }
+
   function openEdit(u) {
     selected    = u
     formNombre  = u.nombre   || ''
@@ -182,8 +181,7 @@ function openCreate() {
       {#if view === 'list'}
         <button class="btn-primary" onclick={openCreate}>＋ Registrar Usuario</button>
       {:else}
-        <button class="btn-back" onclick={() => view = 'list'}>← Volver</button>
-      {/if}
+        <button class="btn-back" onclick={volverALista}>← Volver</button>      {/if}
     </div>
   </header>
  
@@ -335,7 +333,7 @@ function openCreate() {
           </div>
  
           <div class="form-actions">
-            <button class="btn-cancel" onclick={() => view = 'list'}>Cancelar</button>
+            <button class="btn-cancel" onclick={volverALista}>Cancelar</button>
             <button class="btn-send" onclick={saveUsuario} disabled={saving}>
               {saving ? 'Guardando...' : (selected ? '💾 Guardar cambios' : '➕ Registrar usuario')}
             </button>
