@@ -103,6 +103,12 @@ function openCreate() {
   view = 'form'
 }
 
+function volverALista() {
+  selected = null;
+  defaultForm();
+  view = 'list'
+}
+
   function openEdit(u) {
     selected    = u
     formNombre  = u.nombre   || ''
