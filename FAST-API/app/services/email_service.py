@@ -27,7 +27,6 @@ fm = FastMail(conf)
 # UTILIDAD INTERNA
 # ─────────────────────────────────────────────
 
-
 import asyncio
 
 async def _async_send(message):
@@ -42,10 +41,11 @@ def _send_email(to_email: str, subject: str, html_body: str):
             subtype=MessageType.html
         )
 
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        loop.run_until_complete(_async_send(message))
-        loop.close()
+        try:
+            loop = asyncio.get_running_loop()
+            asyncio.create_task(_async_send(message))
+        except RuntimeError:
+            asyncio.run(_async_send(message))
 
         print("Correo enviado correctamente")
         return True
