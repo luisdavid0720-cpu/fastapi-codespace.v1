@@ -51,3 +51,5 @@ app.include_router(asignacion_responsable_router)
 def root():
     return {"message": "API OK"}
 
+
+
