@@ -4,7 +4,10 @@ from fastapi.encoders import jsonable_encoder
 
 from config.db_config import get_db_connection
 from models.pqr_model import Pqr
-from services.email_service import notify_pqr_creada
+from services.email_service import (
+    notify_pqr_creada,
+    notify_cambio_estado_pqr
+)
 
 
 
@@ -262,6 +265,7 @@ class PqrController:
             conn = get_db_connection()
             cursor = conn.cursor()
 
+            # Estado actual + usuario dueño
             cursor.execute("""
                 SELECT p.id_usuario, e.nombre
                 FROM pqr p
@@ -272,14 +276,12 @@ class PqrController:
             row = cursor.fetchone()
 
             if not row:
-                raise HTTPException(
-                    status_code=404,
-                    detail="PQR no encontrada"
-                )
+                raise HTTPException(status_code=404, detail="PQR no encontrada")
 
             id_usuario = row[0]
             estado_anterior = row[1]
 
+            # Actualizar estado
             cursor.execute("""
                 UPDATE pqr
                 SET id_estado = %s
@@ -288,27 +290,23 @@ class PqrController:
 
             conn.commit()
 
+            # Nombre nuevo estado
             cursor.execute(
                 "SELECT nombre FROM estado WHERE id_estado = %s",
                 (nuevo_estado_id,)
             )
 
-            nuevo = cursor.fetchone()
-            estado_nuevo = nuevo[0] if nuevo else "Actualizado"
+            row2 = cursor.fetchone()
+            estado_nuevo = row2[0] if row2 else "Actualizado"
 
-            nombre_u, correo_u = self._get_usuario_correo(
-                cursor,
-                id_usuario
+            # ENVIAR CORREO FIJO A LUIS
+            notify_cambio_estado_pqr(
+                correo_usuario="luisdavid0720@gmail.com",
+                nombre_usuario="Luis Angarita",
+                id_pqr=pqr_id,
+                estado_anterior=estado_anterior,
+                estado_nuevo=estado_nuevo
             )
-
-            if correo_u:
-                notify_cambio_estado_pqr(
-                    correo_usuario=correo_u,
-                    nombre_usuario=nombre_u or "Usuario",
-                    id_pqr=pqr_id,
-                    estado_anterior=estado_anterior,
-                    estado_nuevo=estado_nuevo
-                )
 
             return {"resultado": "Estado actualizado"}
 
