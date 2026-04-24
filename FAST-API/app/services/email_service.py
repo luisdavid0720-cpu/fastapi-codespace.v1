@@ -29,6 +29,8 @@ fm = FastMail(conf)
 
 import asyncio
 
+import asyncio
+
 def _send_email(to_email: str, subject: str, html_body: str):
     try:
         message = MessageSchema(
@@ -38,12 +40,16 @@ def _send_email(to_email: str, subject: str, html_body: str):
             subtype=MessageType.html
         )
 
-        asyncio.run(fm.send_message(message))
-        print("Correo enviado")
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        loop.run_until_complete(fm.send_message(message))
+        loop.close()
+
+        print("Correo enviado correctamente")
         return True
 
     except Exception as e:
-        print("ERROR:", e)
+        print("ERROR ENVIANDO CORREO:", str(e))
         return False
 
 
