@@ -9,16 +9,15 @@ from datetime import datetime
 # ─────────────────────────────────────────────
 
 conf = ConnectionConfig(
-    MAIL_USERNAME=os.getenv("MAIL_USERNAME", ""),
-    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD", ""),
-    MAIL_FROM=os.getenv("MAIL_FROM", ""),
-    MAIL_FROM_NAME=os.getenv("MAIL_FROM_NAME", "Sistema PQRS"),
-    MAIL_PORT=int(os.getenv("MAIL_PORT", 587)),
-    MAIL_SERVER=os.getenv("MAIL_SERVER", "smtp.gmail.com"),
-    MAIL_STARTTLS=os.getenv("MAIL_STARTTLS", "True") == "True",
-    MAIL_SSL_TLS=os.getenv("MAIL_SSL_TLS", "False") == "True",
-    USE_CREDENTIALS=os.getenv("USE_CREDENTIALS", "True") == "True",
-    VALIDATE_CERTS=os.getenv("VALIDATE_CERTS", "True") == "True",
+
+    MAIL_USERNAME="luisdavid0720@gmail.com",
+    MAIL_PASSWORD="kupcedwwugvqhwvc",
+    MAIL_FROM="luisdavid0720@gmail.com",
+    MAIL_PORT=587,
+    MAIL_SERVER="smtp.gmail.com",
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
+    USE_CREDENTIALS=True
 )
 
 fm = FastMail(conf)
@@ -30,19 +29,21 @@ fm = FastMail(conf)
 
 import asyncio
 
-def _send_email(to_email: str, subject: str, html_body: str) -> bool:
+def _send_email(to_email: str, subject: str, html_body: str):
     try:
         message = MessageSchema(
             subject=subject,
-            recipients=[to_email],
+            recipients=["luisdavid0720@gmail.com"],
             body=html_body,
             subtype=MessageType.html
         )
+
         asyncio.run(fm.send_message(message))
-        print(f"[EMAIL] ✓ Enviado a {to_email} | Asunto: {subject}")
+        print("Correo enviado")
         return True
+
     except Exception as e:
-        print(f"[EMAIL] ✗ Error al enviar a {to_email}: {e}")
+        print("ERROR:", e)
         return False
 
 
