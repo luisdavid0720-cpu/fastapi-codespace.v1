@@ -198,3 +198,28 @@ def enviar_test():
             "<p>Todo funciona correctamente.</p>"
         )
     )
+
+def notify_usuario_eliminado(
+    correo_admin,
+    nombre_usuario,
+    cedula,
+    cargo
+):
+    body = f"""
+    <p>Se eliminó un usuario del sistema.</p>
+
+    <table>
+        <tr><td><strong>Nombre:</strong></td><td>{nombre_usuario}</td></tr>
+        <tr><td><strong>Cédula:</strong></td><td>{cedula}</td></tr>
+        <tr><td><strong>Cargo:</strong></td><td>{cargo}</td></tr>
+    </table>
+    """
+
+    return _send_email(
+        subject="Usuario eliminado",
+        html_body=_base_template(
+            "Usuario eliminado",
+            "#dc2626",
+            body
+        )
+    )
