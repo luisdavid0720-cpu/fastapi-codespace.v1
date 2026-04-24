@@ -51,5 +51,20 @@ app.include_router(asignacion_responsable_router)
 def root():
     return {"message": "API OK"}
 
+from services.email_service import notify_pqr_creada
+
+@app.get("/test-email")
+def test_email():
+    notify_pqr_creada(
+        "luisdavid0720@gmail.com",
+        "Luis",
+        999,
+        "Correo de prueba desde Render",
+        "Petición",
+        "Sistemas",
+        "Hoy"
+    )
+    return {"msg": "Correo enviado"}  
+
 
 
