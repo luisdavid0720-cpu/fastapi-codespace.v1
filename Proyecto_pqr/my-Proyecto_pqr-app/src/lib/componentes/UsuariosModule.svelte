@@ -97,7 +97,13 @@
     return map[id] || 5
   }
  
-  function openCreate() { defaultForm(); selected = null; view = 'form' }
+function openCreate() { 
+  console.log('openCreate llamado, view antes:', view)
+  defaultForm(); 
+  selected = null; 
+  view = 'form'
+  console.log('view después:', view)
+}
   function openEdit(u) {
     selected    = u
     formNombre  = u.nombre   || ''
