@@ -17,8 +17,6 @@ from routes.estado_routes import router as estado_router
 from routes.departamento_routes import router as departamento_router
 from routes.asignacion_responsable_routes import router as asignacion_responsable_router
 
-
-
 app = FastAPI()
 
 origins = [
@@ -30,6 +28,7 @@ origins = [
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
+    allow_origin_regex=r"https://.*\.vercel\.app",  # permite todos los previews de Vercel
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -64,7 +63,4 @@ def test_email():
         "Sistemas",
         "Hoy"
     )
-    return {"msg": "Correo enviado"}  
-
-
-
+    return {"msg": "Correo enviado"}
