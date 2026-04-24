@@ -1,61 +1,52 @@
-import smtplib
 import os
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
+from fastapi_mail import FastMail, MessageSchema, ConnectionConfig, MessageType
 from datetime import datetime
 
 
 # ─────────────────────────────────────────────
-# CONFIGURACIÓN SMTP
-# Variables de entorno requeridas:
-#   SMTP_HOST       → ej: smtp.gmail.com
-#   SMTP_PORT       → ej: 587
-#   SMTP_USER       → correo remitente
-#   SMTP_PASSWORD   → contraseña o app-password
-#   SMTP_FROM_NAME  → nombre visible (opcional)
+# CONFIGURACIÓN fastapi-mail
+# Lee las variables de entorno de Vercel
 # ─────────────────────────────────────────────
 
-SMTP_HOST     = os.getenv("SMTP_HOST", "smtp.gmail.com")
-SMTP_PORT     = int(os.getenv("SMTP_PORT", 587))
-SMTP_USER     = os.getenv("SMTP_USER", "")
-SMTP_PASSWORD = os.getenv("SMTP_PASSWORD", "")
-SMTP_FROM     = os.getenv("SMTP_USER", "")
-SMTP_FROM_NAME = os.getenv("SMTP_FROM_NAME", "Sistema PQRS")
+conf = ConnectionConfig(
+    MAIL_USERNAME=os.getenv("MAIL_USERNAME", ""),
+    MAIL_PASSWORD=os.getenv("MAIL_PASSWORD", ""),
+    MAIL_FROM=os.getenv("MAIL_FROM", ""),
+    MAIL_FROM_NAME=os.getenv("MAIL_FROM_NAME", "Sistema PQRS"),
+    MAIL_PORT=int(os.getenv("MAIL_PORT", 587)),
+    MAIL_SERVER=os.getenv("MAIL_SERVER", "smtp.gmail.com"),
+    MAIL_STARTTLS=os.getenv("MAIL_STARTTLS", "True") == "True",
+    MAIL_SSL_TLS=os.getenv("MAIL_SSL_TLS", "False") == "True",
+    USE_CREDENTIALS=os.getenv("USE_CREDENTIALS", "True") == "True",
+    VALIDATE_CERTS=os.getenv("VALIDATE_CERTS", "True") == "True",
+)
+
+fm = FastMail(conf)
 
 
 # ─────────────────────────────────────────────
 # UTILIDAD INTERNA
 # ─────────────────────────────────────────────
 
+import asyncio
+
 def _send_email(to_email: str, subject: str, html_body: str) -> bool:
-    """
-    Envía un correo HTML. Retorna True si tuvo éxito, False si falló.
-    No lanza excepciones para no romper el flujo principal de la API.
-    """
     try:
-        msg = MIMEMultipart("alternative")
-        msg["Subject"] = subject
-        msg["From"]    = f"{SMTP_FROM_NAME} <{SMTP_FROM}>"
-        msg["To"]      = to_email
-
-        msg.attach(MIMEText(html_body, "html", "utf-8"))
-
-        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
-            server.ehlo()
-            server.starttls()
-            server.login(SMTP_USER, SMTP_PASSWORD)
-            server.sendmail(SMTP_FROM, to_email, msg.as_string())
-
+        message = MessageSchema(
+            subject=subject,
+            recipients=[to_email],
+            body=html_body,
+            subtype=MessageType.html
+        )
+        asyncio.run(fm.send_message(message))
         print(f"[EMAIL] ✓ Enviado a {to_email} | Asunto: {subject}")
         return True
-
     except Exception as e:
         print(f"[EMAIL] ✗ Error al enviar a {to_email}: {e}")
         return False
 
 
 def _base_template(title: str, color: str, content: str) -> str:
-    """Plantilla HTML base compartida por todos los correos."""
     return f"""
     <!DOCTYPE html>
     <html lang="es">
@@ -69,7 +60,6 @@ def _base_template(title: str, color: str, content: str) -> str:
           <table width="600" cellpadding="0" cellspacing="0"
                  style="background:#ffffff;border-radius:8px;overflow:hidden;
                         box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-            <!-- HEADER -->
             <tr>
               <td style="background:{color};padding:24px 32px;">
                 <h1 style="margin:0;color:#ffffff;font-size:22px;font-weight:700;">
@@ -80,7 +70,6 @@ def _base_template(title: str, color: str, content: str) -> str:
                 </p>
               </td>
             </tr>
-            <!-- BODY -->
             <tr>
               <td style="padding:32px;">
                 <h2 style="margin:0 0 16px;color:#1a1a2e;font-size:18px;">{title}</h2>
@@ -114,24 +103,7 @@ def _info_row(label: str, value: str) -> str:
 # 1. USUARIO ELIMINADO
 # ═══════════════════════════════════════════════════════
 
-def notify_usuario_eliminado(
-    correo_admin: str,
-    nombre_usuario: str,
-    cedula: str,
-    cargo: str
-) -> bool:
-    """
-    Notifica al administrador cuando un usuario es eliminado del sistema.
-
-    Uso en usuario_controller.py → delete_usuario():
-        from services.email_service import notify_usuario_eliminado
-        notify_usuario_eliminado(
-            correo_admin="admin@empresa.com",
-            nombre_usuario=usuario_data["nombre"],
-            cedula=usuario_data["cedula"],
-            cargo=usuario_data["cargo"]
-        )
-    """
+def notify_usuario_eliminado(correo_admin, nombre_usuario, cedula, cargo) -> bool:
     content = f"""
     <p style="color:#444;font-size:14px;line-height:1.6;">
       Se ha eliminado un usuario del sistema PQRS. A continuación los detalles:
@@ -150,42 +122,16 @@ def notify_usuario_eliminado(
     return _send_email(
         to_email=correo_admin,
         subject="⚠️ Usuario eliminado del sistema PQRS",
-        html_body=_base_template(
-            title="Usuario eliminado",
-            color="#e53e3e",
-            content=content
-        )
+        html_body=_base_template(title="Usuario eliminado", color="#e53e3e", content=content)
     )
 
 
 # ═══════════════════════════════════════════════════════
-# 2. REPORTE DE PQRs GENERADO
+# 2. REPORTE GENERADO
 # ═══════════════════════════════════════════════════════
 
-def notify_reporte_generado(
-    correo_destinatario: str,
-    nombre_usuario: str,
-    total_pqrs: int,
-    pendientes: int,
-    en_proceso: int,
-    resueltas: int,
-    periodo: str = "General"
-) -> bool:
-    """
-    Notifica cuando se genera un reporte de PQRs.
-
-    Uso en cualquier endpoint de reportes:
-        from services.email_service import notify_reporte_generado
-        notify_reporte_generado(
-            correo_destinatario="admin@empresa.com",
-            nombre_usuario="Ana Torres",
-            total_pqrs=50,
-            pendientes=10,
-            en_proceso=15,
-            resueltas=25,
-            periodo="Abril 2026"
-        )
-    """
+def notify_reporte_generado(correo_destinatario, nombre_usuario, total_pqrs,
+                             pendientes, en_proceso, resueltas, periodo="General") -> bool:
     content = f"""
     <p style="color:#444;font-size:14px;line-height:1.6;">
       Hola <strong>{nombre_usuario}</strong>, el reporte del sistema PQRS ha sido generado exitosamente.
@@ -198,50 +144,20 @@ def notify_reporte_generado(
       {_info_row("Resueltas", f'<span style="color:#38a169;">{resueltas}</span>')}
       {_info_row("Generado el", datetime.now().strftime("%d/%m/%Y %H:%M"))}
     </table>
-    <p style="color:#2b6cb0;font-size:13px;background:#ebf8ff;padding:12px;
-              border-left:4px solid #3182ce;border-radius:4px;">
-      📊 Ingrese al sistema para ver el detalle completo del reporte.
-    </p>
     """
     return _send_email(
         to_email=correo_destinatario,
         subject=f"📊 Reporte PQRS generado — {periodo}",
-        html_body=_base_template(
-            title="Reporte generado exitosamente",
-            color="#3182ce",
-            content=content
-        )
+        html_body=_base_template(title="Reporte generado exitosamente", color="#3182ce", content=content)
     )
 
 
 # ═══════════════════════════════════════════════════════
-# 3. PQR CREADA — notificación al usuario que la radicó
+# 3. PQR CREADA
 # ═══════════════════════════════════════════════════════
 
-def notify_pqr_creada(
-    correo_usuario: str,
-    nombre_usuario: str,
-    id_pqr: int,
-    descripcion: str,
-    tipo: str,
-    departamento: str,
-    fecha: str
-) -> bool:
-    """
-    Notifica al usuario que su PQR fue registrada.
-
-    Uso en pqr_controller.py → create_pqr():
-        from services.email_service import notify_pqr_creada
-        notify_pqr_creada(
-            correo_usuario=usuario["correo"],
-            nombre_usuario=usuario["nombre"],
-            id_pqr=nuevo_id,
-            descripcion=pqr.descripcion,
-            tipo="Queja",
-            departamento="Sistemas",
-            fecha=str(pqr.fecha)
-        )
-    """
+def notify_pqr_creada(correo_usuario, nombre_usuario, id_pqr,
+                       descripcion, tipo, departamento, fecha) -> bool:
     resumen = descripcion[:120] + "..." if len(descripcion) > 120 else descripcion
     content = f"""
     <p style="color:#444;font-size:14px;line-height:1.6;">
@@ -262,11 +178,7 @@ def notify_pqr_creada(
     return _send_email(
         to_email=correo_usuario,
         subject=f"✅ PQR #{id_pqr} registrada exitosamente",
-        html_body=_base_template(
-            title=f"Tu solicitud #{id_pqr} fue registrada",
-            color="#38a169",
-            content=content
-        )
+        html_body=_base_template(title=f"Tu solicitud #{id_pqr} fue registrada", color="#38a169", content=content)
     )
 
 
@@ -274,34 +186,13 @@ def notify_pqr_creada(
 # 4. CAMBIO DE ESTADO DE PQR
 # ═══════════════════════════════════════════════════════
 
-def notify_cambio_estado_pqr(
-    correo_usuario: str,
-    nombre_usuario: str,
-    id_pqr: int,
-    estado_anterior: str,
-    estado_nuevo: str
-) -> bool:
-    """
-    Notifica al usuario cuando el estado de su PQR cambia.
-
-    Uso en pqr_controller.py → update_estado_pqr():
-        from services.email_service import notify_cambio_estado_pqr
-        notify_cambio_estado_pqr(
-            correo_usuario=usuario["correo"],
-            nombre_usuario=usuario["nombre"],
-            id_pqr=pqr_id,
-            estado_anterior="Pendiente",
-            estado_nuevo="En proceso"
-        )
-    """
+def notify_cambio_estado_pqr(correo_usuario, nombre_usuario, id_pqr,
+                               estado_anterior, estado_nuevo) -> bool:
     colores_estado = {
-        "pendiente": "#d69e2e",
-        "en proceso": "#3182ce",
-        "resuelto": "#38a169",
-        "cerrado": "#718096",
+        "pendiente": "#d69e2e", "en proceso": "#3182ce",
+        "resuelto": "#38a169", "cerrado": "#718096",
     }
     color_nuevo = colores_estado.get(estado_nuevo.lower(), "#667eea")
-
     content = f"""
     <p style="color:#444;font-size:14px;line-height:1.6;">
       Hola <strong>{nombre_usuario}</strong>, el estado de tu PQR ha sido actualizado.
@@ -309,8 +200,7 @@ def notify_cambio_estado_pqr(
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
       {_info_row("N° de radicado", f"<strong>#{id_pqr}</strong>")}
       {_info_row("Estado anterior", estado_anterior)}
-      {_info_row("Nuevo estado",
-                 f'<span style="color:{color_nuevo};font-weight:bold;">{estado_nuevo}</span>')}
+      {_info_row("Nuevo estado", f'<span style="color:{color_nuevo};font-weight:bold;">{estado_nuevo}</span>')}
       {_info_row("Actualizado el", datetime.now().strftime("%d/%m/%Y %H:%M"))}
     </table>
     <p style="color:#553c9a;font-size:13px;background:#faf5ff;padding:12px;
@@ -321,46 +211,19 @@ def notify_cambio_estado_pqr(
     return _send_email(
         to_email=correo_usuario,
         subject=f"🔔 PQR #{id_pqr} — Estado actualizado: {estado_nuevo}",
-        html_body=_base_template(
-            title="Estado de tu PQR actualizado",
-            color="#805ad5",
-            content=content
-        )
+        html_body=_base_template(title="Estado de tu PQR actualizado", color="#805ad5", content=content)
     )
 
 
 # ═══════════════════════════════════════════════════════
-# 5. ASIGNACIÓN DE RESPONSABLE A UNA PQR
+# 5. ASIGNACIÓN DE RESPONSABLE
 # ═══════════════════════════════════════════════════════
 
-def notify_asignacion_responsable(
-    correo_responsable: str,
-    nombre_responsable: str,
-    id_pqr: int,
-    descripcion_pqr: str,
-    departamento: str,
-    prioridad: str,
-    fecha_asignacion: str
-) -> bool:
-    """
-    Notifica al responsable cuando se le asigna una PQR para su gestión.
-
-    Uso en asignacion_responsable_controller.py → create_asignacion_responsable():
-        from services.email_service import notify_asignacion_responsable
-        notify_asignacion_responsable(
-            correo_responsable=usuario["correo"],
-            nombre_responsable=usuario["nombre"],
-            id_pqr=asignacion.id_pqr,
-            descripcion_pqr=pqr["descripcion"],
-            departamento=dept["nombre"],
-            prioridad=prior["nombre"],
-            fecha_asignacion=str(asignacion.fecha_asignacion)
-        )
-    """
+def notify_asignacion_responsable(correo_responsable, nombre_responsable, id_pqr,
+                                   descripcion_pqr, departamento, prioridad, fecha_asignacion) -> bool:
     resumen = descripcion_pqr[:120] + "..." if len(descripcion_pqr) > 120 else descripcion_pqr
     colores_prioridad = {"alta": "#e53e3e", "media": "#d69e2e", "baja": "#38a169"}
     color_prior = colores_prioridad.get(prioridad.lower(), "#3182ce")
-
     content = f"""
     <p style="color:#444;font-size:14px;line-height:1.6;">
       Hola <strong>{nombre_responsable}</strong>, se te ha asignado una nueva PQR para gestión.
@@ -368,8 +231,7 @@ def notify_asignacion_responsable(
     <table width="100%" cellpadding="0" cellspacing="0" style="margin:16px 0;">
       {_info_row("N° de radicado", f"<strong>#{id_pqr}</strong>")}
       {_info_row("Departamento", departamento)}
-      {_info_row("Prioridad",
-                 f'<span style="color:{color_prior};font-weight:bold;">{prioridad}</span>')}
+      {_info_row("Prioridad", f'<span style="color:{color_prior};font-weight:bold;">{prioridad}</span>')}
       {_info_row("Fecha de asignación", fecha_asignacion)}
       {_info_row("Descripción", resumen)}
     </table>
@@ -381,11 +243,7 @@ def notify_asignacion_responsable(
     return _send_email(
         to_email=correo_responsable,
         subject=f"📋 Nueva PQR #{id_pqr} asignada — Prioridad {prioridad}",
-        html_body=_base_template(
-            title=f"Nueva PQR asignada a tu gestión",
-            color="#dd6b20",
-            content=content
-        )
+        html_body=_base_template(title="Nueva PQR asignada a tu gestión", color="#dd6b20", content=content)
     )
 
 
@@ -393,26 +251,8 @@ def notify_asignacion_responsable(
 # 6. RESPUESTA A UNA PQR
 # ═══════════════════════════════════════════════════════
 
-def notify_respuesta_pqr(
-    correo_usuario: str,
-    nombre_usuario: str,
-    id_pqr: int,
-    mensaje_respuesta: str,
-    nombre_responsable: str
-) -> bool:
-    """
-    Notifica al usuario cuando su PQR recibe una respuesta.
-
-    Uso en respuesta_controller.py → create_respuesta():
-        from services.email_service import notify_respuesta_pqr
-        notify_respuesta_pqr(
-            correo_usuario=usuario["correo"],
-            nombre_usuario=usuario["nombre"],
-            id_pqr=respuesta.id_pqr,
-            mensaje_respuesta=respuesta.mensaje,
-            nombre_responsable=responsable["nombre"]
-        )
-    """
+def notify_respuesta_pqr(correo_usuario, nombre_usuario, id_pqr,
+                          mensaje_respuesta, nombre_responsable) -> bool:
     content = f"""
     <p style="color:#444;font-size:14px;line-height:1.6;">
       Hola <strong>{nombre_usuario}</strong>, tu PQR ha recibido una respuesta.
@@ -424,11 +264,8 @@ def notify_respuesta_pqr(
     </table>
     <div style="margin:16px 0;padding:16px;background:#f7fafc;border-radius:6px;
                 border:1px solid #e2e8f0;">
-      <p style="margin:0 0 8px;font-size:12px;color:#718096;text-transform:uppercase;
-                letter-spacing:0.05em;">Mensaje de respuesta</p>
-      <p style="margin:0;font-size:14px;color:#2d3748;line-height:1.7;">
-        {mensaje_respuesta}
-      </p>
+      <p style="margin:0 0 8px;font-size:12px;color:#718096;text-transform:uppercase;">Mensaje de respuesta</p>
+      <p style="margin:0;font-size:14px;color:#2d3748;line-height:1.7;">{mensaje_respuesta}</p>
     </div>
     <p style="color:#276749;font-size:13px;background:#f0fff4;padding:12px;
               border-left:4px solid #38a169;border-radius:4px;">
@@ -438,9 +275,5 @@ def notify_respuesta_pqr(
     return _send_email(
         to_email=correo_usuario,
         subject=f"💬 Tu PQR #{id_pqr} tiene una nueva respuesta",
-        html_body=_base_template(
-            title="Nueva respuesta a tu PQR",
-            color="#38a169",
-            content=content
-        )
+        html_body=_base_template(title="Nueva respuesta a tu PQR", color="#38a169", content=content)
     )
