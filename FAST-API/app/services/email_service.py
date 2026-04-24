@@ -262,6 +262,43 @@ def notify_pqr_eliminada(
 
 
 # =====================================================
+# CORREO ASIGNACIÓN DE RESPONSABLE
+# =====================================================
+
+def notify_asignacion_responsable(
+    correo_responsable,
+    nombre_responsable,
+    id_pqr,
+    nombre_solicitante,
+    tipo,
+    descripcion,
+    prioridad
+):
+    body = f"""
+    <p>Hola <strong>{nombre_responsable}</strong>.</p>
+
+    <p>Se te ha asignado como responsable de la siguiente solicitud.</p>
+
+    <table style="width:100%;border-collapse:collapse;">
+        <tr><td><strong>Radicado:</strong></td><td>#{id_pqr}</td></tr>
+        <tr><td><strong>Solicitante:</strong></td><td>{nombre_solicitante}</td></tr>
+        <tr><td><strong>Tipo:</strong></td><td>{tipo}</td></tr>
+        <tr><td><strong>Prioridad:</strong></td><td>{prioridad}</td></tr>
+        <tr><td><strong>Descripción:</strong></td><td>{descripcion}</td></tr>
+    </table>
+
+    <p style="margin-top:20px;color:#7c3aed;">
+        🔔 Por favor ingresa a la plataforma para gestionar esta solicitud.
+    </p>
+    """
+
+    return _send_email(
+        subject=f"Nueva asignación — PQR #{id_pqr}",
+        html_body=_base_template("Nueva asignación de responsable", "#7c3aed", body)
+    )
+
+
+# =====================================================
 # TEST MANUAL
 # =====================================================
 
