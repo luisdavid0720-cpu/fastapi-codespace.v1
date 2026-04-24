@@ -169,17 +169,18 @@
 
   /* BOTONES DE ROL */
   .roles-selection {
-    display:grid;
-    grid-template-columns: repeat(3,1fr);
-    gap:20px;
-    margin:30px 0;
-  }
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;       /* era 20px */
+  margin: 30px 0;
+}
   
   .role-card {
-    display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 20px;
-    border-radius: 20px; border: 1.5px solid #e2e8f0;
-    background: white; cursor: pointer; transition: all 0.3s ease;
-  }
+  display: flex; flex-direction: column; align-items: center; gap: 8px; padding: 16px 8px;
+  border-radius: 20px; border: 1.5px solid #e2e8f0;
+  background: white; cursor: pointer; transition: all 0.3s ease;
+  min-width: 0;    /* evita que el grid se desborde */
+}
 
   .role-card:hover { transform: translateY(-5px); border-color: var(--cul-blue); box-shadow: 0 10px 20px rgba(11, 31, 63, 0.1); }
   .role-icon { font-size: 24px; transition: transform 0.3s ease; }
@@ -233,12 +234,13 @@
   .card-footer { padding: 25px; background: rgba(248, 250, 252, 0.5); text-align: center; font-size: 13px; border-top: 1px solid #f1f5f9; }
 
 @media (max-width: 400px) {
-  .login-content { padding: 24px 16px; }
-  .card-header { padding: 24px 16px 16px; }
-  .roles-selection { gap: 12px; }
-  .role-card { padding: 14px; }
+  .login-content { padding: 20px 12px; }
+  .card-header { padding: 20px 12px 14px; }
+  .roles-selection { gap: 8px; }
+  .role-card { padding: 12px 6px; }
+  .role-title { font-size: 12px; }
+  .role-icon { font-size: 20px; }
   .welcome-text h3 { font-size: 20px; }
 }
-
 
 </style>
