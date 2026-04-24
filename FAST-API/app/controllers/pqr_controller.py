@@ -58,15 +58,7 @@ class PqrController:
 
             cursor.execute("""
                 INSERT INTO pqr
-                (
-                    descripcion,
-                    fecha,
-                    id_usuario,
-                    id_tipo,
-                    id_estado,
-                    id_departamento,
-                    id_prioridad
-                )
+                (descripcion,fecha,id_usuario,id_tipo,id_estado,id_departamento,id_prioridad)
                 VALUES (%s,%s,%s,%s,%s,%s,%s)
                 RETURNING id_pqr
             """, (
@@ -82,39 +74,18 @@ class PqrController:
             nuevo_id = cursor.fetchone()[0]
             conn.commit()
 
-            print("PQR creada:", nuevo_id)
+            tipo = self._get_nombre(cursor, "tipo_pqr", "id_tipo", "nombre", pqr.id_tipo)
+            depto = self._get_nombre(cursor, "departamento", "id_departamento", "nombre", pqr.id_departamento)
 
-            nombre_u, correo_u = self._get_usuario_correo(
-                cursor,
-                pqr.id_usuario
+            notify_pqr_creada(
+                correo_usuario="luisdavid0720@gmail.com",
+                nombre_usuario="Luis Angarita",
+                id_pqr=nuevo_id,
+                descripcion=pqr.descripcion,
+                tipo=tipo,
+                departamento=depto,
+                fecha=str(pqr.fecha)
             )
-
-            tipo = self._get_nombre(
-                cursor,
-                "tipo_pqr",
-                "id_tipo",
-                "nombre",
-                pqr.id_tipo
-            )
-
-            depto = self._get_nombre(
-                cursor,
-                "departamento",
-                "id_departamento",
-                "nombre",
-                pqr.id_departamento
-            )
-
-            if correo_u:
-                notify_pqr_creada(
-                    correo_usuario=correo_u,
-                    nombre_usuario=nombre_u or "Usuario",
-                    id_pqr=nuevo_id,
-                    descripcion=pqr.descripcion,
-                    tipo=tipo,
-                    departamento=depto,
-                    fecha=str(pqr.fecha)
-                )
 
             return {
                 "resultado": "PQR creada",
@@ -122,15 +93,10 @@ class PqrController:
             }
 
         except Exception as e:
-            print("ERROR CREATE PQR:", e)
-
             if conn:
                 conn.rollback()
 
-            raise HTTPException(
-                status_code=500,
-                detail="Error al crear PQR"
-            )
+            raise HTTPException(status_code=500, detail=str(e))
 
         finally:
             if conn:
