@@ -189,6 +189,25 @@ class PqrController:
             conn = get_db_connection()
             cursor = conn.cursor()
 
+            # Estado anterior
+            cursor.execute("""
+                SELECT e.nombre
+                FROM pqr p
+                JOIN estado e ON e.id_estado = p.id_estado
+                WHERE p.id_pqr = %s
+            """, (pqr_id,))
+
+            row = cursor.fetchone()
+
+            if not row:
+                raise HTTPException(
+                    status_code=404,
+                    detail="PQR no encontrada"
+                )
+
+            estado_anterior = row[0]
+
+            # Actualizar
             cursor.execute("""
                 UPDATE pqr
                 SET descripcion = %s,
@@ -212,13 +231,33 @@ class PqrController:
 
             conn.commit()
 
-            if cursor.rowcount == 0:
-                raise HTTPException(
-                    status_code=404,
-                    detail="PQR no encontrada"
+            # Estado nuevo
+            cursor.execute(
+                "SELECT nombre FROM estado WHERE id_estado = %s",
+                (pqr.id_estado,)
+            )
+
+            row2 = cursor.fetchone()
+            estado_nuevo = row2[0] if row2 else "Actualizado"
+
+            # Si cambió estado -> enviar correo
+            if estado_anterior != estado_nuevo:
+
+                notify_cambio_estado_pqr(
+                    correo_usuario="luisdavid0720@gmail.com",
+                    nombre_usuario="Luis Angarita",
+                    id_pqr=pqr_id,
+                    estado_anterior=estado_anterior,
+                    estado_nuevo=estado_nuevo
                 )
 
             return {"resultado": "PQR actualizada"}
+
+        except Exception as e:
+            if conn:
+                conn.rollback()
+
+            raise HTTPException(status_code=500, detail=str(e))
 
         finally:
             if conn:
