@@ -86,8 +86,8 @@
     console.log('Usuarios:', u)
 
     pqrs = p.status === 'fulfilled'
-      ? (p.value?.resultado || p.value || [])
-      : []
+  ? (Array.isArray(p.value) ? p.value : p.value?.resultado || [])
+  : []
 
     tipos = t.status === 'fulfilled'
       ? (t.value?.resultado || t.value || [])
@@ -193,35 +193,42 @@
   }
 
   async function savePqr() {
-    if (!formDescripcion || !formIdTipo || !formIdDepartamento) {
-      showToast('⚠️ Completa todos los campos')
-      return
-    }
-
-    saving = true
-    try {
-      const payload = {
-        descripcion: formDescripcion,
-        id_tipo: formIdTipo,
-        id_departamento: formIdDepartamento,
-        id_pqr: 0,
-        fecha: new Date().toISOString(),
-        id_usuario: $currentUser?.id_usuario,
-        id_estado: 1,
-        id_prioridad: 1
-      }
-
-      await api.createPqr(payload)
-      const data = await api.getPqrs()
-      pqrs = data || []
-      view = 'list'
-      showToast('✅ PQR enviada con éxito')
-    } catch (e) {
-      console.error(e)
-      showToast('❌ Error al enviar')
-    }
-    saving = false
+  if (!formDescripcion || !formIdTipo || !formIdDepartamento) {
+    showToast('⚠️ Completa todos los campos')
+    return
   }
+
+  saving = true
+  try {
+    const payload = {
+      descripcion: formDescripcion,
+      id_tipo: formIdTipo,
+      id_departamento: formIdDepartamento,
+      id_pqr: 0,
+      fecha: new Date().toISOString(),
+      id_usuario: $currentUser?.id_usuario,
+      id_estado: 1,
+      id_prioridad: 1
+    }
+
+    await api.createPqr(payload)
+
+    // 🔥 IMPORTANTE: evitar error de .filter
+    const data = await api.getPqrs()
+    pqrs = Array.isArray(data) ? data : data.resultado || []
+
+    showToast('✅ PQR enviada con éxito')
+
+    // 🔥 REDIRECCIÓN REAL
+    goto('/pqrs')
+
+  } catch (e) {
+    console.error(e)
+    showToast('❌ Error al enviar')
+  }
+
+  saving = false
+}
 
   async function saveGestion() {
   if (!coordForm.id_estado) {
@@ -252,7 +259,7 @@
     }
 
     const data = await api.getPqrs()
-    pqrs = data.resultado || []
+    pqrs = Array.isArray(data) ? data : data.resultado || []
     view = 'list'
     showToast('✅ PQR gestionada correctamente')
   } catch (e) {
