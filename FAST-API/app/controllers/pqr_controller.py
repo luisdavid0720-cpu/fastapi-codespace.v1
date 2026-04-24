@@ -4,10 +4,8 @@ from fastapi.encoders import jsonable_encoder
 
 from config.db_config import get_db_connection
 from models.pqr_model import Pqr
-from services.email_service import (
-    notify_pqr_creada,
-    notify_cambio_estado_pqr
-)
+from services.email_service import notify_pqr_creada
+
 
 
 class PqrController:
