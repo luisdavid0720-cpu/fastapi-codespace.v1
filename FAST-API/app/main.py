@@ -17,6 +17,8 @@ from routes.estado_routes import router as estado_router
 from routes.departamento_routes import router as departamento_router
 from routes.asignacion_responsable_routes import router as asignacion_responsable_router
 
+
+
 app = FastAPI()
 
 origins = [
@@ -48,3 +50,4 @@ app.include_router(asignacion_responsable_router)
 @app.get("/")
 def root():
     return {"message": "API OK"}
+
