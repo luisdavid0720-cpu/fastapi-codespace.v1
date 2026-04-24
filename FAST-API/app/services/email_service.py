@@ -226,6 +226,42 @@ def notify_usuario_eliminado(
 
 
 # =====================================================
+# CORREO PQR ELIMINADA
+# =====================================================
+
+def notify_pqr_eliminada(
+    correo_admin,
+    id_pqr,
+    descripcion,
+    nombre_usuario,
+    tipo,
+    estado,
+    fecha
+):
+    body = f"""
+    <p>La siguiente PQR fue <strong>eliminada del sistema</strong>.</p>
+
+    <table style="width:100%;border-collapse:collapse;">
+        <tr><td><strong>Radicado:</strong></td><td>#{id_pqr}</td></tr>
+        <tr><td><strong>Usuario:</strong></td><td>{nombre_usuario}</td></tr>
+        <tr><td><strong>Tipo:</strong></td><td>{tipo}</td></tr>
+        <tr><td><strong>Estado al eliminar:</strong></td><td>{estado}</td></tr>
+        <tr><td><strong>Fecha creación:</strong></td><td>{fecha}</td></tr>
+        <tr><td><strong>Descripción:</strong></td><td>{descripcion}</td></tr>
+    </table>
+
+    <p style="margin-top:20px;color:#dc2626;">
+        🗑️ Esta acción no se puede deshacer.
+    </p>
+    """
+
+    return _send_email(
+        subject=f"PQR #{id_pqr} eliminada del sistema",
+        html_body=_base_template("PQR eliminada", "#dc2626", body)
+    )
+
+
+# =====================================================
 # TEST MANUAL
 # =====================================================
 

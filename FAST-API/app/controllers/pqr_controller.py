@@ -6,9 +6,9 @@ from config.db_config import get_db_connection
 from models.pqr_model import Pqr
 from services.email_service import (
     notify_pqr_creada,
-    notify_cambio_estado_pqr
+    notify_cambio_estado_pqr,
+    notify_pqr_eliminada
 )
-
 
 
 class PqrController:
@@ -28,14 +28,7 @@ class PqrController:
         except Exception:
             return (None, None)
 
-    def _get_nombre(
-        self,
-        cursor,
-        tabla: str,
-        campo_id: str,
-        campo_nombre: str,
-        valor_id: int
-    ):
+    def _get_nombre(self, cursor, tabla, campo_id, campo_nombre, valor_id):
         try:
             cursor.execute(
                 f"SELECT {campo_nombre} FROM {tabla} WHERE {campo_id} = %s",
@@ -52,7 +45,6 @@ class PqrController:
 
     def create_pqr(self, pqr: Pqr):
         conn = None
-
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
@@ -63,19 +55,14 @@ class PqrController:
                 VALUES (%s,%s,%s,%s,%s,%s,%s)
                 RETURNING id_pqr
             """, (
-                pqr.descripcion,
-                pqr.fecha,
-                pqr.id_usuario,
-                pqr.id_tipo,
-                pqr.id_estado,
-                pqr.id_departamento,
-                pqr.id_prioridad
+                pqr.descripcion, pqr.fecha, pqr.id_usuario,
+                pqr.id_tipo, pqr.id_estado, pqr.id_departamento, pqr.id_prioridad
             ))
 
             nuevo_id = cursor.fetchone()[0]
             conn.commit()
 
-            tipo = self._get_nombre(cursor, "tipo_pqr", "id_tipo", "nombre", pqr.id_tipo)
+            tipo  = self._get_nombre(cursor, "tipo_pqr",    "id_tipo",    "nombre", pqr.id_tipo)
             depto = self._get_nombre(cursor, "departamento", "id_departamento", "nombre", pqr.id_departamento)
 
             notify_pqr_creada(
@@ -88,17 +75,12 @@ class PqrController:
                 fecha=str(pqr.fecha)
             )
 
-            return {
-                "resultado": "PQR creada",
-                "id_pqr": nuevo_id
-            }
+            return {"resultado": "PQR creada", "id_pqr": nuevo_id}
 
         except Exception as e:
             if conn:
                 conn.rollback()
-
             raise HTTPException(status_code=500, detail=str(e))
-
         finally:
             if conn:
                 conn.close()
@@ -109,37 +91,20 @@ class PqrController:
 
     def get_pqr(self, pqr_id: int):
         conn = None
-
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-
-            cursor.execute(
-                "SELECT * FROM pqr WHERE id_pqr = %s",
-                (pqr_id,)
-            )
-
+            cursor.execute("SELECT * FROM pqr WHERE id_pqr = %s", (pqr_id,))
             result = cursor.fetchone()
 
             if not result:
-                raise HTTPException(
-                    status_code=404,
-                    detail="PQR no encontrada"
-                )
+                raise HTTPException(status_code=404, detail="PQR no encontrada")
 
-            content = {
-                "id_pqr": result[0],
-                "descripcion": result[1],
-                "fecha": result[2],
-                "id_usuario": result[3],
-                "id_tipo": result[4],
-                "id_estado": result[5],
-                "id_departamento": result[6],
-                "id_prioridad": result[7]
-            }
-
-            return jsonable_encoder(content)
-
+            return jsonable_encoder({
+                "id_pqr": result[0], "descripcion": result[1], "fecha": result[2],
+                "id_usuario": result[3], "id_tipo": result[4], "id_estado": result[5],
+                "id_departamento": result[6], "id_prioridad": result[7]
+            })
         finally:
             if conn:
                 conn.close()
@@ -150,30 +115,21 @@ class PqrController:
 
     def get_pqrs(self):
         conn = None
-
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-
             cursor.execute("SELECT * FROM pqr")
             result = cursor.fetchall()
 
             payload = []
-
             for row in result:
                 payload.append({
-                    "id_pqr": row[0],
-                    "descripcion": row[1],
-                    "fecha": row[2],
-                    "id_usuario": row[3],
-                    "id_tipo": row[4],
-                    "id_estado": row[5],
-                    "id_departamento": row[6],
-                    "id_prioridad": row[7]
+                    "id_pqr": row[0], "descripcion": row[1], "fecha": row[2],
+                    "id_usuario": row[3], "id_tipo": row[4], "id_estado": row[5],
+                    "id_departamento": row[6], "id_prioridad": row[7]
                 })
 
             return {"resultado": jsonable_encoder(payload)}
-
         finally:
             if conn:
                 conn.close()
@@ -184,65 +140,38 @@ class PqrController:
 
     def update_pqr(self, pqr_id: int, pqr: Pqr):
         conn = None
-
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            # Estado anterior
             cursor.execute("""
-                SELECT e.nombre
-                FROM pqr p
+                SELECT e.nombre FROM pqr p
                 JOIN estado e ON e.id_estado = p.id_estado
                 WHERE p.id_pqr = %s
             """, (pqr_id,))
-
             row = cursor.fetchone()
 
             if not row:
-                raise HTTPException(
-                    status_code=404,
-                    detail="PQR no encontrada"
-                )
+                raise HTTPException(status_code=404, detail="PQR no encontrada")
 
             estado_anterior = row[0]
 
-            # Actualizar
             cursor.execute("""
                 UPDATE pqr
-                SET descripcion = %s,
-                    fecha = %s,
-                    id_usuario = %s,
-                    id_tipo = %s,
-                    id_estado = %s,
-                    id_departamento = %s,
-                    id_prioridad = %s
-                WHERE id_pqr = %s
+                SET descripcion=%s, fecha=%s, id_usuario=%s, id_tipo=%s,
+                    id_estado=%s, id_departamento=%s, id_prioridad=%s
+                WHERE id_pqr=%s
             """, (
-                pqr.descripcion,
-                pqr.fecha,
-                pqr.id_usuario,
-                pqr.id_tipo,
-                pqr.id_estado,
-                pqr.id_departamento,
-                pqr.id_prioridad,
-                pqr_id
+                pqr.descripcion, pqr.fecha, pqr.id_usuario, pqr.id_tipo,
+                pqr.id_estado, pqr.id_departamento, pqr.id_prioridad, pqr_id
             ))
-
             conn.commit()
 
-            # Estado nuevo
-            cursor.execute(
-                "SELECT nombre FROM estado WHERE id_estado = %s",
-                (pqr.id_estado,)
-            )
-
+            cursor.execute("SELECT nombre FROM estado WHERE id_estado = %s", (pqr.id_estado,))
             row2 = cursor.fetchone()
             estado_nuevo = row2[0] if row2 else "Actualizado"
 
-            # Si cambió estado -> enviar correo
             if estado_anterior != estado_nuevo:
-
                 notify_cambio_estado_pqr(
                     correo_usuario="luisdavid0720@gmail.com",
                     nombre_usuario="Luis Angarita",
@@ -256,39 +185,67 @@ class PqrController:
         except Exception as e:
             if conn:
                 conn.rollback()
-
             raise HTTPException(status_code=500, detail=str(e))
-
         finally:
             if conn:
                 conn.close()
 
     # =====================================================
-    # ELIMINAR PQR
+    # ELIMINAR PQR — con notificación
     # =====================================================
 
     def delete_pqr(self, pqr_id: int):
         conn = None
-
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            cursor.execute(
-                "DELETE FROM pqr WHERE id_pqr = %s",
-                (pqr_id,)
-            )
+            # Obtener datos antes de eliminar para el correo
+            cursor.execute("""
+                SELECT p.descripcion, p.fecha, u.nombre, u.correo,
+                       e.nombre, t.nombre
+                FROM pqr p
+                LEFT JOIN usuario  u ON u.id_usuario = p.id_usuario
+                LEFT JOIN estado   e ON e.id_estado  = p.id_estado
+                LEFT JOIN tipo_pqr t ON t.id_tipo    = p.id_tipo
+                WHERE p.id_pqr = %s
+            """, (pqr_id,))
 
+            row = cursor.fetchone()
+
+            if not row:
+                raise HTTPException(status_code=404, detail="PQR no encontrada")
+
+            descripcion   = row[0]
+            fecha         = row[1]
+            nombre_usuario = row[2] or "Usuario"
+            correo_usuario = row[3] or "luisdavid0720@gmail.com"
+            estado        = row[4] or "—"
+            tipo          = row[5] or "—"
+
+            # Eliminar
+            cursor.execute("DELETE FROM pqr WHERE id_pqr = %s", (pqr_id,))
             conn.commit()
 
-            if cursor.rowcount == 0:
-                raise HTTPException(
-                    status_code=404,
-                    detail="PQR no encontrada"
-                )
+            # Notificar
+            notify_pqr_eliminada(
+                correo_admin="luisdavid0720@gmail.com",
+                id_pqr=pqr_id,
+                descripcion=descripcion,
+                nombre_usuario=nombre_usuario,
+                tipo=tipo,
+                estado=estado,
+                fecha=str(fecha)
+            )
 
             return {"resultado": "PQR eliminada"}
 
+        except HTTPException:
+            raise
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            raise HTTPException(status_code=500, detail=str(e))
         finally:
             if conn:
                 conn.close()
@@ -299,46 +256,35 @@ class PqrController:
 
     def update_estado_pqr(self, pqr_id: int, nuevo_estado_id: int):
         conn = None
-
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            # Estado actual + usuario dueño
             cursor.execute("""
-                SELECT p.id_usuario, e.nombre
-                FROM pqr p
+                SELECT p.id_usuario, e.nombre FROM pqr p
                 JOIN estado e ON e.id_estado = p.id_estado
                 WHERE p.id_pqr = %s
             """, (pqr_id,))
-
             row = cursor.fetchone()
 
             if not row:
                 raise HTTPException(status_code=404, detail="PQR no encontrada")
 
-            id_usuario = row[0]
             estado_anterior = row[1]
 
-            # Actualizar estado
-            cursor.execute("""
-                UPDATE pqr
-                SET id_estado = %s
-                WHERE id_pqr = %s
-            """, (nuevo_estado_id, pqr_id))
-
+            cursor.execute(
+                "UPDATE pqr SET id_estado = %s WHERE id_pqr = %s",
+                (nuevo_estado_id, pqr_id)
+            )
             conn.commit()
 
-            # Nombre nuevo estado
             cursor.execute(
                 "SELECT nombre FROM estado WHERE id_estado = %s",
                 (nuevo_estado_id,)
             )
-
             row2 = cursor.fetchone()
             estado_nuevo = row2[0] if row2 else "Actualizado"
 
-            # ENVIAR CORREO FIJO A LUIS
             notify_cambio_estado_pqr(
                 correo_usuario="luisdavid0720@gmail.com",
                 nombre_usuario="Luis Angarita",
@@ -359,34 +305,13 @@ class PqrController:
 
     def get_pqrs_by_usuario(self, usuario_id: int):
         conn = None
-
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-
-            cursor.execute(
-                "SELECT * FROM pqr WHERE id_usuario = %s",
-                (usuario_id,)
-            )
-
+            cursor.execute("SELECT * FROM pqr WHERE id_usuario = %s", (usuario_id,))
             result = cursor.fetchall()
-
-            payload = []
-
-            for row in result:
-                payload.append({
-                    "id_pqr": row[0],
-                    "descripcion": row[1],
-                    "fecha": row[2],
-                    "id_usuario": row[3],
-                    "id_tipo": row[4],
-                    "id_estado": row[5],
-                    "id_departamento": row[6],
-                    "id_prioridad": row[7]
-                })
-
+            payload = [{"id_pqr": r[0], "descripcion": r[1], "fecha": r[2], "id_usuario": r[3], "id_tipo": r[4], "id_estado": r[5], "id_departamento": r[6], "id_prioridad": r[7]} for r in result]
             return {"resultado": jsonable_encoder(payload)}
-
         finally:
             if conn:
                 conn.close()
@@ -397,38 +322,16 @@ class PqrController:
 
     def get_pqrs_by_estado(self, estado_id: int):
         conn = None
-
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-
-            cursor.execute(
-                "SELECT * FROM pqr WHERE id_estado = %s",
-                (estado_id,)
-            )
-
+            cursor.execute("SELECT * FROM pqr WHERE id_estado = %s", (estado_id,))
             result = cursor.fetchall()
-
-            payload = []
-
-            for row in result:
-                payload.append({
-                    "id_pqr": row[0],
-                    "descripcion": row[1],
-                    "fecha": row[2],
-                    "id_usuario": row[3],
-                    "id_tipo": row[4],
-                    "id_estado": row[5],
-                    "id_departamento": row[6],
-                    "id_prioridad": row[7]
-                })
-
+            payload = [{"id_pqr": r[0], "descripcion": r[1], "fecha": r[2], "id_usuario": r[3], "id_tipo": r[4], "id_estado": r[5], "id_departamento": r[6], "id_prioridad": r[7]} for r in result]
             return {"resultado": jsonable_encoder(payload)}
-
         finally:
             if conn:
-                if conn:
-                    conn.close()
+                conn.close()
 
     # =====================================================
     # FILTRAR POR DEPARTAMENTO
@@ -436,34 +339,13 @@ class PqrController:
 
     def get_pqrs_by_departamento(self, departamento_id: int):
         conn = None
-
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-
-            cursor.execute(
-                "SELECT * FROM pqr WHERE id_departamento = %s",
-                (departamento_id,)
-            )
-
+            cursor.execute("SELECT * FROM pqr WHERE id_departamento = %s", (departamento_id,))
             result = cursor.fetchall()
-
-            payload = []
-
-            for row in result:
-                payload.append({
-                    "id_pqr": row[0],
-                    "descripcion": row[1],
-                    "fecha": row[2],
-                    "id_usuario": row[3],
-                    "id_tipo": row[4],
-                    "id_estado": row[5],
-                    "id_departamento": row[6],
-                    "id_prioridad": row[7]
-                })
-
+            payload = [{"id_pqr": r[0], "descripcion": r[1], "fecha": r[2], "id_usuario": r[3], "id_tipo": r[4], "id_estado": r[5], "id_departamento": r[6], "id_prioridad": r[7]} for r in result]
             return {"resultado": jsonable_encoder(payload)}
-
         finally:
             if conn:
                 conn.close()
@@ -474,34 +356,13 @@ class PqrController:
 
     def get_pqrs_by_prioridad(self, prioridad_id: int):
         conn = None
-
         try:
             conn = get_db_connection()
             cursor = conn.cursor()
-
-            cursor.execute(
-                "SELECT * FROM pqr WHERE id_prioridad = %s",
-                (prioridad_id,)
-            )
-
+            cursor.execute("SELECT * FROM pqr WHERE id_prioridad = %s", (prioridad_id,))
             result = cursor.fetchall()
-
-            payload = []
-
-            for row in result:
-                payload.append({
-                    "id_pqr": row[0],
-                    "descripcion": row[1],
-                    "fecha": row[2],
-                    "id_usuario": row[3],
-                    "id_tipo": row[4],
-                    "id_estado": row[5],
-                    "id_departamento": row[6],
-                    "id_prioridad": row[7]
-                })
-
+            payload = [{"id_pqr": r[0], "descripcion": r[1], "fecha": r[2], "id_usuario": r[3], "id_tipo": r[4], "id_estado": r[5], "id_departamento": r[6], "id_prioridad": r[7]} for r in result]
             return {"resultado": jsonable_encoder(payload)}
-
         finally:
             if conn:
                 conn.close()
