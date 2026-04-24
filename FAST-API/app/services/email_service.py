@@ -223,3 +223,19 @@ def notify_usuario_eliminado(
             body
         )
     )
+
+def notify_respuesta_pqr(correo_usuario, nombre_usuario, id_pqr, respuesta):
+  asunto = f"Respuesta a tu solicitud #{id_pqr}"
+
+  cuerpo = f"""
+Hola {nombre_usuario},
+
+Tu solicitud #{id_pqr} fue respondida.
+
+Respuesta:
+{respuesta}
+
+Gracias.
+"""
+
+    send_email(correo_usuario, asunto, cuerpo)
