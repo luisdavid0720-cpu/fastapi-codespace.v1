@@ -5,6 +5,7 @@
   import Badge     from './Badge.svelte'
   import Modal     from './Modal.svelte'
   import FormField from './FormField.svelte'
+  import { goto } from '$app/navigation'
 
   let pqrs = $state([])
   let loading = $state(true)
@@ -166,7 +167,7 @@
       await api.updatePqr(editForm.id_pqr, editForm)
       const data = await api.getPqrs()
       pqrs = data || []
-      view = 'list'
+      goto('/pqrs')
       showToast('✅ PQR actualizada')
     } catch (e) {
       console.error(e)
