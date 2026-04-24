@@ -39,6 +39,10 @@
   let formIdTipo         = $state('')
   let formIdDepartamento = $state('')
 
+  // Referencia a la tabla para DataTable
+  let tableElement = $state(null)
+  let dataTableInstance = $state(null)
+
   function defaultForm() {
     formDescripcion    = ''
     formIdTipo         = ''
@@ -67,55 +71,126 @@
   )
 
   onMount(async () => {
-  loading = true
-  try {
-    const [p, t, e, d, pr, u] = await Promise.allSettled([
-      api.getPqrs(),
-      api.getTiposPqr(),
-      api.getEstados(),
-      api.getDepartamentos(),
-      api.getPrioridades(),
-      api.getUsuarios()
-    ])
+    loading = true
+    try {
+      const [p, t, e, d, pr, u] = await Promise.allSettled([
+        api.getPqrs(),
+        api.getTiposPqr(),
+        api.getEstados(),
+        api.getDepartamentos(),
+        api.getPrioridades(),
+        api.getUsuarios()
+      ])
 
-    console.log('PQRs:', p)
-    console.log('Tipos:', t)
-    console.log('Estados:', e)
-    console.log('Departamentos:', d)
-    console.log('Prioridades:', pr)
-    console.log('Usuarios:', u)
+      pqrs = p.status === 'fulfilled'
+        ? (Array.isArray(p.value) ? p.value : p.value?.resultado || [])
+        : []
 
-    pqrs = p.status === 'fulfilled'
-  ? (Array.isArray(p.value) ? p.value : p.value?.resultado || [])
-  : []
+      tipos = t.status === 'fulfilled'
+        ? (t.value?.resultado || t.value || [])
+        : []
 
-    tipos = t.status === 'fulfilled'
-      ? (t.value?.resultado || t.value || [])
-      : []
+      estados = e.status === 'fulfilled'
+        ? (e.value?.resultado || e.value || [])
+        : []
 
-    estados = e.status === 'fulfilled'
-      ? (e.value?.resultado || e.value || [])
-      : []
+      departamentos = d.status === 'fulfilled'
+        ? (d.value?.resultado || d.value || [])
+        : []
 
-    departamentos = d.status === 'fulfilled'
-      ? (d.value?.resultado || d.value || [])
-      : []
+      prioridades = pr.status === 'fulfilled'
+        ? (pr.value?.resultado || pr.value || [])
+        : []
 
-    prioridades = pr.status === 'fulfilled'
-      ? (pr.value?.resultado || pr.value || [])
-      : []
+      usuarios = u.status === 'fulfilled'
+        ? (u.value?.resultado || u.value || [])
+        : []
 
-    usuarios = u.status === 'fulfilled'
-      ? (u.value?.resultado || u.value || [])
-      : []
+    } catch (e) {
+      console.error('Error cargando datos:', e)
+      showToast('❌ Error cargando datos')
+    } finally {
+      loading = false
+    }
+  })
 
-  } catch (e) {
-    console.error('Error cargando datos:', e)
-    showToast('❌ Error cargando datos')
-  } finally {
-    loading = false
+  // Inicializar DataTable cuando la tabla esté disponible
+  $effect(() => {
+    if (tableElement && filtered.length >= 0 && !loading) {
+      initDataTable()
+    }
+  })
+
+  async function initDataTable() {
+    // Destruir instancia anterior si existe
+    if (dataTableInstance) {
+      dataTableInstance.destroy()
+      dataTableInstance = null
+    }
+
+    // Esperar a que el DOM se actualice
+    await new Promise(r => setTimeout(r, 100))
+
+    // Importar jQuery y DataTable dinámicamente
+    const $ = await import('https://esm.sh/jquery@3.7.1').then(m => m.default)
+    const dt = await import('https://esm.sh/datatables.net@1.13.8').then(m => m.default)
+    await import('https://esm.sh/datatables.net-dt@1.13.8/css/dataTables.dataTables.css').catch(() => {})
+
+    // Configuración en español
+    const espanol = {
+      "decimal": "",
+      "emptyTable": "No hay datos disponibles",
+      "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
+      "infoEmpty": "Mostrando 0 a 0 de 0 registros",
+      "infoFiltered": "(filtrado de _MAX_ registros totales)",
+      "infoPostFix": "",
+      "thousands": ",",
+      "lengthMenu": "Mostrar _MENU_ registros",
+      "loadingRecords": "Cargando...",
+      "processing": "Procesando...",
+      "search": "Buscar:",
+      "zeroRecords": "No se encontraron registros coincidentes",
+      "paginate": {
+        "first": "Primero",
+        "last": "Último",
+        "next": "Siguiente",
+        "previous": "Anterior"
+      },
+      "aria": {
+        "orderable": "Ordenar por esta columna",
+        "orderableReverse": "Ordenar en forma descendente",
+        "paginate": {
+          "first": "Primero",
+          "last": "Último",
+          "next": "Siguiente",
+          "previous": "Anterior"
+        }
+      }
+    }
+
+    if (tableElement) {
+      dataTableInstance = $(tableElement).DataTable({
+        language: espanol,
+        pageLength: 10,
+        lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Todos"]],
+        order: [[0, 'desc']],
+        responsive: true,
+        dom: 'rt<"bottom"lip>',
+        columnDefs: [
+          { className: 'dt-center', targets: '_all' }
+        ]
+      }).on('init', () => {
+        // Aplicar estilos personalizados después de init
+        setTimeout(() => {
+          const wrapper = tableElement.closest('.dataTables_wrapper')
+          if (wrapper) {
+            wrapper.style.fontFamily = "'Inter', sans-serif"
+            wrapper.style.fontSize = "13px"
+          }
+        }, 50)
+      })
+    }
   }
-})
 
   function openCreate() {
     defaultForm()
@@ -193,82 +268,79 @@
   }
 
   async function savePqr() {
-  if (!formDescripcion || !formIdTipo || !formIdDepartamento) {
-    showToast('⚠️ Completa todos los campos')
-    return
-  }
-
-  saving = true
-  try {
-    const payload = {
-      descripcion: formDescripcion,
-      id_tipo: formIdTipo,
-      id_departamento: formIdDepartamento,
-      id_pqr: 0,
-      fecha: new Date().toISOString(),
-      id_usuario: $currentUser?.id_usuario,
-      id_estado: 1,
-      id_prioridad: 1
+    if (!formDescripcion || !formIdTipo || !formIdDepartamento) {
+      showToast('⚠️ Completa todos los campos')
+      return
     }
 
-    await api.createPqr(payload)
+    saving = true
+    try {
+      const payload = {
+        descripcion: formDescripcion,
+        id_tipo: formIdTipo,
+        id_departamento: formIdDepartamento,
+        id_pqr: 0,
+        fecha: new Date().toISOString(),
+        id_usuario: $currentUser?.id_usuario,
+        id_estado: 1,
+        id_prioridad: 1
+      }
 
-    // 🔥 IMPORTANTE: evitar error de .filter
-    const data = await api.getPqrs()
-    pqrs = Array.isArray(data) ? data : data.resultado || []
+      await api.createPqr(payload)
 
-    showToast('✅ PQR enviada con éxito')
+      const data = await api.getPqrs()
+      pqrs = Array.isArray(data) ? data : data.resultado || []
 
-    // 🔥 REDIRECCIÓN REAL
-    goto('/pqrs')
+      showToast('✅ PQR enviada con éxito')
+      goto('/pqrs')
 
-  } catch (e) {
-    console.error(e)
-    showToast('❌ Error al enviar')
+    } catch (e) {
+      console.error(e)
+      showToast('❌ Error al enviar')
+    }
+
+    saving = false
   }
-
-  saving = false
-}
 
   async function saveGestion() {
-  if (!coordForm.id_estado) {
-    showToast('⚠️ Selecciona un estado')
-    return
-  }
-
-  saving = true
-  try {
-    await api.updateEstadoPqr(selected.id_pqr, coordForm.id_estado)
-
-    if (coordForm.id_responsable) {
-      await api.createAsignacion({
-        id_asignacion: 0,
-        id_pqr: Number(selected.id_pqr),
-        id_usuario: Number(coordForm.id_responsable),
-        fecha_asignacion: new Date().toISOString().slice(0, 10)
-      })
+    if (!coordForm.id_estado) {
+      showToast('⚠️ Selecciona un estado')
+      return
     }
 
-    if (coordForm.respuesta.trim()) {
-      await api.createRespuesta({
-        id_pqr: selected.id_pqr,
-        id_usuario: $currentUser?.id_usuario,
-        contenido: coordForm.respuesta.trim(),
-        fecha: new Date().toISOString()
-      })
+    saving = true
+    try {
+      await api.updateEstadoPqr(selected.id_pqr, coordForm.id_estado)
+
+      if (coordForm.id_responsable) {
+        await api.createAsignacion({
+          id_asignacion: 0,
+          id_pqr: Number(selected.id_pqr),
+          id_usuario: Number(coordForm.id_responsable),
+          fecha_asignacion: new Date().toISOString().slice(0, 10)
+        })
+      }
+
+      if (coordForm.respuesta.trim()) {
+        await api.createRespuesta({
+          id_pqr: selected.id_pqr,
+          id_usuario: $currentUser?.id_usuario,
+          contenido: coordForm.respuesta.trim(),
+          fecha: new Date().toISOString()
+        })
+      }
+
+      const data = await api.getPqrs()
+      pqrs = Array.isArray(data) ? data : data.resultado || []
+      view = 'list'
+      showToast('✅ PQR gestionada correctamente')
+    } catch (e) {
+      console.error(e)
+      showToast('❌ Error al guardar')
     }
 
-    const data = await api.getPqrs()
-    pqrs = Array.isArray(data) ? data : data.resultado || []
-    view = 'list'
-    showToast('✅ PQR gestionada correctamente')
-  } catch (e) {
-    console.error(e)
-    showToast('❌ Error al guardar')
+    saving = false
   }
-
-  saving = false
-}
 
   function limpiarFiltros() {
     searchText = ''
@@ -276,6 +348,10 @@
     filterTipo = ''
     filterDesde = ''
     filterHasta = ''
+    // Recargar DataTable con filtros limpiados
+    if (dataTableInstance) {
+      dataTableInstance.search('').draw()
+    }
   }
 
   async function descargarPDF() {
@@ -379,6 +455,98 @@
   onconfirm={deletePqr}
 />
 
+<!-- Estilos para DataTable -->
+<style>
+  :global(.dataTables_wrapper) {
+    font-family: 'Inter', sans-serif !important;
+    padding: 20px 0;
+  }
+  :global(.dataTables_wrapper .dataTables_length) {
+    margin-bottom: 15px;
+    color: #64748b;
+    font-size: 13px;
+  }
+  :global(.dataTables_wrapper .dataTables_length select) {
+    padding: 6px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-left: 8px;
+  }
+  :global(.dataTables_wrapper .dataTables_filter) {
+    margin-bottom: 15px;
+    color: #64748b;
+    font-size: 13px;
+  }
+  :global(.dataTables_wrapper .dataTables_filter input) {
+    padding: 8px 14px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 13px;
+    margin-left: 8px;
+    width: 250px;
+  }
+  :global(.dataTables_wrapper .dataTables_info) {
+    color: #64748b;
+    font-size: 13px;
+    padding-top: 12px;
+  }
+  :global(.dataTables_wrapper .dataTables_paginate) {
+    padding-top: 12px;
+  }
+  :global(.dataTables_wrapper .paginate_button) {
+    padding: 6px 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 8px !important;
+    margin: 0 3px;
+    font-size: 13px;
+    color: #475569 !important;
+    cursor: pointer;
+  }
+  :global(.dataTables_wrapper .paginate_button:hover) {
+    background: #f1f5f9 !important;
+    border-color: #cbd5e1 !important;
+  }
+  :global(.dataTables_wrapper .paginate_button.current) {
+    background: #2563eb !important;
+    border-color: #2563eb !important;
+    color: white !important;
+  }
+  :global(.dataTables_wrapper .dataTables_empty) {
+    text-align: center;
+    color: #94a3b8;
+    padding: 40px;
+  }
+  :global(table.dataTable) {
+    border-collapse: collapse !important;
+  }
+  :global(table.dataTable thead th) {
+    background: #f8fafc !important;
+    padding: 14px 16px !important;
+    font-size: 11px !important;
+    color: #64748b !important;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #e2e8f0 !important;
+    font-weight: 700;
+  }
+  :global(table.dataTable tbody tr) {
+    transition: background 0.15s;
+  }
+  :global(table.dataTable tbody tr:hover) {
+    background: #fafbff !important;
+  }
+  :global(table.dataTable tbody td) {
+    padding: 14px 16px !important;
+    font-size: 13px;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+  }
+  :global(table.dataTable tbody tr:last-child td) {
+    border-bottom: none !important;
+  }
+</style>
+
 <div class="module">
   {#if toastMsg}<div class="toast">{toastMsg}</div>{/if}
 
@@ -459,16 +627,23 @@
       <div class="loader-wrap"><p>Sincronizando...</p></div>
     {:else}
       <div class="table-container">
-        <table>
+        <!-- DataTable -->
+        <table bind:this={tableElement} class="display nowrap" style="width:100%">
           <thead>
             <tr>
-              <th>ID</th><th>Descripción</th><th>Categoría</th>
-              {#if isAdmin || isCoord}<th>Usuario</th><th>Estado</th>{/if}
-              <th>Fecha</th><th class="text-center">Acciones</th>
+              <th>ID</th>
+              <th>Descripción</th>
+              <th>Categoría</th>
+              {#if isAdmin || isCoord}
+                <th>Usuario</th>
+                <th>Estado</th>
+              {/if}
+              <th>Fecha</th>
+              <th class="text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {#each filtered as pqr}
+            {#each filtered as pqr (pqr.id_pqr)}
               <tr>
                 <td><span class="id-tag">#{pqr.id_pqr}</span></td>
                 <td class="text-main">{pqr.descripcion?.slice(0,40)}...</td>
@@ -705,16 +880,10 @@
   .results-count strong { color: #0f172a; font-weight: 700; }
   .no-results-hint { font-size: 12px; color: #94a3b8; }
 
-  .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
-  table { width: 100%; border-collapse: collapse; }
-  th { background: #f8fafc; padding: 14px 16px; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
-  td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; font-size: 13px; color: #334155; }
-  tr:last-child td { border-bottom: none; }
-  tr:hover td { background: #fafbff; }
-  .empty-row { text-align: center; color: #94a3b8; padding: 40px !important; }
-  .text-main { max-width: 300px; }
-  .text-usuario { font-weight: 600; color: #1e293b; }
-  .date-text { color: #64748b; font-size: 12px; white-space: nowrap; }
+  .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); padding: 20px; }
+
+  .id-tag { color: #94a3b8; font-weight: 700; font-family: monospace; font-size: 12px; }
+  .type-chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 11px; white-space: nowrap; }
 
   .actions-cell { display: flex; align-items: center; justify-content: center; gap: 6px; }
   .action-btn { width: 32px; height: 32px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
@@ -728,8 +897,9 @@
   .coord-btn   { background: #fff7ed; color: #ea580c; }
   .coord-btn:hover   { background: #ea580c; color: white; transform: scale(1.1); }
 
-  .id-tag { color: #94a3b8; font-weight: 700; font-family: monospace; font-size: 12px; }
-  .type-chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 11px; white-space: nowrap; }
+  .text-main { max-width: 300px; }
+  .text-usuario { font-weight: 600; color: #1e293b; }
+  .date-text { color: #64748b; font-size: 12px; white-space: nowrap; }
 
   .center-container { display: flex; justify-content: center; padding: 20px 0 60px; }
   .card { background: white; width: 100%; max-width: 680px; border-radius: 32px; border: 1px solid #e2e8f0; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1); overflow: hidden; }
@@ -763,8 +933,7 @@
     .header-actions { width: 100%; }
     h1 { font-size: 22px; }
     .filters-grid { grid-template-columns: 1fr; }
-    table { min-width: 600px; }
-    th, td { padding: 10px 12px; font-size: 11px; }
+    .table-container { padding: 10px; }
     .form-padding, .card-top, .card-body { padding: 24px; }
     .field-group { grid-template-columns: 1fr; }
     .info-grid { grid-template-columns: 1fr; }

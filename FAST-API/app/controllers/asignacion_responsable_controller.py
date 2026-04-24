@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from config.db_config import get_db_connection
 from models.asignacion_responsable_model import Asignacion_responsable
 from fastapi.encoders import jsonable_encoder
-from services.email_service import notify_asignacion_responsable
+
 
 class Asignacion_responsableController:
 
