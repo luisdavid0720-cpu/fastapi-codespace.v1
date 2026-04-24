@@ -24,37 +24,63 @@ class PqrController:
             return str(valor_id)
 
     def create_pqr(self, pqr: Pqr):
-        try:
-            conn = get_db_connection()
-            cursor = conn.cursor()
-            cursor.execute(
-                "INSERT INTO pqr (descripcion,fecha,id_usuario,id_tipo,id_estado,id_departamento,id_prioridad)"
-                " VALUES (%s, %s, %s, %s, %s ,%s, %s) RETURNING id_pqr",
-                (pqr.descripcion, pqr.fecha, pqr.id_usuario, pqr.id_tipo,
-                 pqr.id_estado, pqr.id_departamento, pqr.id_prioridad)
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        cursor.execute("""
+            INSERT INTO pqr
+            (descripcion,fecha,id_usuario,id_tipo,id_estado,id_departamento,id_prioridad)
+            VALUES (%s,%s,%s,%s,%s,%s,%s)
+            RETURNING id_pqr
+        """, (
+            pqr.descripcion,
+            pqr.fecha,
+            pqr.id_usuario,
+            pqr.id_tipo,
+            pqr.id_estado,
+            pqr.id_departamento,
+            pqr.id_prioridad
+        ))
+
+        nuevo_id = cursor.fetchone()[0]
+        conn.commit()
+
+        print("PQR creada:", nuevo_id)
+
+        nombre_u, correo_u = self._get_usuario_correo(cursor, pqr.id_usuario)
+
+        print("Usuario:", nombre_u)
+        print("Correo:", correo_u)
+
+        tipo = self._get_nombre(cursor, "tipo_pqr", "id_tipo", "nombre", pqr.id_tipo)
+        depto = self._get_nombre(cursor, "departamento", "id_departamento", "nombre", pqr.id_departamento)
+
+        print("Tipo:", tipo)
+        print("Depto:", depto)
+
+        if correo_u:
+            notify_pqr_creada(
+                correo_usuario=correo_u,
+                nombre_usuario=nombre_u or "Usuario",
+                id_pqr=nuevo_id,
+                descripcion=pqr.descripcion,
+                tipo=tipo,
+                departamento=depto,
+                fecha=str(pqr.fecha)
             )
-            nuevo_id = cursor.fetchone()[0]
-            conn.commit()
-            # Notificar al usuario que radicó la PQR
-            nombre_u, correo_u = self._get_usuario_correo(cursor, pqr.id_usuario)
-            tipo  = self._get_nombre(cursor, "tipo_pqr",    "id_tipo",         "nombre", pqr.id_tipo)
-            depto = self._get_nombre(cursor, "departamento", "id_departamento", "nombre", pqr.id_departamento)
-            if correo_u:
-                notify_pqr_creada(
-                    correo_usuario=correo_u,
-                    nombre_usuario=nombre_u or "Usuario",
-                    id_pqr=nuevo_id,
-                    descripcion=pqr.descripcion,
-                    tipo=tipo,
-                    departamento=depto,
-                    fecha=str(pqr.fecha)
-                )
-            return {"resultado": "pqr creado"}
-        except psycopg2.Error as err:
-            print(err)
-            conn.rollback()
-        finally:
-            conn.close()
+            print("Correo enviado")
+        else:
+            print("No hay correo")
+
+        return {"resultado": "PQR creada"}
+
+    except Exception as e:
+        print("ERROR CREATE PQR:", e)
+        conn.rollback()
+
+    finally:
+        conn.close()
 
     def get_pqr(self, pqr_id: int):
         try:
