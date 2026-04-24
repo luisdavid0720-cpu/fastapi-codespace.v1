@@ -39,10 +39,6 @@
   let formIdTipo         = $state('')
   let formIdDepartamento = $state('')
 
-  // Referencia a la tabla para DataTable
-  let tableElement = $state(null)
-  let dataTableInstance = $state(null)
-
   function defaultForm() {
     formDescripcion    = ''
     formIdTipo         = ''
@@ -71,126 +67,55 @@
   )
 
   onMount(async () => {
-    loading = true
-    try {
-      const [p, t, e, d, pr, u] = await Promise.allSettled([
-        api.getPqrs(),
-        api.getTiposPqr(),
-        api.getEstados(),
-        api.getDepartamentos(),
-        api.getPrioridades(),
-        api.getUsuarios()
-      ])
+  loading = true
+  try {
+    const [p, t, e, d, pr, u] = await Promise.allSettled([
+      api.getPqrs(),
+      api.getTiposPqr(),
+      api.getEstados(),
+      api.getDepartamentos(),
+      api.getPrioridades(),
+      api.getUsuarios()
+    ])
 
-      pqrs = p.status === 'fulfilled'
-        ? (Array.isArray(p.value) ? p.value : p.value?.resultado || [])
-        : []
+    console.log('PQRs:', p)
+    console.log('Tipos:', t)
+    console.log('Estados:', e)
+    console.log('Departamentos:', d)
+    console.log('Prioridades:', pr)
+    console.log('Usuarios:', u)
 
-      tipos = t.status === 'fulfilled'
-        ? (t.value?.resultado || t.value || [])
-        : []
+    pqrs = p.status === 'fulfilled'
+  ? (Array.isArray(p.value) ? p.value : p.value?.resultado || [])
+  : []
 
-      estados = e.status === 'fulfilled'
-        ? (e.value?.resultado || e.value || [])
-        : []
+    tipos = t.status === 'fulfilled'
+      ? (t.value?.resultado || t.value || [])
+      : []
 
-      departamentos = d.status === 'fulfilled'
-        ? (d.value?.resultado || d.value || [])
-        : []
+    estados = e.status === 'fulfilled'
+      ? (e.value?.resultado || e.value || [])
+      : []
 
-      prioridades = pr.status === 'fulfilled'
-        ? (pr.value?.resultado || pr.value || [])
-        : []
+    departamentos = d.status === 'fulfilled'
+      ? (d.value?.resultado || d.value || [])
+      : []
 
-      usuarios = u.status === 'fulfilled'
-        ? (u.value?.resultado || u.value || [])
-        : []
+    prioridades = pr.status === 'fulfilled'
+      ? (pr.value?.resultado || pr.value || [])
+      : []
 
-    } catch (e) {
-      console.error('Error cargando datos:', e)
-      showToast('❌ Error cargando datos')
-    } finally {
-      loading = false
-    }
-  })
+    usuarios = u.status === 'fulfilled'
+      ? (u.value?.resultado || u.value || [])
+      : []
 
-  // Inicializar DataTable cuando la tabla esté disponible
-  $effect(() => {
-    if (tableElement && filtered.length >= 0 && !loading) {
-      initDataTable()
-    }
-  })
-
-  async function initDataTable() {
-    // Destruir instancia anterior si existe
-    if (dataTableInstance) {
-      dataTableInstance.destroy()
-      dataTableInstance = null
-    }
-
-    // Esperar a que el DOM se actualice
-    await new Promise(r => setTimeout(r, 100))
-
-    // Importar jQuery y DataTable dinámicamente
-    const $ = await import('https://esm.sh/jquery@3.7.1').then(m => m.default)
-    const dt = await import('https://esm.sh/datatables.net@1.13.8').then(m => m.default)
-    await import('https://esm.sh/datatables.net-dt@1.13.8/css/dataTables.dataTables.css').catch(() => {})
-
-    // Configuración en español
-    const espanol = {
-      "decimal": "",
-      "emptyTable": "No hay datos disponibles",
-      "info": "Mostrando _START_ a _END_ de _TOTAL_ registros",
-      "infoEmpty": "Mostrando 0 a 0 de 0 registros",
-      "infoFiltered": "(filtrado de _MAX_ registros totales)",
-      "infoPostFix": "",
-      "thousands": ",",
-      "lengthMenu": "Mostrar _MENU_ registros",
-      "loadingRecords": "Cargando...",
-      "processing": "Procesando...",
-      "search": "Buscar:",
-      "zeroRecords": "No se encontraron registros coincidentes",
-      "paginate": {
-        "first": "Primero",
-        "last": "Último",
-        "next": "Siguiente",
-        "previous": "Anterior"
-      },
-      "aria": {
-        "orderable": "Ordenar por esta columna",
-        "orderableReverse": "Ordenar en forma descendente",
-        "paginate": {
-          "first": "Primero",
-          "last": "Último",
-          "next": "Siguiente",
-          "previous": "Anterior"
-        }
-      }
-    }
-
-    if (tableElement) {
-      dataTableInstance = $(tableElement).DataTable({
-        language: espanol,
-        pageLength: 10,
-        lengthMenu: [[5, 10, 25, 50, -1], [5, 10, 25, 50, "Todos"]],
-        order: [[0, 'desc']],
-        responsive: true,
-        dom: 'rt<"bottom"lip>',
-        columnDefs: [
-          { className: 'dt-center', targets: '_all' }
-        ]
-      }).on('init', () => {
-        // Aplicar estilos personalizados después de init
-        setTimeout(() => {
-          const wrapper = tableElement.closest('.dataTables_wrapper')
-          if (wrapper) {
-            wrapper.style.fontFamily = "'Inter', sans-serif"
-            wrapper.style.fontSize = "13px"
-          }
-        }, 50)
-      })
-    }
+  } catch (e) {
+    console.error('Error cargando datos:', e)
+    showToast('❌ Error cargando datos')
+  } finally {
+    loading = false
   }
+})
 
   function openCreate() {
     defaultForm()
@@ -268,79 +193,82 @@
   }
 
   async function savePqr() {
-    if (!formDescripcion || !formIdTipo || !formIdDepartamento) {
-      showToast('⚠️ Completa todos los campos')
-      return
-    }
-
-    saving = true
-    try {
-      const payload = {
-        descripcion: formDescripcion,
-        id_tipo: formIdTipo,
-        id_departamento: formIdDepartamento,
-        id_pqr: 0,
-        fecha: new Date().toISOString(),
-        id_usuario: $currentUser?.id_usuario,
-        id_estado: 1,
-        id_prioridad: 1
-      }
-
-      await api.createPqr(payload)
-
-      const data = await api.getPqrs()
-      pqrs = Array.isArray(data) ? data : data.resultado || []
-
-      showToast('✅ PQR enviada con éxito')
-      goto('/pqrs')
-
-    } catch (e) {
-      console.error(e)
-      showToast('❌ Error al enviar')
-    }
-
-    saving = false
+  if (!formDescripcion || !formIdTipo || !formIdDepartamento) {
+    showToast('⚠️ Completa todos los campos')
+    return
   }
+
+  saving = true
+  try {
+    const payload = {
+      descripcion: formDescripcion,
+      id_tipo: formIdTipo,
+      id_departamento: formIdDepartamento,
+      id_pqr: 0,
+      fecha: new Date().toISOString(),
+      id_usuario: $currentUser?.id_usuario,
+      id_estado: 1,
+      id_prioridad: 1
+    }
+
+    await api.createPqr(payload)
+
+    // 🔥 IMPORTANTE: evitar error de .filter
+    const data = await api.getPqrs()
+    pqrs = Array.isArray(data) ? data : data.resultado || []
+
+    showToast('✅ PQR enviada con éxito')
+
+    // 🔥 REDIRECCIÓN REAL
+    goto('/pqrs')
+
+  } catch (e) {
+    console.error(e)
+    showToast('❌ Error al enviar')
+  }
+
+  saving = false
+}
 
   async function saveGestion() {
-    if (!coordForm.id_estado) {
-      showToast('⚠️ Selecciona un estado')
-      return
-    }
-
-    saving = true
-    try {
-      await api.updateEstadoPqr(selected.id_pqr, coordForm.id_estado)
-
-      if (coordForm.id_responsable) {
-        await api.createAsignacion({
-          id_asignacion: 0,
-          id_pqr: Number(selected.id_pqr),
-          id_usuario: Number(coordForm.id_responsable),
-          fecha_asignacion: new Date().toISOString().slice(0, 10)
-        })
-      }
-
-      if (coordForm.respuesta.trim()) {
-        await api.createRespuesta({
-          id_pqr: selected.id_pqr,
-          id_usuario: $currentUser?.id_usuario,
-          contenido: coordForm.respuesta.trim(),
-          fecha: new Date().toISOString()
-        })
-      }
-
-      const data = await api.getPqrs()
-      pqrs = Array.isArray(data) ? data : data.resultado || []
-      view = 'list'
-      showToast('✅ PQR gestionada correctamente')
-    } catch (e) {
-      console.error(e)
-      showToast('❌ Error al guardar')
-    }
-
-    saving = false
+  if (!coordForm.id_estado) {
+    showToast('⚠️ Selecciona un estado')
+    return
   }
+
+  saving = true
+  try {
+    await api.updateEstadoPqr(selected.id_pqr, coordForm.id_estado)
+
+    if (coordForm.id_responsable) {
+      await api.createAsignacion({
+        id_asignacion: 0,
+        id_pqr: Number(selected.id_pqr),
+        id_usuario: Number(coordForm.id_responsable),
+        fecha_asignacion: new Date().toISOString().slice(0, 10)
+      })
+    }
+
+    if (coordForm.respuesta.trim()) {
+      await api.createRespuesta({
+        id_pqr: selected.id_pqr,
+        id_usuario: $currentUser?.id_usuario,
+        contenido: coordForm.respuesta.trim(),
+        fecha: new Date().toISOString()
+      })
+    }
+
+    const data = await api.getPqrs()
+    pqrs = Array.isArray(data) ? data : data.resultado || []
+    view = 'list'
+    showToast('✅ PQR gestionada correctamente')
+  } catch (e) {
+    console.error(e)
+    showToast('❌ Error al guardar')
+  }
+
+  saving = false
+}
 
   function limpiarFiltros() {
     searchText = ''
@@ -348,10 +276,6 @@
     filterTipo = ''
     filterDesde = ''
     filterHasta = ''
-    // Recargar DataTable con filtros limpiados
-    if (dataTableInstance) {
-      dataTableInstance.search('').draw()
-    }
   }
 
   async function descargarPDF() {
@@ -455,182 +379,6 @@
   onconfirm={deletePqr}
 />
 
-
-<style>
-  .module { padding: 40px; font-family: 'Inter', sans-serif; background: #fcfdfe; min-height: 100vh; }
-  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
-  h1 { font-size: 32px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -1px; }
-  .subtitle { color: #64748b; font-size: 15px; margin-top: 4px; }
-  .header-actions { display: flex; gap: 12px; align-items: center; }
-  .btn-create { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.2); font-family: inherit; }
-  .btn-back   { background: white; border: 1.5px solid #e2e8f0; padding: 10px 20px; border-radius: 10px; color: #475569; font-weight: 700; cursor: pointer; font-family: inherit; }
-  .btn-pdf { display: flex; align-items: center; gap: 8px; background: #dc2626; color: white; border: none; padding: 12px 22px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; white-space: nowrap; box-shadow: 0 4px 14px rgba(220,38,38,0.25); font-family: inherit; }
-  .btn-pdf:hover { background: #b91c1c; transform: translateY(-1px); }
-  .btn-pdf:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
-  .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; display: inline-block; animation: spin 0.7s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-
-  .filters-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
-  .filters-title { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 16px; }
-  .filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; align-items: end; }
-  .filter-end { display: flex; align-items: flex-end; }
-  .btn-clear { padding: 10px 16px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white; color: #64748b; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit; width: 100%; }
-  .btn-clear:hover { border-color: #cbd5e1; background: #f8fafc; }
-
-  .results-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-  .results-count { font-size: 13px; color: #64748b; }
-  .results-count strong { color: #0f172a; font-weight: 700; }
-  .no-results-hint { font-size: 12px; color: #94a3b8; }
-
-  .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); padding: 20px; }
-
-  .id-tag { color: #94a3b8; font-weight: 700; font-family: monospace; font-size: 12px; }
-  .type-chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 11px; white-space: nowrap; }
-
-  .actions-cell { display: flex; align-items: center; justify-content: center; gap: 6px; }
-  .action-btn { width: 32px; height: 32px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
-  .view-btn    { background: #eff6ff; color: #2563eb; }
-  .view-btn:hover    { background: #2563eb; color: white; transform: scale(1.1); }
-  .edit-btn    { background: #f0fdf4; color: #16a34a; }
-  .edit-btn:hover    { background: #16a34a; color: white; transform: scale(1.1); }
-  .delete-btn  { background: #fef2f2; color: #dc2626; }
-  .delete-btn:hover  { background: #dc2626; color: white; transform: scale(1.1); }
-  .delete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-  .coord-btn   { background: #fff7ed; color: #ea580c; }
-  .coord-btn:hover   { background: #ea580c; color: white; transform: scale(1.1); }
-
-  .text-main { max-width: 300px; }
-  .text-usuario { font-weight: 600; color: #1e293b; }
-  .date-text { color: #64748b; font-size: 12px; white-space: nowrap; }
-
-  .center-container { display: flex; justify-content: center; padding: 20px 0 60px; }
-  .card { background: white; width: 100%; max-width: 680px; border-radius: 32px; border: 1px solid #e2e8f0; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1); overflow: hidden; }
-  .form-padding { padding: 45px; }
-  .card-title { font-size: 26px; font-weight: 800; color: #0f172a; margin-bottom: 30px; }
-  .card-top { padding: 35px 45px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; }
-  .card-body { padding: 45px; }
-  .badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .id-large { font-size: 24px; font-weight: 800; color: #0f172a; }
-  .date-sub { color: #94a3b8; font-size: 13px; margin: 0; }
-  .info-section { margin-bottom: 30px; }
-  .content-box { background: #f8fafc; padding: 25px; border-radius: 20px; border: 1px solid #edf2f7; line-height: 1.7; font-size: 15px; color: #334155; }
-  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
-  .info-item { display: flex; flex-direction: column; gap: 6px; }
-  .label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
-  .value { font-weight: 700; color: #1e293b; font-size: 15px; }
-  .section-divider { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 20px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
-  .section-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
-  .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .btn-send { width: 100%; background: #2563eb; color: white; border: none; padding: 18px; border-radius: 16px; font-weight: 800; font-size: 16px; cursor: pointer; margin-top: 10px; font-family: inherit; }
-  .btn-send:disabled { opacity: 0.6; cursor: not-allowed; }
-
-  .toast { position: fixed; bottom: 30px; right: 30px; background: #0f172a; color: white; padding: 16px 28px; border-radius: 16px; font-weight: 600; z-index: 100; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
-  .animate-up { animation: slideUp 0.4s ease-out; }
-  @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
-  .loader-wrap { padding: 60px; text-align: center; color: #94a3b8; }
-
-  @media (max-width: 768px) {
-    .module { padding: 16px; }
-    .page-header { flex-direction: column; gap: 12px; align-items: flex-start; }
-    .header-actions { width: 100%; }
-    h1 { font-size: 22px; }
-    .filters-grid { grid-template-columns: 1fr; }
-    .table-container { padding: 10px; }
-    .form-padding, .card-top, .card-body { padding: 24px; }
-    .field-group { grid-template-columns: 1fr; }
-    .info-grid { grid-template-columns: 1fr; }
-  }
-
-  :global(.dataTables_wrapper) {
-    font-family: 'Inter', sans-serif !important;
-    padding: 20px 0;
-  }
-  :global(.dataTables_wrapper .dataTables_length) {
-    margin-bottom: 15px;
-    color: #64748b;
-    font-size: 13px;
-  }
-  :global(.dataTables_wrapper .dataTables_length select) {
-    padding: 6px 12px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 13px;
-    margin-left: 8px;
-  }
-  :global(.dataTables_wrapper .dataTables_filter) {
-    margin-bottom: 15px;
-    color: #64748b;
-    font-size: 13px;
-  }
-  :global(.dataTables_wrapper .dataTables_filter input) {
-    padding: 8px 14px;
-    border: 1px solid #e2e8f0;
-    border-radius: 8px;
-    font-size: 13px;
-    margin-left: 8px;
-    width: 250px;
-  }
-  :global(.dataTables_wrapper .dataTables_info) {
-    color: #64748b;
-    font-size: 13px;
-    padding-top: 12px;
-  }
-  :global(.dataTables_wrapper .dataTables_paginate) {
-    padding-top: 12px;
-  }
-  :global(.dataTables_wrapper .paginate_button) {
-    padding: 6px 12px !important;
-    border: 1px solid #e2e8f0 !important;
-    border-radius: 8px !important;
-    margin: 0 3px;
-    font-size: 13px;
-    color: #475569 !important;
-    cursor: pointer;
-  }
-  :global(.dataTables_wrapper .paginate_button:hover) {
-    background: #f1f5f9 !important;
-    border-color: #cbd5e1 !important;
-  }
-  :global(.dataTables_wrapper .paginate_button.current) {
-    background: #2563eb !important;
-    border-color: #2563eb !important;
-    color: white !important;
-  }
-  :global(.dataTables_wrapper .dataTables_empty) {
-    text-align: center;
-    color: #94a3b8;
-    padding: 40px;
-  }
-  :global(table.dataTable) {
-    border-collapse: collapse !important;
-  }
-  :global(table.dataTable thead th) {
-    background: #f8fafc !important;
-    padding: 14px 16px !important;
-    font-size: 11px !important;
-    color: #64748b !important;
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    border-bottom: 2px solid #e2e8f0 !important;
-    font-weight: 700;
-  }
-  :global(table.dataTable tbody tr) {
-    transition: background 0.15s;
-  }
-  :global(table.dataTable tbody tr:hover) {
-    background: #fafbff !important;
-  }
-  :global(table.dataTable tbody td) {
-    padding: 14px 16px !important;
-    font-size: 13px;
-    color: #334155;
-    border-bottom: 1px solid #f1f5f9;
-  }
-  :global(table.dataTable tbody tr:last-child td) {
-    border-bottom: none !important;
-  }
-</style>
-
 <div class="module">
   {#if toastMsg}<div class="toast">{toastMsg}</div>{/if}
 
@@ -711,23 +459,16 @@
       <div class="loader-wrap"><p>Sincronizando...</p></div>
     {:else}
       <div class="table-container">
-        <!-- DataTable -->
-        <table bind:this={tableElement} class="display nowrap" style="width:100%">
+        <table>
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Descripción</th>
-              <th>Categoría</th>
-              {#if isAdmin || isCoord}
-                <th>Usuario</th>
-                <th>Estado</th>
-              {/if}
-              <th>Fecha</th>
-              <th class="text-center">Acciones</th>
+              <th>ID</th><th>Descripción</th><th>Categoría</th>
+              {#if isAdmin || isCoord}<th>Usuario</th><th>Estado</th>{/if}
+              <th>Fecha</th><th class="text-center">Acciones</th>
             </tr>
           </thead>
           <tbody>
-            {#each filtered as pqr (pqr.id_pqr)}
+            {#each filtered as pqr}
               <tr>
                 <td><span class="id-tag">#{pqr.id_pqr}</span></td>
                 <td class="text-main">{pqr.descripcion?.slice(0,40)}...</td>
@@ -939,4 +680,93 @@
 </div>
 
 <style>
-  
+  .module { padding: 40px; font-family: 'Inter', sans-serif; background: #fcfdfe; min-height: 100vh; }
+  .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 35px; }
+  h1 { font-size: 32px; font-weight: 800; color: #0f172a; margin: 0; letter-spacing: -1px; }
+  .subtitle { color: #64748b; font-size: 15px; margin-top: 4px; }
+  .header-actions { display: flex; gap: 12px; align-items: center; }
+  .btn-create { background: #2563eb; color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 12px rgba(37,99,235,0.2); font-family: inherit; }
+  .btn-back   { background: white; border: 1.5px solid #e2e8f0; padding: 10px 20px; border-radius: 10px; color: #475569; font-weight: 700; cursor: pointer; font-family: inherit; }
+  .btn-pdf { display: flex; align-items: center; gap: 8px; background: #dc2626; color: white; border: none; padding: 12px 22px; border-radius: 12px; font-weight: 700; font-size: 14px; cursor: pointer; transition: 0.2s; white-space: nowrap; box-shadow: 0 4px 14px rgba(220,38,38,0.25); font-family: inherit; }
+  .btn-pdf:hover { background: #b91c1c; transform: translateY(-1px); }
+  .btn-pdf:disabled { opacity: 0.55; cursor: not-allowed; transform: none; }
+  .spinner { width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.3); border-top-color: white; border-radius: 50%; display: inline-block; animation: spin 0.7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .filters-card { background: white; border: 1px solid #e2e8f0; border-radius: 16px; padding: 24px; margin-bottom: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.03); }
+  .filters-title { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin: 0 0 16px; }
+  .filters-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 14px; align-items: end; }
+  .filter-end { display: flex; align-items: flex-end; }
+  .btn-clear { padding: 10px 16px; border-radius: 10px; border: 1.5px solid #e2e8f0; background: white; color: #64748b; font-size: 13px; font-weight: 600; cursor: pointer; transition: 0.2s; font-family: inherit; width: 100%; }
+  .btn-clear:hover { border-color: #cbd5e1; background: #f8fafc; }
+
+  .results-bar { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .results-count { font-size: 13px; color: #64748b; }
+  .results-count strong { color: #0f172a; font-weight: 700; }
+  .no-results-hint { font-size: 12px; color: #94a3b8; }
+
+  .table-container { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow-x: auto; box-shadow: 0 4px 6px rgba(0,0,0,0.02); }
+  table { width: 100%; border-collapse: collapse; }
+  th { background: #f8fafc; padding: 14px 16px; text-align: left; font-size: 11px; color: #64748b; text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; }
+  td { padding: 14px 16px; border-bottom: 1px solid #f1f5f9; font-size: 13px; color: #334155; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafbff; }
+  .empty-row { text-align: center; color: #94a3b8; padding: 40px !important; }
+  .text-main { max-width: 300px; }
+  .text-usuario { font-weight: 600; color: #1e293b; }
+  .date-text { color: #64748b; font-size: 12px; white-space: nowrap; }
+
+  .actions-cell { display: flex; align-items: center; justify-content: center; gap: 6px; }
+  .action-btn { width: 32px; height: 32px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
+  .view-btn    { background: #eff6ff; color: #2563eb; }
+  .view-btn:hover    { background: #2563eb; color: white; transform: scale(1.1); }
+  .edit-btn    { background: #f0fdf4; color: #16a34a; }
+  .edit-btn:hover    { background: #16a34a; color: white; transform: scale(1.1); }
+  .delete-btn  { background: #fef2f2; color: #dc2626; }
+  .delete-btn:hover  { background: #dc2626; color: white; transform: scale(1.1); }
+  .delete-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+  .coord-btn   { background: #fff7ed; color: #ea580c; }
+  .coord-btn:hover   { background: #ea580c; color: white; transform: scale(1.1); }
+
+  .id-tag { color: #94a3b8; font-weight: 700; font-family: monospace; font-size: 12px; }
+  .type-chip { background: #eff6ff; color: #2563eb; padding: 4px 10px; border-radius: 8px; font-weight: 700; font-size: 11px; white-space: nowrap; }
+
+  .center-container { display: flex; justify-content: center; padding: 20px 0 60px; }
+  .card { background: white; width: 100%; max-width: 680px; border-radius: 32px; border: 1px solid #e2e8f0; box-shadow: 0 30px 60px -12px rgba(0,0,0,0.1); overflow: hidden; }
+  .form-padding { padding: 45px; }
+  .card-title { font-size: 26px; font-weight: 800; color: #0f172a; margin-bottom: 30px; }
+  .card-top { padding: 35px 45px; background: #f8fafc; border-bottom: 1px solid #f1f5f9; }
+  .card-body { padding: 45px; }
+  .badge-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .id-large { font-size: 24px; font-weight: 800; color: #0f172a; }
+  .date-sub { color: #94a3b8; font-size: 13px; margin: 0; }
+  .info-section { margin-bottom: 30px; }
+  .content-box { background: #f8fafc; padding: 25px; border-radius: 20px; border: 1px solid #edf2f7; line-height: 1.7; font-size: 15px; color: #334155; }
+  .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .info-item { display: flex; flex-direction: column; gap: 6px; }
+  .label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+  .value { font-weight: 700; color: #1e293b; font-size: 15px; }
+  .section-divider { font-size: 14px; font-weight: 700; color: #0f172a; margin: 0 0 20px; padding-bottom: 12px; border-bottom: 1px solid #f1f5f9; }
+  .section-label { font-size: 11px; font-weight: 800; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; }
+  .field-group { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .btn-send { width: 100%; background: #2563eb; color: white; border: none; padding: 18px; border-radius: 16px; font-weight: 800; font-size: 16px; cursor: pointer; margin-top: 10px; font-family: inherit; }
+  .btn-send:disabled { opacity: 0.6; cursor: not-allowed; }
+
+  .toast { position: fixed; bottom: 30px; right: 30px; background: #0f172a; color: white; padding: 16px 28px; border-radius: 16px; font-weight: 600; z-index: 100; box-shadow: 0 20px 40px rgba(0,0,0,0.2); }
+  .animate-up { animation: slideUp 0.4s ease-out; }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(15px); } to { opacity: 1; transform: translateY(0); } }
+  .loader-wrap { padding: 60px; text-align: center; color: #94a3b8; }
+
+  @media (max-width: 768px) {
+    .module { padding: 16px; }
+    .page-header { flex-direction: column; gap: 12px; align-items: flex-start; }
+    .header-actions { width: 100%; }
+    h1 { font-size: 22px; }
+    .filters-grid { grid-template-columns: 1fr; }
+    table { min-width: 600px; }
+    th, td { padding: 10px 12px; font-size: 11px; }
+    .form-padding, .card-top, .card-body { padding: 24px; }
+    .field-group { grid-template-columns: 1fr; }
+    .info-grid { grid-template-columns: 1fr; }
+  }
+</style>
