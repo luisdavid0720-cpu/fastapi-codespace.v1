@@ -98,10 +98,12 @@
   }
  
   function openCreate() { 
-    selected = null;
-    defaultForm(); 
-    view = 'form'
-  }
+  console.log('openCreate llamado, view antes:', view)
+  defaultForm(); 
+  selected = null; 
+  view = 'form'
+  console.log('view después:', view)
+}
 
   function volverALista() {
     selected = null;
