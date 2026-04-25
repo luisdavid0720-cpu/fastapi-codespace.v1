@@ -97,17 +97,18 @@
     return map[id] || 5
   }
  
-function openCreate() { 
-  selected = null;
-  defaultForm(); 
-  view = 'form'
-}
+  function openCreate() { 
+    selected = null;
+    defaultForm(); 
+    view = 'form'
+  }
 
-function volverALista() {
-  selected = null;
-  defaultForm();
-  view = 'list'
-}
+  function volverALista() {
+    selected = null;
+    defaultForm();
+    view = 'list'
+  }
+
 
   function openEdit(u) {
     selected    = u
@@ -187,11 +188,7 @@ function volverALista() {
       {#if view === 'list'}
         <button class="btn-primary" onclick={openCreate}>＋ Registrar Usuario</button>
       {:else}
-        function volverALista() {
-          selected = null;
-          defaultForm();
-          view = 'list'
-      }
+        <button class="btn-back" onclick={volverALista}>← Volver</button>      {/if}
     </div>
   </header>
  
