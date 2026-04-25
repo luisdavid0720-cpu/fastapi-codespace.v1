@@ -187,7 +187,11 @@ function volverALista() {
       {#if view === 'list'}
         <button class="btn-primary" onclick={openCreate}>＋ Registrar Usuario</button>
       {:else}
-        <button class="btn-back" onclick={volverALista}>← Volver</button>      {/if}
+        function volverALista() {
+          selected = null;
+          defaultForm();
+          view = 'list'
+      }
     </div>
   </header>
  
