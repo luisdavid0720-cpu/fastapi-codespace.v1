@@ -188,7 +188,7 @@
     </div>
     <div class="header-actions">
       {#if view === 'list'}
-        <button class="btn-primary" onclick={openCreate}>＋ Registrar Usuario</button>
+        <button class="btn-primary" onclick={(e) => { e.stopPropagation(); openCreate(); }}>＋ Registrar Usuario</button>
       {:else}
         <button class="btn-back" onclick={volverALista}>← Volver</button>      {/if}
     </div>
