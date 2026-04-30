@@ -24,15 +24,17 @@
   function handleLogout() { logout() }
 
   function navigateTo(id) {
-    if (id === 'usuarios' && !isAdmin) return
-    if (id === 'analitica' && !isStaff) return
+  if (id === 'usuarios' && !isAdmin) return
+  if (id === 'analitica' && !isStaff) return
 
-    loading = true
-    setTimeout(() => {
-      page = id
-      loading = false
-    }, 300)
-  }
+  if (id === page) return  // ← ya estamos aquí, no hacer nada
+
+  loading = true
+  setTimeout(() => {
+    page = id
+    loading = false
+  }, 300)
+}
 </script>
 
 <div class="layout">

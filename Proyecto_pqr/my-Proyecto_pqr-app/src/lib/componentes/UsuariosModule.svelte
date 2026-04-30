@@ -73,6 +73,7 @@
   }
  
   onMount(async () => {
+    console.log('UsuariosModule montado')  // ← ¿aparece dos veces?
     loading = true
     try {
       const [uData, rData] = await Promise.allSettled([api.getUsuarios(), api.getRoles()])
