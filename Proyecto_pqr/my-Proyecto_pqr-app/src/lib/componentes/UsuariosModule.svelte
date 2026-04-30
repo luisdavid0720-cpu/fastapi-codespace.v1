@@ -77,8 +77,10 @@
     loading = true
     try {
       const [uData, rData] = await Promise.allSettled([api.getUsuarios(), api.getRoles()])
+      console.log('rData:', rData) 
       usuarios = uData.value?.resultado || uData.value || []
       roles    = rData.value?.resultado || rData.value || []
+      console.log('roles:', roles)  
     } catch(e) { console.error(e) }
     finally { loading = false }
   })
@@ -317,7 +319,7 @@
               tipo="select"
               bind:valor={formIdRol}
               placeholder="Seleccionar..."
-              opciones={roles.map(r => ({ value: r.id_rol, label: r.nombre || r.nombre_rol }))}
+              opciones={(Array.isArray(roles) ? roles : []).map(r => ({ value: r.id_rol, label: r.nombre || r.nombre_rol }))}
             />
             <FormField
               label="Carrera"
