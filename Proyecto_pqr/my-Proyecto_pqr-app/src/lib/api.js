@@ -168,7 +168,7 @@ export async function getTiposPqr() {
 }
 
 export async function getRoles() {
-  const res = await fetch(`${API}/get_rols/`)
+  const res = await fetch(`${API}/get_roles/`)
   return res.json()
 }
 

@@ -17,11 +17,9 @@
   let editForm = $state(null)
   let generando = $state(false)
 
-  // Modal de confirmación de eliminación
   let modalEliminarAbierto = $state(false)
   let pqrAEliminar = $state(null)
 
-  // Vista coordinador
   let coordForm = $state({ id_estado: '', respuesta: '', id_responsable: '' })
 
   // Filtros
@@ -34,10 +32,13 @@
   let tipos = $state([]), estados = $state([]), departamentos = $state([])
   let prioridades = $state([]), usuarios = $state([])
 
-  // Valores para FormField
   let formDescripcion    = $state('')
   let formIdTipo         = $state('')
   let formIdDepartamento = $state('')
+
+  // Paginación
+  let currentPage  = $state(1)
+  const rowsPerPage = 10
 
   function defaultForm() {
     formDescripcion    = ''
@@ -66,76 +67,54 @@
       .sort((a, b) => new Date(b.fecha) - new Date(a.fecha))
   )
 
+  // Paginación derivada
+  let totalPages = $derived(Math.max(1, Math.ceil(filtered.length / rowsPerPage)))
+  let paginated  = $derived(filtered.slice((currentPage - 1) * rowsPerPage, currentPage * rowsPerPage))
+
+  // Resetear página cuando cambian filtros
+  $effect(() => {
+    searchText; filterEstado; filterTipo; filterDesde; filterHasta
+    currentPage = 1
+  })
+
   onMount(async () => {
-  loading = true
-  try {
-    const [p, t, e, d, pr, u] = await Promise.allSettled([
-      api.getPqrs(),
-      api.getTiposPqr(),
-      api.getEstados(),
-      api.getDepartamentos(),
-      api.getPrioridades(),
-      api.getUsuarios()
-    ])
+    loading = true
+    try {
+      const [p, t, e, d, pr, u] = await Promise.allSettled([
+        api.getPqrs(),
+        api.getTiposPqr(),
+        api.getEstados(),
+        api.getDepartamentos(),
+        api.getPrioridades(),
+        api.getUsuarios()
+      ])
 
-    console.log('PQRs:', p)
-    console.log('Tipos:', t)
-    console.log('Estados:', e)
-    console.log('Departamentos:', d)
-    console.log('Prioridades:', pr)
-    console.log('Usuarios:', u)
+      pqrs = p.status === 'fulfilled'
+        ? (Array.isArray(p.value) ? p.value : p.value?.resultado || [])
+        : []
 
-    pqrs = p.status === 'fulfilled'
-  ? (Array.isArray(p.value) ? p.value : p.value?.resultado || [])
-  : []
+      tipos         = t.status === 'fulfilled'  ? (t.value?.resultado  || t.value  || []) : []
+      estados       = e.status === 'fulfilled'  ? (e.value?.resultado  || e.value  || []) : []
+      departamentos = d.status === 'fulfilled'  ? (d.value?.resultado  || d.value  || []) : []
+      prioridades   = pr.status === 'fulfilled' ? (pr.value?.resultado || pr.value || []) : []
+      usuarios      = u.status === 'fulfilled'  ? (u.value?.resultado  || u.value  || []) : []
 
-    tipos = t.status === 'fulfilled'
-      ? (t.value?.resultado || t.value || [])
-      : []
+    } catch (e) {
+      console.error('Error cargando datos:', e)
+      showToast('❌ Error cargando datos')
+    } finally {
+      loading = false
+    }
+  })
 
-    estados = e.status === 'fulfilled'
-      ? (e.value?.resultado || e.value || [])
-      : []
-
-    departamentos = d.status === 'fulfilled'
-      ? (d.value?.resultado || d.value || [])
-      : []
-
-    prioridades = pr.status === 'fulfilled'
-      ? (pr.value?.resultado || pr.value || [])
-      : []
-
-    usuarios = u.status === 'fulfilled'
-      ? (u.value?.resultado || u.value || [])
-      : []
-
-  } catch (e) {
-    console.error('Error cargando datos:', e)
-    showToast('❌ Error cargando datos')
-  } finally {
-    loading = false
-  }
-})
-
-  function openCreate() {
-    defaultForm()
-    view = 'form'
-  }
-
-  function openDetail(pqr) {
-    selected = pqr
-    view = 'detail'
-  }
+  function openCreate() { defaultForm(); view = 'form' }
+  function openDetail(pqr) { selected = pqr; view = 'detail' }
 
   function openEdit(pqr) {
     editForm = {
-      id_pqr: pqr.id_pqr,
-      descripcion: pqr.descripcion,
-      fecha: pqr.fecha,
-      id_usuario: pqr.id_usuario,
-      id_tipo: pqr.id_tipo,
-      id_departamento: pqr.id_departamento,
-      id_estado: pqr.id_estado,
+      id_pqr: pqr.id_pqr, descripcion: pqr.descripcion, fecha: pqr.fecha,
+      id_usuario: pqr.id_usuario, id_tipo: pqr.id_tipo,
+      id_departamento: pqr.id_departamento, id_estado: pqr.id_estado,
       id_prioridad: pqr.id_prioridad
     }
     view = 'edit'
@@ -143,139 +122,90 @@
 
   function openGestion(pqr) {
     selected = pqr
-    coordForm = {
-      id_estado: pqr.id_estado,
-      respuesta: '',
-      id_responsable: ''
-    }
+    coordForm = { id_estado: pqr.id_estado, respuesta: '', id_responsable: '' }
     view = 'gestion'
   }
 
-  function pedirEliminar(pqr) {
-    pqrAEliminar = pqr
-    modalEliminarAbierto = true
-  }
+  function pedirEliminar(pqr) { pqrAEliminar = pqr; modalEliminarAbierto = true }
 
   async function saveEdit() {
     if (!editForm.descripcion || !editForm.id_tipo || !editForm.id_departamento) {
-      showToast('⚠️ Completa todos los campos')
-      return
+      showToast('⚠️ Completa todos los campos'); return
     }
-
     saving = true
     try {
       await api.updatePqr(editForm.id_pqr, editForm)
       const data = await api.getPqrs()
       pqrs = Array.isArray(data) ? data : data.data || []
-      goto('/pqrs')
+      view = 'list'
       showToast('✅ PQR actualizada')
-    } catch (e) {
-      console.error(e)
-      showToast('❌ Error al actualizar')
-    }
+    } catch (e) { console.error(e); showToast('❌ Error al actualizar') }
     saving = false
   }
 
   async function deletePqr() {
     if (!pqrAEliminar) return
-
     deleting = true
     try {
       await api.deletePqr(pqrAEliminar.id_pqr)
       pqrs = pqrs.filter(p => p.id_pqr !== pqrAEliminar.id_pqr)
       showToast('🗑️ PQR eliminada')
       pqrAEliminar = null
-    } catch (e) {
-      console.error(e)
-      showToast('❌ Error al eliminar')
-    }
+    } catch (e) { console.error(e); showToast('❌ Error al eliminar') }
     deleting = false
   }
 
   async function savePqr() {
-  if (!formDescripcion || !formIdTipo || !formIdDepartamento) {
-    showToast('⚠️ Completa todos los campos')
-    return
-  }
-
-  saving = true
-  try {
-    const payload = {
-      descripcion: formDescripcion,
-      id_tipo: formIdTipo,
-      id_departamento: formIdDepartamento,
-      id_pqr: 0,
-      fecha: new Date().toISOString(),
-      id_usuario: $currentUser?.id_usuario,
-      id_estado: 1,
-      id_prioridad: 1
+    if (!formDescripcion || !formIdTipo || !formIdDepartamento) {
+      showToast('⚠️ Completa todos los campos'); return
     }
-
-    await api.createPqr(payload)
-
-    // 🔥 IMPORTANTE: evitar error de .filter
-    const data = await api.getPqrs()
-    pqrs = Array.isArray(data) ? data : data.resultado || []
-
-    showToast('✅ PQR enviada con éxito')
-
-    // 🔥 REDIRECCIÓN REAL
-    goto('/pqrs')
-
-  } catch (e) {
-    console.error(e)
-    showToast('❌ Error al enviar')
+    saving = true
+    try {
+      const payload = {
+        descripcion: formDescripcion, id_tipo: formIdTipo,
+        id_departamento: formIdDepartamento, id_pqr: 0,
+        fecha: new Date().toISOString(), id_usuario: $currentUser?.id_usuario,
+        id_estado: 1, id_prioridad: 1
+      }
+      await api.createPqr(payload)
+      const data = await api.getPqrs()
+      pqrs = Array.isArray(data) ? data : data.resultado || []
+      showToast('✅ PQR enviada con éxito')
+      view = 'list'
+    } catch (e) { console.error(e); showToast('❌ Error al enviar') }
+    saving = false
   }
-
-  saving = false
-}
 
   async function saveGestion() {
-  if (!coordForm.id_estado) {
-    showToast('⚠️ Selecciona un estado')
-    return
+    if (!coordForm.id_estado) { showToast('⚠️ Selecciona un estado'); return }
+    saving = true
+    try {
+      await api.updateEstadoPqr(selected.id_pqr, coordForm.id_estado)
+      if (coordForm.id_responsable) {
+        await api.createAsignacion({
+          id_asignacion: 0, id_pqr: Number(selected.id_pqr),
+          id_usuario: Number(coordForm.id_responsable),
+          fecha_asignacion: new Date().toISOString().slice(0, 10)
+        })
+      }
+      if (coordForm.respuesta.trim()) {
+        await api.createRespuesta({
+          id_pqr: selected.id_pqr, id_usuario: $currentUser?.id_usuario,
+          contenido: coordForm.respuesta.trim(), fecha: new Date().toISOString()
+        })
+      }
+      const data = await api.getPqrs()
+      pqrs = Array.isArray(data) ? data : data.resultado || []
+      view = 'list'
+      showToast('✅ PQR gestionada correctamente')
+    } catch (e) { console.error(e); showToast('❌ Error al guardar') }
+    saving = false
   }
-
-  saving = true
-  try {
-    await api.updateEstadoPqr(selected.id_pqr, coordForm.id_estado)
-
-    if (coordForm.id_responsable) {
-      await api.createAsignacion({
-        id_asignacion: 0,
-        id_pqr: Number(selected.id_pqr),
-        id_usuario: Number(coordForm.id_responsable),
-        fecha_asignacion: new Date().toISOString().slice(0, 10)
-      })
-    }
-
-    if (coordForm.respuesta.trim()) {
-      await api.createRespuesta({
-        id_pqr: selected.id_pqr,
-        id_usuario: $currentUser?.id_usuario,
-        contenido: coordForm.respuesta.trim(),
-        fecha: new Date().toISOString()
-      })
-    }
-
-    const data = await api.getPqrs()
-    pqrs = Array.isArray(data) ? data : data.resultado || []
-    view = 'list'
-    showToast('✅ PQR gestionada correctamente')
-  } catch (e) {
-    console.error(e)
-    showToast('❌ Error al guardar')
-  }
-
-  saving = false
-}
 
   function limpiarFiltros() {
-    searchText = ''
-    filterEstado = ''
-    filterTipo = ''
-    filterDesde = ''
-    filterHasta = ''
+    searchText = ''; filterEstado = ''; filterTipo = ''
+    filterDesde = ''; filterHasta = ''
+    currentPage = 1
   }
 
   async function descargarPDF() {
@@ -295,69 +225,50 @@
           const r = new FileReader()
           r.onload = () => res(r.result)
           fetch(window.location.origin + '/logo_cul.png')
-            .then(r => r.blob())
-            .then(b => r.readAsDataURL(b))
+            .then(r => r.blob()).then(b => r.readAsDataURL(b))
         })
         doc.addImage(b64, 'PNG', 6, 3, 20, 20)
       } catch (_) {}
 
       doc.setTextColor(255,255,255)
-      doc.setFontSize(13)
-      doc.setFont('helvetica','bold')
+      doc.setFontSize(13); doc.setFont('helvetica','bold')
       doc.text('Corporación Universitaria Latinoamericana', 30, 11)
-
-      doc.setFontSize(9)
-      doc.setFont('helvetica','normal')
+      doc.setFontSize(9); doc.setFont('helvetica','normal')
       doc.setTextColor(148,163,184)
       doc.text('Sistema PQRS — Gestión de Solicitudes', 30, 18)
+      doc.text(`Generado: ${new Date().toLocaleString('es-CO')}`, W - 14, 18, { align: 'right' })
 
-      const ahora = new Date().toLocaleString('es-CO')
-      doc.text(`Generado: ${ahora}`, W - 14, 18, { align: 'right' })
-
-      doc.setTextColor(100,116,139)
-      doc.setFontSize(7.5)
+      doc.setTextColor(100,116,139); doc.setFontSize(7.5)
       const fl = []
       if (searchText)   fl.push(`Búsqueda: "${searchText}"`)
       if (filterEstado) fl.push(`Estado: ${getLabelEstado(filterEstado)}`)
       if (filterTipo)   fl.push(`Categoría: ${getLabelTipo(filterTipo)}`)
-
       doc.text(`Filtros: ${fl.length ? fl.join('  ·  ') : 'Sin filtros'}   —   Total: ${filtered.length}`, 14, 33)
 
       auto(doc, {
         startY: 37,
         head: [['ID','Descripción','Categoría','Usuario','Departamento','Prioridad','Estado','Fecha']],
         body: filtered.map(p => [
-          `#${p.id_pqr}`,
-          p.descripcion?.slice(0,72) || '—',
-          getLabelTipo(p.id_tipo),
-          getLabelUsuario(p.id_usuario),
-          getLabelDep(p.id_departamento),
-          getLabelPrioridad(p.id_prioridad),
-          getLabelEstado(p.id_estado),
-          new Date(p.fecha).toLocaleDateString('es-CO')
+          `#${p.id_pqr}`, p.descripcion?.slice(0,72) || '—',
+          getLabelTipo(p.id_tipo), getLabelUsuario(p.id_usuario),
+          getLabelDep(p.id_departamento), getLabelPrioridad(p.id_prioridad),
+          getLabelEstado(p.id_estado), new Date(p.fecha).toLocaleDateString('es-CO')
         ]),
         headStyles: { fillColor:[37,99,235], textColor:255, fontSize:8.5, fontStyle:'bold' },
         bodyStyles: { fontSize:8, textColor:[51,65,85] },
         alternateRowStyles: { fillColor:[248,250,252] },
         margin: { left:14, right:14 },
         didDrawPage: ({ pageNumber }) => {
-          doc.setFontSize(7)
-          doc.setTextColor(148,163,184)
+          doc.setFontSize(7); doc.setTextColor(148,163,184)
           doc.text(`Página ${pageNumber} de ${doc.internal.getNumberOfPages()}`, W/2, 205, { align:'center' })
         }
       })
-
       doc.save(`pqrs_reporte_${new Date().toISOString().slice(0,10)}.pdf`)
-    } catch (e) {
-      console.error(e)
-    }
+    } catch (e) { console.error(e) }
     generando = false
   }
 
-  function showToast(msg) {
-    toastMsg = msg
-    setTimeout(() => toastMsg = '', 3000)
-  }
+  function showToast(msg) { toastMsg = msg; setTimeout(() => toastMsg = '', 3000) }
 
   const getLabelEstado    = (id) => estados.find(e => e.id_estado == id)?.nombre || 'PENDIENTE'
   const getLabelTipo      = (id) => tipos.find(t => t.id_tipo == id)?.nombre || '—'
@@ -420,23 +331,14 @@
     <div class="filters-card">
       <p class="filters-title">Filtros del reporte</p>
       <div class="filters-grid">
-        <FormField
-          label="Búsqueda"
-          tipo="text"
-          bind:valor={searchText}
-          placeholder="Palabra clave..."
-        />
+        <FormField label="Búsqueda" tipo="text" bind:valor={searchText} placeholder="Palabra clave..." />
         {#if isAdmin || isCoord}
           <FormField
-            label="Estado"
-            tipo="select"
-            bind:valor={filterEstado}
+            label="Estado" tipo="select" bind:valor={filterEstado}
             opciones={[{ value: '', label: 'Todos los estados' }, ...estados.map(e => ({ value: e.id_estado, label: e.nombre }))]}
           />
           <FormField
-            label="Categoría"
-            tipo="select"
-            bind:valor={filterTipo}
+            label="Categoría" tipo="select" bind:valor={filterTipo}
             opciones={[{ value: '', label: 'Todas las categorías' }, ...tipos.map(t => ({ value: t.id_tipo, label: t.nombre }))]}
           />
           {#if isAdmin}
@@ -451,12 +353,16 @@
     </div>
 
     <div class="results-bar">
-      <span class="results-count"><strong>{filtered.length}</strong> {filtered.length === 1 ? 'solicitud encontrada' : 'solicitudes encontradas'}</span>
-      {#if filtered.length === 0 && !loading}<span class="no-results-hint">Ajusta los filtros para ver resultados</span>{/if}
+      <span class="results-count">
+        <strong>{filtered.length}</strong> {filtered.length === 1 ? 'solicitud encontrada' : 'solicitudes encontradas'}
+      </span>
+      {#if filtered.length === 0 && !loading}
+        <span class="no-results-hint">Ajusta los filtros para ver resultados</span>
+      {/if}
     </div>
 
     {#if loading}
-      <div class="loader-wrap"><p>Sincronizando...</p></div>
+      <div class="loader-wrap"><p>Cargando solicitudes...</p></div>
     {:else}
       <div class="table-container">
         <table>
@@ -468,16 +374,14 @@
             </tr>
           </thead>
           <tbody>
-            {#each filtered as pqr}
+            {#each paginated as pqr}
               <tr>
                 <td><span class="id-tag">#{pqr.id_pqr}</span></td>
                 <td class="text-main">{pqr.descripcion?.slice(0,40)}...</td>
                 <td><span class="type-chip">{getLabelTipo(pqr.id_tipo)}</span></td>
                 {#if isAdmin || isCoord}
                   <td class="text-usuario">{getLabelUsuario(pqr.id_usuario)}</td>
-                  <td>
-                    <Badge texto={getLabelEstado(pqr.id_estado)} id={pqr.id_estado} />
-                  </td>
+                  <td><Badge texto={getLabelEstado(pqr.id_estado)} id={pqr.id_estado} /></td>
                 {/if}
                 <td class="date-text">{new Date(pqr.fecha).toLocaleDateString('es-CO')}</td>
                 <td class="text-center actions-cell">
@@ -503,11 +407,22 @@
                 </td>
               </tr>
             {/each}
-            {#if filtered.length === 0}
+            {#if paginated.length === 0}
               <tr><td colspan="7" class="empty-row">No se encontraron solicitudes</td></tr>
             {/if}
           </tbody>
         </table>
+
+        <!-- Paginación -->
+        {#if totalPages > 1}
+          <div class="pagination">
+            <button class="page-btn" onclick={() => currentPage = 1} disabled={currentPage === 1}>««</button>
+            <button class="page-btn" onclick={() => currentPage--} disabled={currentPage === 1}>‹ Anterior</button>
+            <span class="page-info">Página <strong>{currentPage}</strong> de <strong>{totalPages}</strong></span>
+            <button class="page-btn" onclick={() => currentPage++} disabled={currentPage === totalPages}>Siguiente ›</button>
+            <button class="page-btn" onclick={() => currentPage = totalPages} disabled={currentPage === totalPages}>»»</button>
+          </div>
+        {/if}
       </div>
     {/if}
 
@@ -555,36 +470,16 @@
             <p class="section-label">Descripción de la solicitud</p>
             <div class="content-box">{selected.descripcion}</div>
           </div>
-
           <h3 class="section-divider">Gestión del Coordinador</h3>
-
-          <FormField
-            label="Cambiar estado"
-            tipo="select"
-            bind:valor={coordForm.id_estado}
+          <FormField label="Cambiar estado" tipo="select" bind:valor={coordForm.id_estado}
             placeholder="Selecciona un estado..."
-            opciones={estados.map(e => ({ value: e.id_estado, label: e.nombre }))}
-          />
-
-          <FormField
-            label="Asignar responsable"
-            tipo="select"
-            bind:valor={coordForm.id_responsable}
+            opciones={estados.map(e => ({ value: e.id_estado, label: e.nombre }))} />
+          <FormField label="Asignar responsable" tipo="select" bind:valor={coordForm.id_responsable}
             placeholder="Selecciona un responsable..."
-            opciones={usuarios.map(u => ({
-              value: u.id_usuario,
-              label: u.nombre || u.correo || `Usuario ${u.id_usuario}`
-            }))}
-          />
-
-          <FormField
-            label="Respuesta / Comentario"
-            tipo="textarea"
-            bind:valor={coordForm.respuesta}
+            opciones={usuarios.map(u => ({ value: u.id_usuario, label: u.nombre || u.correo || `Usuario ${u.id_usuario}` }))} />
+          <FormField label="Respuesta / Comentario" tipo="textarea" bind:valor={coordForm.respuesta}
             placeholder="Escribe una respuesta o comentario para esta solicitud..."
-            hint="Campo opcional"
-          />
-
+            hint="Campo opcional" />
           <button class="btn-send" onclick={saveGestion} disabled={saving}>
             {saving ? 'Guardando...' : '✅ Guardar gestión'}
           </button>
@@ -597,41 +492,18 @@
       <div class="card animate-up">
         <div class="form-padding">
           <h2 class="card-title">Editar PQR #{editForm.id_pqr}</h2>
-          <FormField
-            label="Descripción"
-            tipo="textarea"
-            bind:valor={editForm.descripcion}
-            placeholder="Descripción de la solicitud..."
-          />
+          <FormField label="Descripción" tipo="textarea" bind:valor={editForm.descripcion} placeholder="Descripción de la solicitud..." />
           <div class="field-group">
-            <FormField
-              label="Tipo"
-              tipo="select"
-              bind:valor={editForm.id_tipo}
-              placeholder="Selecciona..."
-              opciones={tipos.map(t => ({ value: t.id_tipo, label: t.nombre }))}
-            />
-            <FormField
-              label="Departamento"
-              tipo="select"
-              bind:valor={editForm.id_departamento}
-              placeholder="Selecciona..."
-              opciones={departamentos.map(d => ({ value: d.id_departamento, label: d.nombre }))}
-            />
+            <FormField label="Tipo" tipo="select" bind:valor={editForm.id_tipo} placeholder="Selecciona..."
+              opciones={tipos.map(t => ({ value: t.id_tipo, label: t.nombre }))} />
+            <FormField label="Departamento" tipo="select" bind:valor={editForm.id_departamento} placeholder="Selecciona..."
+              opciones={departamentos.map(d => ({ value: d.id_departamento, label: d.nombre }))} />
           </div>
           <div class="field-group">
-            <FormField
-              label="Estado"
-              tipo="select"
-              bind:valor={editForm.id_estado}
-              opciones={estados.map(e => ({ value: e.id_estado, label: e.nombre }))}
-            />
-            <FormField
-              label="Prioridad"
-              tipo="select"
-              bind:valor={editForm.id_prioridad}
-              opciones={prioridades.map(p => ({ value: p.id_prioridad, label: p.nombre }))}
-            />
+            <FormField label="Estado" tipo="select" bind:valor={editForm.id_estado}
+              opciones={estados.map(e => ({ value: e.id_estado, label: e.nombre }))} />
+            <FormField label="Prioridad" tipo="select" bind:valor={editForm.id_prioridad}
+              opciones={prioridades.map(p => ({ value: p.id_prioridad, label: p.nombre }))} />
           </div>
           <button class="btn-send" onclick={saveEdit} disabled={saving}>
             {saving ? 'Guardando...' : '💾 Guardar cambios'}
@@ -645,30 +517,13 @@
       <div class="card animate-up">
         <div class="form-padding">
           <h2 class="card-title">Radicar nueva PQR</h2>
-          <FormField
-            label="¿Qué sucedió? (Descripción)"
-            tipo="textarea"
-            bind:valor={formDescripcion}
-            placeholder="Explica detalladamente tu solicitud..."
-            required={true}
-          />
+          <FormField label="¿Qué sucedió? (Descripción)" tipo="textarea" bind:valor={formDescripcion}
+            placeholder="Explica detalladamente tu solicitud..." required={true} />
           <div class="field-group">
-            <FormField
-              label="Tipo"
-              tipo="select"
-              bind:valor={formIdTipo}
-              placeholder="Selecciona..."
-              opciones={tipos.map(t => ({ value: t.id_tipo, label: t.nombre }))}
-              required={true}
-            />
-            <FormField
-              label="Departamento"
-              tipo="select"
-              bind:valor={formIdDepartamento}
-              placeholder="Selecciona..."
-              opciones={departamentos.map(d => ({ value: d.id_departamento, label: d.nombre }))}
-              required={true}
-            />
+            <FormField label="Tipo" tipo="select" bind:valor={formIdTipo} placeholder="Selecciona..."
+              opciones={tipos.map(t => ({ value: t.id_tipo, label: t.nombre }))} required={true} />
+            <FormField label="Departamento" tipo="select" bind:valor={formIdDepartamento} placeholder="Selecciona..."
+              opciones={departamentos.map(d => ({ value: d.id_departamento, label: d.nombre }))} required={true} />
           </div>
           <button class="btn-send" onclick={savePqr} disabled={saving}>
             {saving ? 'Procesando...' : '🚀 Enviar Solicitud'}
@@ -715,6 +570,12 @@
   .text-main { max-width: 300px; }
   .text-usuario { font-weight: 600; color: #1e293b; }
   .date-text { color: #64748b; font-size: 12px; white-space: nowrap; }
+
+  .pagination { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 16px; border-top: 1px solid #f1f5f9; }
+  .page-btn { background: white; border: 1.5px solid #e2e8f0; padding: 8px 14px; border-radius: 10px; font-size: 13px; font-weight: 600; cursor: pointer; color: #475569; transition: 0.2s; font-family: inherit; }
+  .page-btn:hover:not(:disabled) { background: #2563eb; color: white; border-color: #2563eb; }
+  .page-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .page-info { font-size: 13px; color: #64748b; padding: 0 8px; }
 
   .actions-cell { display: flex; align-items: center; justify-content: center; gap: 6px; }
   .action-btn { width: 32px; height: 32px; border: none; border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all 0.15s; }
@@ -768,5 +629,6 @@
     .form-padding, .card-top, .card-body { padding: 24px; }
     .field-group { grid-template-columns: 1fr; }
     .info-grid { grid-template-columns: 1fr; }
+    .pagination { flex-wrap: wrap; }
   }
 </style>
