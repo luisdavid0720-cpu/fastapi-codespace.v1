@@ -377,7 +377,7 @@
             {#each paginated as pqr}
               <tr>
                 <td><span class="id-tag">#{pqr.id_pqr}</span></td>
-                <td class="text-main">{pqr.descripcion?.slice(0,40)}...</td>
+                <td class="text-main">{pqr.descripcion?.slice(0,40)}</td>
                 <td><span class="type-chip">{getLabelTipo(pqr.id_tipo)}</span></td>
                 {#if isAdmin || isCoord}
                   <td class="text-usuario">{getLabelUsuario(pqr.id_usuario)}</td>
