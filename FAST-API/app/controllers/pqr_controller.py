@@ -232,6 +232,9 @@ class PqrController:
             estado         = row[4] or "—"
             tipo           = row[5] or "—"
 
+            # Eliminar registros relacionados primero para evitar ForeignKeyViolation
+            cursor.execute("DELETE FROM asignacion_responsable WHERE id_pqr = %s", (pqr_id,))
+            cursor.execute("DELETE FROM respuesta WHERE id_pqr = %s", (pqr_id,))
             cursor.execute("DELETE FROM pqr WHERE id_pqr = %s", (pqr_id,))
             conn.commit()
 
