@@ -13,10 +13,10 @@ conf = ConnectionConfig(
     MAIL_USERNAME="luisdavid0720@gmail.com",
     MAIL_PASSWORD="kupcedwwugvqhwvc",
     MAIL_FROM="luisdavid0720@gmail.com",
-    MAIL_PORT=465,
+    MAIL_PORT=587,
     MAIL_SERVER="smtp.gmail.com",
-    MAIL_STARTTLS=False,
-    MAIL_SSL_TLS=True,
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
     USE_CREDENTIALS=True
 )
 
@@ -270,10 +270,10 @@ def notify_asignacion_responsable(
     correo_responsable,
     nombre_responsable,
     id_pqr,
-    nombre_solicitante,
-    tipo,
-    descripcion,
-    prioridad
+    descripcion_pqr,
+    departamento,
+    prioridad,
+    fecha_asignacion
 ):
     body = f"""
     <p>Hola <strong>{nombre_responsable}</strong>.</p>
@@ -282,10 +282,10 @@ def notify_asignacion_responsable(
 
     <table style="width:100%;border-collapse:collapse;">
         <tr><td><strong>Radicado:</strong></td><td>#{id_pqr}</td></tr>
-        <tr><td><strong>Solicitante:</strong></td><td>{nombre_solicitante}</td></tr>
-        <tr><td><strong>Tipo:</strong></td><td>{tipo}</td></tr>
+        <tr><td><strong>Departamento:</strong></td><td>{departamento}</td></tr>
         <tr><td><strong>Prioridad:</strong></td><td>{prioridad}</td></tr>
-        <tr><td><strong>Descripción:</strong></td><td>{descripcion}</td></tr>
+        <tr><td><strong>Fecha asignación:</strong></td><td>{fecha_asignacion}</td></tr>
+        <tr><td><strong>Descripción:</strong></td><td>{descripcion_pqr}</td></tr>
     </table>
 
     <p style="margin-top:20px;color:#7c3aed;">
