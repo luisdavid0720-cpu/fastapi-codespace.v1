@@ -177,15 +177,16 @@ def notify_respuesta_pqr(
     correo_usuario,
     nombre_usuario,
     id_pqr,
-    respuesta
+    mensaje_respuesta,
+    nombre_responsable="Coordinador"
 ):
     body = f"""
     <p>Hola <strong>{nombre_usuario}</strong>.</p>
 
-    <p>Tu solicitud <strong>#{id_pqr}</strong> recibió una respuesta del coordinador.</p>
+    <p>Tu solicitud <strong>#{id_pqr}</strong> recibió una respuesta de <strong>{nombre_responsable}</strong>.</p>
 
     <div style="background:#f8fafc;padding:16px;border-radius:8px;border-left:4px solid #2563eb;margin-top:16px;">
-        <p style="margin:0;color:#334155;">{respuesta}</p>
+        <p style="margin:0;color:#334155;">{mensaje_respuesta}</p>
     </div>
 
     <p style="margin-top:20px;color:#2563eb;">
