@@ -13,11 +13,12 @@ conf = ConnectionConfig(
     MAIL_USERNAME="luisdavid0720@gmail.com",
     MAIL_PASSWORD="kupcedwwugvqhwvc",
     MAIL_FROM="luisdavid0720@gmail.com",
-    MAIL_PORT=465,
+    MAIL_PORT=587,
     MAIL_SERVER="smtp.gmail.com",
-    MAIL_STARTTLS=False,
-    MAIL_SSL_TLS=True,
-    USE_CREDENTIALS=True
+    MAIL_STARTTLS=True,
+    MAIL_SSL_TLS=False,
+    USE_CREDENTIALS=True,
+    VALIDATE_CERTS=True
 )
 
 fm = FastMail(conf)
