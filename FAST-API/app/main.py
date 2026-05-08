@@ -19,6 +19,17 @@ from routes.asignacion_responsable_routes import router as asignacion_responsabl
 
 app = FastAPI()
 
+import socket
+
+@app.get("/test-smtp")
+def test_smtp():
+    try:
+        socket.setdefaulttimeout(5)
+        socket.socket(socket.AF_INET, socket.SOCK_STREAM).connect(("smtp.gmail.com", 587))
+        return {"resultado": "Puerto 587 ABIERTO"}
+    except Exception as e:
+        return {"resultado": f"Puerto 587 BLOQUEADO: {str(e)}"}
+
 origins = [
     "http://localhost",
     "http://localhost:5173",
