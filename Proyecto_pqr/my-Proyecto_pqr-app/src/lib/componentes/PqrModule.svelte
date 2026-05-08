@@ -136,7 +136,7 @@
     try {
       await api.updatePqr(editForm.id_pqr, editForm)
       const data = await api.getPqrs()
-      pqrs = Array.isArray(data) ? data : data.data || []
+      pqrs = Array.isArray(data) ? data : data.resultado || []
       view = 'list'
       showToast('✅ PQR actualizada')
     } catch (e) { console.error(e); showToast('❌ Error al actualizar') }
