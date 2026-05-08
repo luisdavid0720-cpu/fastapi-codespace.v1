@@ -191,7 +191,7 @@
       if (coordForm.respuesta.trim()) {
         await api.createRespuesta({
           id_pqr: selected.id_pqr, id_usuario: $currentUser?.id_usuario,
-          contenido: coordForm.respuesta.trim(), fecha: new Date().toISOString()
+          mensaje: coordForm.respuesta.trim(), fecha: new Date().toISOString()
         })
       }
       const data = await api.getPqrs()
