@@ -81,3 +81,5 @@ npm install
 
 CORRER EL SVELTE 
 npm run dev
+
+npm install @vincjo/datatables
