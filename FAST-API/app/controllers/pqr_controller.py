@@ -62,21 +62,26 @@ class PqrController:
             nuevo_id = cursor.fetchone()[0]
             conn.commit()
 
-            tipo  = self._get_nombre(cursor, "tipo_pqr",    "id_tipo",    "nombre", pqr.id_tipo)
-            depto = self._get_nombre(cursor, "departamento", "id_departamento", "nombre", pqr.id_departamento)
+            tipo  = self._get_nombre(cursor, "tipo_pqr",     "id_tipo",          "nombre", pqr.id_tipo)
+            depto = self._get_nombre(cursor, "departamento",  "id_departamento",  "nombre", pqr.id_departamento)
 
-            notify_pqr_creada(
-                correo_usuario="luisdavid0720@gmail.com",
-                nombre_usuario="Luis Angarita",
-                id_pqr=nuevo_id,
-                descripcion=pqr.descripcion,
-                tipo=tipo,
-                departamento=depto,
-                fecha=str(pqr.fecha)
-            )
+            try:
+                notify_pqr_creada(
+                    correo_usuario="luisdavid0720@gmail.com",
+                    nombre_usuario="Luis Angarita",
+                    id_pqr=nuevo_id,
+                    descripcion=pqr.descripcion,
+                    tipo=tipo,
+                    departamento=depto,
+                    fecha=str(pqr.fecha)
+                )
+            except Exception as email_err:
+                print(f"[WARN] No se pudo enviar correo de creación: {email_err}")
 
             return {"resultado": "PQR creada", "id_pqr": nuevo_id}
 
+        except HTTPException:
+            raise
         except Exception as e:
             if conn:
                 conn.rollback()
@@ -172,16 +177,21 @@ class PqrController:
             estado_nuevo = row2[0] if row2 else "Actualizado"
 
             if estado_anterior != estado_nuevo:
-                notify_cambio_estado_pqr(
-                    correo_usuario="luisdavid0720@gmail.com",
-                    nombre_usuario="Luis Angarita",
-                    id_pqr=pqr_id,
-                    estado_anterior=estado_anterior,
-                    estado_nuevo=estado_nuevo
-                )
+                try:
+                    notify_cambio_estado_pqr(
+                        correo_usuario="luisdavid0720@gmail.com",
+                        nombre_usuario="Luis Angarita",
+                        id_pqr=pqr_id,
+                        estado_anterior=estado_anterior,
+                        estado_nuevo=estado_nuevo
+                    )
+                except Exception as email_err:
+                    print(f"[WARN] No se pudo enviar correo de cambio de estado: {email_err}")
 
             return {"resultado": "PQR actualizada"}
 
+        except HTTPException:
+            raise
         except Exception as e:
             if conn:
                 conn.rollback()
@@ -191,7 +201,7 @@ class PqrController:
                 conn.close()
 
     # =====================================================
-    # ELIMINAR PQR — con notificación
+    # ELIMINAR PQR
     # =====================================================
 
     def delete_pqr(self, pqr_id: int):
@@ -200,7 +210,6 @@ class PqrController:
             conn = get_db_connection()
             cursor = conn.cursor()
 
-            # Obtener datos antes de eliminar para el correo
             cursor.execute("""
                 SELECT p.descripcion, p.fecha, u.nombre, u.correo,
                        e.nombre, t.nombre
@@ -216,27 +225,28 @@ class PqrController:
             if not row:
                 raise HTTPException(status_code=404, detail="PQR no encontrada")
 
-            descripcion   = row[0]
-            fecha         = row[1]
+            descripcion    = row[0]
+            fecha          = row[1]
             nombre_usuario = row[2] or "Usuario"
             correo_usuario = row[3] or "luisdavid0720@gmail.com"
-            estado        = row[4] or "—"
-            tipo          = row[5] or "—"
+            estado         = row[4] or "—"
+            tipo           = row[5] or "—"
 
-            # Eliminar
             cursor.execute("DELETE FROM pqr WHERE id_pqr = %s", (pqr_id,))
             conn.commit()
 
-            # Notificar
-            notify_pqr_eliminada(
-                correo_admin="luisdavid0720@gmail.com",
-                id_pqr=pqr_id,
-                descripcion=descripcion,
-                nombre_usuario=nombre_usuario,
-                tipo=tipo,
-                estado=estado,
-                fecha=str(fecha)
-            )
+            try:
+                notify_pqr_eliminada(
+                    correo_admin="luisdavid0720@gmail.com",
+                    id_pqr=pqr_id,
+                    descripcion=descripcion,
+                    nombre_usuario=nombre_usuario,
+                    tipo=tipo,
+                    estado=estado,
+                    fecha=str(fecha)
+                )
+            except Exception as email_err:
+                print(f"[WARN] No se pudo enviar correo de eliminación: {email_err}")
 
             return {"resultado": "PQR eliminada"}
 
@@ -285,16 +295,25 @@ class PqrController:
             row2 = cursor.fetchone()
             estado_nuevo = row2[0] if row2 else "Actualizado"
 
-            notify_cambio_estado_pqr(
-                correo_usuario="luisdavid0720@gmail.com",
-                nombre_usuario="Luis Angarita",
-                id_pqr=pqr_id,
-                estado_anterior=estado_anterior,
-                estado_nuevo=estado_nuevo
-            )
+            try:
+                notify_cambio_estado_pqr(
+                    correo_usuario="luisdavid0720@gmail.com",
+                    nombre_usuario="Luis Angarita",
+                    id_pqr=pqr_id,
+                    estado_anterior=estado_anterior,
+                    estado_nuevo=estado_nuevo
+                )
+            except Exception as email_err:
+                print(f"[WARN] No se pudo enviar correo de cambio de estado: {email_err}")
 
             return {"resultado": "Estado actualizado"}
 
+        except HTTPException:
+            raise
+        except Exception as e:
+            if conn:
+                conn.rollback()
+            raise HTTPException(status_code=500, detail=str(e))
         finally:
             if conn:
                 conn.close()
