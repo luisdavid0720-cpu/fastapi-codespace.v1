@@ -40,10 +40,15 @@
 <div class="layout">
   <aside class="sidebar">
     <div class="sidebar-top">
-    <div class="brand">
-  <img src="/logo_cul.png" alt="CUL" class="brand-logo" />
-  <span class="brand-text">Sistema PQRS</span>
-</div>
+      <div class="brand">
+        <div class="brand-icon">
+          <svg width="28" height="28" viewBox="0 0 32 32" fill="none">
+            <rect width="32" height="32" rx="8" fill="#2563eb"/>
+            <path d="M8 10h16M8 16h10M8 22h13" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>
+          </svg>
+        </div>
+        <span class="brand-text">Sistema PQRS</span>
+      </div>
 
       <nav>
         {#each navItems as item}
@@ -161,22 +166,19 @@
 </div>
 
 <style>
-  .layout { display: flex; height: 100vh; overflow: hidden; width: 100%; }
-
-  .brand-logo { width: 32px; height: 32px; object-fit: contain; flex-shrink: 0; }
+  .layout { display: flex; height: 100vh; overflow: hidden; }
 
   .sidebar {
     width: 240px; min-width: 240px;
     background: linear-gradient(180deg, #000, #111);
     color: #fff; display: flex; flex-direction: column;
-    justify-content: space-between; padding: 24px 16px;
-    height: 100vh; overflow-y: auto;
+    justify-content: space-between; padding: 24px 16px; height: 100vh;
   }
 
   .brand {
     display: flex; align-items: center; gap: 10px;
-    padding: 0 8px 16px; border-bottom: 1px solid rgba(255,255,255,0.1);
-    margin-bottom: 12px;
+    padding: 0 8px 28px; border-bottom: 1px solid rgba(255,255,255,0.1);
+    margin-bottom: 20px;
   }
   .brand-text { font-weight: 700; font-size: 16px; letter-spacing: -0.02em; }
 
@@ -209,7 +211,7 @@
   }
   .btn-logout:hover { background: rgba(255,255,255,0.1); }
 
-  .main { flex: 1; background: #f4f6f9; display: flex; flex-direction: column; height: 100vh; min-width: 0; }
+  .main { flex: 1; background: #f4f6f9; display: flex; flex-direction: column; height: 100vh; }
 
   .full-width-module { width: 100%; box-sizing: border-box; display: flex; flex-direction: column; }
   .scrollable-content { overflow-y: auto; padding: 24px 24px 40px 24px; flex: 1; }
@@ -240,15 +242,8 @@
 
   @media (max-width: 768px) {
     .layout { flex-direction: column; height: auto; overflow: visible; }
-    .sidebar {
-      width: 100%; height: auto; position: static;
-      flex-direction: row; flex-wrap: wrap;
-      align-items: flex-start; padding: 12px 16px; gap: 8px;
-    }
-    .sidebar-top { flex: 1; display: flex; flex-direction: column; gap: 4px; }
-    .sidebar-bottom { display: flex; flex-direction: column; gap: 8px; border-top: none; padding-top: 0; min-width: 160px; }
-    .brand { padding: 0 0 8px 0; margin-bottom: 8px; }
-    .main { height: auto; min-width: unset; }
+    .sidebar { width: 100%; height: auto; position: static; flex-direction: row; flex-wrap: wrap; padding: 16px; gap: 8px; }
+    .main { height: auto; }
     .analitica-wrapper { padding: 12px; height: 80vh; }
     .scrollable-content { padding: 12px; }
   }
