@@ -16,6 +16,7 @@
   let toastMsg = $state('')
   let editForm = $state(null)
   let generando = $state(false)
+  let responsable = $state(null)
 
   let modalEliminarAbierto = $state(false)
   let pqrAEliminar = $state(null)
@@ -108,7 +109,23 @@
   })
 
   function openCreate() { defaultForm(); view = 'form' }
-  function openDetail(pqr) { selected = pqr; view = 'detail' }
+ async function openDetail(pqr) {
+  selected = pqr
+  responsable = null       // null = cargando
+  view = 'detail'
+  try {
+    const res = await api.getAsignacionByPqr(pqr.id_pqr)
+    const idUsuario = res?.id_usuario
+    if (idUsuario) {
+      const u = usuarios.find(u => u.id_usuario == idUsuario)
+      responsable = u ? (u.nombre || u.correo || `#${idUsuario}`) : `#${idUsuario}`
+    } else {
+      responsable = false  // false = sin asignar
+    }
+  } catch {
+    responsable = false    // false = sin asignar
+  }
+}
 
   function openEdit(pqr) {
     editForm = {
@@ -441,7 +458,7 @@
             <p class="section-label">Descripción</p>
             <div class="content-box">{selected.descripcion}</div>
           </div>
-          <div class="info-grid">
+         <div class="info-grid">
             <div class="info-item">
               <span class="label">Categoría</span>
               <span class="value">{getLabelTipo(selected.id_tipo)}</span>
@@ -449,6 +466,18 @@
             <div class="info-item">
               <span class="label">Área Destino</span>
               <span class="value">{getLabelDep(selected.id_departamento)}</span>
+            </div>
+            <div class="info-item">
+              <span class="label">Responsable Asignado</span>
+              <span class="value">
+  {#if responsable === null}
+    <span style="color:#94a3b8; font-size:13px;">Cargando...</span>
+  {:else if responsable === false}
+    Sin asignar
+  {:else}
+    {responsable}
+  {/if}
+</span>
             </div>
           </div>
         </div>
