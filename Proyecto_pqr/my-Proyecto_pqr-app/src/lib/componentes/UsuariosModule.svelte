@@ -147,9 +147,31 @@
     setTimeout(() => toastMsg = '', 3000)
   }
 
-  function sortBy(field) {
-    if (handler) handler.createSort(field)
+ // POR esto:
+let sortField = $state('')
+let sortAsc   = $state(true)
+
+function sortBy(field) {
+  if (!handler) return
+  if (sortField === field) {
+    sortAsc = !sortAsc
+  } else {
+    sortField = field
+    sortAsc = true
   }
+  handler.setRows(
+    [...(handler.getAllRows?.() ?? usuarios)].sort((a, b) => {
+      let va = a[field], vb = b[field]
+      if (va == null) va = ''
+      if (vb == null) vb = ''
+      if (typeof va === 'number' && typeof vb === 'number')
+        return sortAsc ? va - vb : vb - va
+      return sortAsc
+        ? String(va).localeCompare(String(vb), 'es', { sensitivity: 'base' })
+        : String(vb).localeCompare(String(va), 'es', { sensitivity: 'base' })
+    })
+  )
+}
 </script>
 
 <Modal
@@ -218,11 +240,32 @@
         <table>
           <thead>
             <tr>
-              <th onclick={() => sortBy('id_usuario')} class="sortable">ID ↕</th>
-              <th onclick={() => sortBy('nombre')} class="sortable">Usuario ↕</th>
-              <th onclick={() => sortBy('cedula')} class="sortable">Identificación ↕</th>
-              <th onclick={() => sortBy('correo')} class="sortable">Correo ↕</th>
-              <th onclick={() => sortBy('id_rol')} class="sortable">Rol ↕</th>
+              <!-- POR esto: -->
+{#snippet sortIcon(field)}
+  <span class="sort-icon">
+    {#if sortField === field}
+      {sortAsc ? '▲' : '▼'}
+    {:else}
+      <span class="sort-neutral">⇅</span>
+    {/if}
+  </span>
+{/snippet}
+
+<th onclick={() => sortBy('id_usuario')} class="sortable" class:active={sortField==='id_usuario'}>
+  ID {@render sortIcon('id_usuario')}
+</th>
+<th onclick={() => sortBy('nombre')} class="sortable" class:active={sortField==='nombre'}>
+  Usuario {@render sortIcon('nombre')}
+</th>
+<th onclick={() => sortBy('cedula')} class="sortable" class:active={sortField==='cedula'}>
+  Identificación {@render sortIcon('cedula')}
+</th>
+<th onclick={() => sortBy('correo')} class="sortable" class:active={sortField==='correo'}>
+  Correo {@render sortIcon('correo')}
+</th>
+<th onclick={() => sortBy('id_rol')} class="sortable" class:active={sortField==='id_rol'}>
+  Rol {@render sortIcon('id_rol')}
+</th>
               <th class="text-center">Acciones</th>
             </tr>
           </thead>
@@ -393,5 +436,9 @@
     .field-group { grid-template-columns: 1fr; }
     .form-actions { flex-direction: column; }
     .pagination { flex-wrap: wrap; }
+    .sort-icon { margin-left: 5px; font-size: 10px; color: #94a3b8; }
+.sort-neutral { opacity: 0.4; }
+th.active { color: #2563eb; background: #eff6ff; }
+th.active .sort-icon { color: #2563eb; }
   }
 </style>
