@@ -179,7 +179,7 @@ def notify_respuesta_pqr(
     nombre_usuario,
     id_pqr,
     mensaje_respuesta,
-    nombre_responsable="Coordinador"
+    nombre_responsable="Director de programa"
 ):
     body = f"""
     <p>Hola <strong>{nombre_usuario}</strong>.</p>

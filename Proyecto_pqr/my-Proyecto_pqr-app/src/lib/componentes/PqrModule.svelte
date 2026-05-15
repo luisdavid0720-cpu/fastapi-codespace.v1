@@ -499,7 +499,7 @@ async function openDetail(pqr) {
             <p class="section-label">Descripción de la solicitud</p>
             <div class="content-box">{selected.descripcion}</div>
           </div>
-          <h3 class="section-divider">Gestión del Coordinador</h3>
+          <h3 class="section-divider">Gestión del Director de Programa</h3>
           <FormField label="Cambiar estado" tipo="select" bind:valor={coordForm.id_estado}
             placeholder="Selecciona un estado..."
             opciones={estados.map(e => ({ value: e.id_estado, label: e.nombre }))} />

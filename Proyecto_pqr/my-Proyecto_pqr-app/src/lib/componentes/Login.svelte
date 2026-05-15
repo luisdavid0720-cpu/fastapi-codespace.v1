@@ -16,11 +16,11 @@
     });
   }
 
-  else if (rol === 'coordinador') {
+  else if (rol === 'Director de Programa') {
     currentUser.set({
       id_usuario: 2,
-      nombre: 'Coordinador',
-      correo: 'coordinador@cul.edu.co',
+      nombre: 'Director de Programa',
+      correo: 'DirectorPrograma@cul.edu.co',
       id_rol: 4
     });
   }
@@ -65,9 +65,9 @@
           <span class="role-title">Administrador</span>
         </button>
 
-      <button class="role-card" onclick={() => loginAs('coordinador')}>
+      <button class="role-card" onclick={() => loginAs('Director de Programa')}>
         <div class="role-icon">📋</div>
-        <span class="role-title">Coordinador</span>  
+        <span class="role-title">Director de Programa</span>  
       </button>
 
         <button class="role-card" onclick={() => loginAs('usuario')}>

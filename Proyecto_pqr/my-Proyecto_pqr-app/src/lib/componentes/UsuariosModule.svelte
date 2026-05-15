@@ -69,7 +69,7 @@
       const r = roles.find(rol => rol.id_rol == id)
       if (r) return r.nombre || r.nombre_rol
     }
-    const dic = { 1:'Estudiante', 2:'Docente', 3:'Administrador', 4:'Coordinador', 5:'Secretaria', 6:'Soporte', 7:'Decano', 8:'Director', 9:'Investigador', 10:'Monitor', 11:'Tutor', 12:'Analista' }
+    const dic = { 1:'Estudiante', 2:'Docente', 3:'Administrador', 4:'Director de Programa', 5:'Secretaria', 6:'Soporte', 7:'Decano', 8:'Director', 9:'Investigador', 10:'Monitor', 11:'Tutor', 12:'Analista' }
     return dic[id] || `Rol ${id}`
   }
 

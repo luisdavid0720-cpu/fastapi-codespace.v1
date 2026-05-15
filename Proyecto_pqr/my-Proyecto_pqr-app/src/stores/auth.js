@@ -26,10 +26,10 @@ export function login(rol) {
     })
   }
 
-  else if (rol === 'coordinador') {
+  else if (rol === 'Director de Programa') {
     currentUser.set({
       id_usuario: 2,
-      nombre: 'Coordinador',
+      nombre: 'Director de Programa',
       correo: 'coord@cul.edu.co',
       id_rol: 4
     })

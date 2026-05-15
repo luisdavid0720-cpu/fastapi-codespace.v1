@@ -93,7 +93,7 @@
         <div class="user-info">
           <p class="user-name">{$currentUser?.nombre || 'Usuario'}</p>
           <p class="user-role">
-            {isAdmin ? 'Administrador' : isCoord ? 'Coordinador' : 'Estudiante'}
+            {isAdmin ? 'Administrador' : isCoord ? 'Director de Programa' : 'Estudiante'}
           </p>
         </div>
       </div>
@@ -138,7 +138,7 @@
             </div>
             <div class="live-status">
               <span class="pulse-dot"></span>
-              {isAdmin ? 'MODO ADMIN' : 'MODO COORDINADOR'}
+              {isAdmin ? 'MODO ADMIN' : 'MODO DIRECTOR DE PROGRAMA'}
             </div>
           </div>
           <div class="iframe-container">
