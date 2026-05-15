@@ -201,7 +201,7 @@
       if (coordForm.id_responsable) {
         await api.createAsignacion({
           id_asignacion: 0, id_pqr: Number(selected.id_pqr),
-          id_usuario: Number(coordForm.id_responsable),
+          id_departamento: Number(coordForm.id_responsable),
           fecha_asignacion: new Date().toISOString().slice(0, 10)
         })
       }
@@ -505,7 +505,7 @@
             opciones={estados.map(e => ({ value: e.id_estado, label: e.nombre }))} />
           <FormField label="Asignar responsable" tipo="select" bind:valor={coordForm.id_responsable}
             placeholder="Selecciona un responsable..."
-            opciones={usuarios.map(u => ({ value: u.id_usuario, label: u.nombre || u.correo || `Usuario ${u.id_usuario}` }))} />
+            opciones={departamentos.map(d => ({ value: d.id_departamento, label: d.nombre }))} />
           <FormField label="Respuesta / Comentario" tipo="textarea" bind:valor={coordForm.respuesta}
             placeholder="Escribe una respuesta o comentario para esta solicitud..."
             hint="Campo opcional" />
