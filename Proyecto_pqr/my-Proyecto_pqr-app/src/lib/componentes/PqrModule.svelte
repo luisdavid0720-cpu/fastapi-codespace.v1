@@ -109,24 +109,24 @@
   })
 
   function openCreate() { defaultForm(); view = 'form' }
- async function openDetail(pqr) {
+ // POR esto:
+async function openDetail(pqr) {
   selected = pqr
-  responsable = null       // null = cargando
+  responsable = null
   view = 'detail'
   try {
     const res = await api.getAsignacionByPqr(pqr.id_pqr)
-    const idUsuario = res?.id_usuario
-    if (idUsuario) {
-      const u = usuarios.find(u => u.id_usuario == idUsuario)
-      responsable = u ? (u.nombre || u.correo || `#${idUsuario}`) : `#${idUsuario}`
+    if (res?.id_usuario) {
+      const deps = $state.snapshot(departamentos)
+      const dep = deps.find(d => d.id_departamento == pqr.id_departamento)
+      responsable = dep ? dep.nombre : '—'
     } else {
-      responsable = false  // false = sin asignar
+      responsable = false
     }
   } catch {
-    responsable = false    // false = sin asignar
+    responsable = false
   }
 }
-
   function openEdit(pqr) {
     editForm = {
       id_pqr: pqr.id_pqr, descripcion: pqr.descripcion, fecha: pqr.fecha,
@@ -201,7 +201,7 @@
       if (coordForm.id_responsable) {
         await api.createAsignacion({
           id_asignacion: 0, id_pqr: Number(selected.id_pqr),
-          id_departamento: Number(coordForm.id_responsable),
+          id_usuario: Number(coordForm.id_responsable),
           fecha_asignacion: new Date().toISOString().slice(0, 10)
         })
       }
@@ -503,8 +503,9 @@
           <FormField label="Cambiar estado" tipo="select" bind:valor={coordForm.id_estado}
             placeholder="Selecciona un estado..."
             opciones={estados.map(e => ({ value: e.id_estado, label: e.nombre }))} />
-          <FormField label="Asignar responsable" tipo="select" bind:valor={coordForm.id_responsable}
-            placeholder="Selecciona un responsable..."
+          <!-- POR esto: -->
+          <FormField label="Departamento responsable" tipo="select" bind:valor={coordForm.id_responsable}
+            placeholder="Selecciona un departamento..."
             opciones={departamentos.map(d => ({ value: d.id_departamento, label: d.nombre }))} />
           <FormField label="Respuesta / Comentario" tipo="textarea" bind:valor={coordForm.respuesta}
             placeholder="Escribe una respuesta o comentario para esta solicitud..."
